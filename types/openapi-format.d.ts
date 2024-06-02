@@ -85,6 +85,24 @@ declare module 'openapi-format' {
   ): Promise<Record<string, unknown>>
 
   /**
+   * OpenAPI-format parse function
+   * Parse a JSON/YAML string
+   * @returns {Promise<Record<string, unknown>} Data object
+   */
+  export async function parseString(
+    input: string,
+    options: Record<string, unknown> = {}
+  ): Promise<Record<string, unknown>>
+
+  /**
+   * OpenAPI-format parse function
+   * Parse a JSON/YAML string
+   */
+  export async function detectFormat(
+    input: string,
+  ): Promise<'json' | 'yaml' | 'unknown'>
+
+  /**
    * OpenAPI-format write function for JSON/YAML
    * @param filePath Path to the output file.
    * @param data Data object.
