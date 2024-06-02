@@ -13,8 +13,8 @@ interface MonacoEditorProps {
   onChange: (value: string) => void;
 }
 
-const MonacoEditorWrapper: React.FC<MonacoEditorProps> = ({ value, onChange }) => {
-  return <MonacoEditorComponent value={value} onChange={onChange} />;
+const MonacoEditorWrapper: React.FC<MonacoEditorProps> = ({value, onChange}) => {
+  return <MonacoEditorComponent value={value} onChange={onChange}/>;
 };
 
 export default MonacoEditorWrapper;

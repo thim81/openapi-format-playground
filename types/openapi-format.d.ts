@@ -3,6 +3,27 @@
 declare module 'openapi-format' {
   import { OpenAPIV3 } from 'openapi-types'
 
+  interface OpenAPISortSet {
+    root?: Array<'openapi' | 'info' | 'servers' | 'paths' | 'components' | 'tags' | 'x-tagGroups' | 'externalDocs'>
+    get?: Array<'operationId' | 'summary' | 'description' | 'parameters' | 'requestBody' | 'responses'>
+    post?: Array<'operationId' | 'summary' | 'description' | 'parameters' | 'requestBody' | 'responses'>
+    put?: Array<'operationId' | 'summary' | 'description' | 'parameters' | 'requestBody' | 'responses'>
+    patch?: Array<'operationId' | 'summary' | 'description' | 'parameters' | 'requestBody' | 'responses'>
+    delete?: Array<'operationId' | 'summary' | 'description' | 'parameters' | 'requestBody' | 'responses'>
+    parameters?: Array<'name' | 'in' | 'description' | 'required' | 'schema'>
+    requestBody?: Array<'description' | 'required' | 'content'>
+    responses?: Array<'description' | 'headers' | 'content' | 'links'>
+    content?: Array<string>
+    components?: Array<'parameters' | 'schemas'>
+    schema?: Array<'description' | 'type' | 'items' | 'properties' | 'format' | 'example' | 'default'>
+    schemas?: Array<'description' | 'type' | 'items' | 'properties' | 'format' | 'example' | 'default'>
+    properties?: Array<'description' | 'type' | 'items' | 'format' | 'example' | 'default' | 'enum'>
+  }
+
+  interface OpenAPISortOptions {
+    sortSet: OpenAPISortSet
+  }
+
   interface OpenAPIFilterSet {
     methods?: string[]
     tags?: string[]
@@ -27,6 +48,19 @@ declare module 'openapi-format' {
     data: OpenAPIV3.Document
     resultData: Record<string, never>
   }
+
+  /**
+   * OpenAPI-format sort function
+   * Traverse through the OpenAPI document and sort the props according to the sort configuration.
+   * @param {OpenAPIV3.Document} oaObj OpenAPI document
+   * @param {OpenAPISortOptions} options OpenAPI-format sort options
+   * @returns {Promise<OpenAPIResult>} Sorted OpenAPI document
+   */
+  export async function  openapiSort(
+      oaObj: OpenAPIV3.Document,
+      options: OpenAPISortOptions
+  ): Promise<OpenAPIResult>
+
 
   /**
    * OpenAPI-format filter function

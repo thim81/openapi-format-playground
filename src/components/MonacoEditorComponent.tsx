@@ -1,5 +1,5 @@
 import React, {useEffect, useRef} from 'react';
-import Editor, { OnMount } from '@monaco-editor/react';
+import Editor, {OnMount} from '@monaco-editor/react';
 import * as monacoEditor from 'monaco-editor';
 
 interface MonacoEditorProps {
@@ -7,7 +7,7 @@ interface MonacoEditorProps {
   onChange: (value: string) => void;
 }
 
-const MonacoEditorComponent: React.FC<MonacoEditorProps> = ({ value, onChange }) => {
+const MonacoEditorComponent: React.FC<MonacoEditorProps> = ({value, onChange}) => {
   const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor | null>(null);
 
   const handleEditorDidMount: OnMount = (editor, monaco) => {
@@ -33,7 +33,7 @@ const MonacoEditorComponent: React.FC<MonacoEditorProps> = ({ value, onChange })
       defaultValue={value}
       value={value}
       onChange={(value) => onChange(value || '')}
-      options={{ automaticLayout: true }}
+      options={{automaticLayout: true}}
       onMount={handleEditorDidMount}
     />
   );
