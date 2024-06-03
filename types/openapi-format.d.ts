@@ -46,7 +46,7 @@ declare module 'openapi-format' {
   }
 
   interface OpenAPIResult {
-    data: OpenAPIV3.Document
+    data: OpenAPIV3.Document | string
     resultData: Record<string, never>
   }
 
@@ -61,7 +61,6 @@ declare module 'openapi-format' {
       oaObj: OpenAPIV3.Document,
       options: OpenAPISortOptions
   ): Promise<OpenAPIResult>
-
 
   /**
    * OpenAPI-format filter function
@@ -123,4 +122,6 @@ declare module 'openapi-format' {
    * @returns {string} - The string with the specified case.
    */
   export function changeCase(valueAsString: string, caseType: string): string
+
+  export async function stringify(document: Document<{}>, options: Record<string, unknown> = {}):  Promise<string>
 }

@@ -30,7 +30,7 @@ const OpenApiPlayground: React.FC<OpenApiPlaygroundProps> = ({input, setInput, o
       const res = await response.json();
       if (response.ok) {
         console.log(res);
-        setOutput(res.formatted.data);
+        setOutput(res.data);
       } else {
         setOutput(`Error: ${res.error}`);
       }
@@ -83,7 +83,7 @@ const OpenApiPlayground: React.FC<OpenApiPlaygroundProps> = ({input, setInput, o
             </h3>
             {!isFilterOptionsCollapsed && (
               <div className="h-full">
-                <MonacoEditorWrapper value={filterOptions} onChange={setFilterOptions} />
+                <MonacoEditorWrapper value={filterOptions} onChange={setFilterOptions}/>
               </div>
             )}
           </div>
@@ -96,7 +96,7 @@ const OpenApiPlayground: React.FC<OpenApiPlaygroundProps> = ({input, setInput, o
             </h3>
             {!isSortOptionsCollapsed && (
               <div className="h-full">
-                <MonacoEditorWrapper value={sortOptions} onChange={setSortOptions} />
+                <MonacoEditorWrapper value={sortOptions} onChange={setSortOptions}/>
               </div>
             )}
           </div>

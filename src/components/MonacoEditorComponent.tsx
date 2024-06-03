@@ -26,6 +26,22 @@ const MonacoEditorComponent: React.FC<MonacoEditorProps> = ({value, onChange}) =
     }
   };
 
+  const handleEditorChange = (value: string | undefined) => {
+    if (value != null && editorRef.current) {
+      editorRef.current.setValue(value);
+    }
+  }
+
+  const editorOptions= {
+    fontFamily: '"Cascadia Code", "Jetbrains Mono", "Fira Code", "Menlo", "Consolas", monospace',
+    fontLigatures: true,
+    fontSize: 12,
+    lineHeight: 20,
+    minimap: { enabled: false },
+    tabSize: 2,
+    automaticLayout: true
+  }
+
   return (
     <Editor
       height="90vh"
@@ -33,8 +49,8 @@ const MonacoEditorComponent: React.FC<MonacoEditorProps> = ({value, onChange}) =
       defaultValue={value}
       value={value}
       onChange={(value) => onChange(value || '')}
-      options={{automaticLayout: true}}
       onMount={handleEditorDidMount}
+      options={editorOptions}
     />
   );
 };

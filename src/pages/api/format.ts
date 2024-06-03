@@ -3,9 +3,7 @@ import {
   detectFormat,
   openapiFilter,
   OpenAPIFilterOptions, OpenAPIFilterSet, OpenAPIResult,
-  openapiSort,
-  OpenAPISortOptions, parseFile,
-  parseString
+  parseString, stringify
 } from 'openapi-format';
 
 import defaultFilterJson from './defaults/defaultFilter.json'
@@ -15,8 +13,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const {openapiString, sort, filterOptions} = req.body;
 
   try {
-    let formatted
-    let oaObj = await parseString(openapiString) as OpenAPIV3.Document
+    const format = await detectFormat(openapiString)
+    let oaObj = await parseString(openapiString) as OpenAPIV3.Document || ''
+    let output = {data: oaObj} as OpenAPIResult
 
     // Sort OpenAPI
     // if (sort) {
@@ -28,10 +27,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const filterOpts = await parseString(filterOptions) as OpenAPIFilterSet
       const defaultOpts = defaultFilterJson as OpenAPIFilterSet
       const options = {filterSet: filterOpts, defaultFilter: defaultOpts} as OpenAPIFilterOptions
-      formatted = await openapiFilter(oaObj, options) as OpenAPIResult;
+      output = await openapiFilter(oaObj, options) as OpenAPIResult;
     }
 
-    res.status(200).json({formatted});
+    // Convert format
+    output.data = await stringify(output.data, {format: format});
+
+    res.status(200).json(output);
   } catch (error) {
     // @ts-ignore
     res.status(500).json({error: error.message});
