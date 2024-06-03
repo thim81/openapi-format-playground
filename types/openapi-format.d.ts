@@ -41,7 +41,8 @@ declare module 'openapi-format' {
   }
 
   interface OpenAPIFilterOptions {
-    filterSet: OpenAPIFilterSet
+    filterSet?: OpenAPIFilterSet
+    defaultFilter?: OpenAPIFilterSet
   }
 
   interface OpenAPIResult {
@@ -92,7 +93,7 @@ declare module 'openapi-format' {
   export async function parseString(
     input: string,
     options: Record<string, unknown> = {}
-  ): Promise<Record<string, unknown>>
+  ): Promise< OpenAPIResult | OpenAPISortOptions | OpenAPIFilterOptions | Record<string, unknown>>
 
   /**
    * OpenAPI-format parse function
