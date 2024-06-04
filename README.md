@@ -1,6 +1,13 @@
+<a href="https://www.npmjs.com/package/openapi-format" alt="Latest Stable Version">![npm](https://img.shields.io/npm/v/openapi-format.svg)</a>
+<a href="https://www.npmjs.com/package/openapi-format" alt="Total Downloads">![npm](https://img.shields.io/npm/dw/openapi-format.svg)</a>
+
 # OpenAPI-Format Playground
 
-OpenAPI-Format Playground is a web-based tool for formatting and sorting OpenAPI documents. This tool uses the `openapi-format` library to provide a user-friendly interface for developers to manipulate OpenAPI specifications.
+OpenAPI-Format Playground is a web-based tool for formatting and sorting OpenAPI documents. 
+
+The playground is powered by the [openapi-format](https://www.npmjs.com/package/openapi-format) CLI to provide a user-friendly interface for developers to format & filter a OpenAPI specifications.
+
+
 
 ## Features
 
