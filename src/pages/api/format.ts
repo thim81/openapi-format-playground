@@ -12,10 +12,10 @@ import defaultSortComponents from '../../defaults/defaultSortComponents.json'
 import {OpenAPIV3} from "openapi-types";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const {openapiString, sort, filterOptions, sortOptions} = req.body;
+  const {openapiString, sort, filterOptions, sortOptions, format} = req.body;
 
   try {
-    const format = await detectFormat(openapiString)
+    const _format = format || await detectFormat(openapiString)
     let oaObj = await parseString(openapiString) as OpenAPIV3.Document || ''
     let output = {data: oaObj} as OpenAPIResult
 
@@ -37,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Convert output to JSON/YAML format
-    output.data = await stringify(output.data, {format: format});
+    output.data = await stringify(output.data, {format: _format});
 
     res.status(200).json(output);
   } catch (error) {

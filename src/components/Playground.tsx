@@ -1,10 +1,11 @@
 "use client";
 
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import MonacoEditorWrapper from './MonacoEditorWrapper';
 
 import defaultSort from '../defaults/defaultSort.json'
 import DownloadButton from "@/components/DownloadButton";
+import {parseString, stringify} from "openapi-format";
 
 interface PlaygroundProps {
   input: string;
@@ -21,28 +22,34 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [isSortOptionsCollapsed, setSortOptionsCollapsed] = useState<boolean>(true);
   const [outputLanguage, setOutputLanguage] = useState<'json' | 'yaml'>('yaml');
 
-  const handleFormat = async () => {
-    try {
-      const response = await fetch('/api/format', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({openapiString: input, sort, filterOptions, sortOptions}),
-      });
+  useEffect(() => {
+    const handleFormat = async () => {
+      try {
+        const response = await fetch('/api/format', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({openapiString: input, sort, filterOptions, sortOptions, format: outputLanguage}),
+        });
 
-      const res = await response.json();
-      if (response.ok) {
-        console.log(res);
-        setOutput(res.data);
-      } else {
-        setOutput(`Error: ${res.error}`);
+        const res = await response.json();
+        if (response.ok) {
+          console.log(res);
+          setOutput(res.data);
+        } else {
+          setOutput(`Error: ${res.error}`);
+        }
+      } catch (error) {
+        // @ts-ignore
+        setOutput(`Error: ${error.message}`);
       }
-    } catch (error) {
-      // @ts-ignore
-      setOutput(`Error: ${error.message}`);
+    };
+
+    if (input) {
+      handleFormat();
     }
-  };
+  }, [input, sort, filterOptions, sortOptions, outputLanguage]);
 
   const toggleFilterOptions = () => {
     setFilterOptionsCollapsed(!isFilterOptionsCollapsed);
@@ -54,16 +61,15 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setFilterOptionsCollapsed(isSortOptionsCollapsed); // Collapse Filter options when Sort options is expanded
   };
 
+  const handleInputChange = (newValue: string) => {
+    console.log("Input changed:", newValue);
+    setInput(newValue);
+  };
+
   return (
     <div className="mt-4 h-screen">
       <div className="flex justify-end mb-4">
         <DownloadButton data={output} filename="openapi-formatted" format={outputLanguage}/>
-        <button
-          onClick={handleFormat}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Format OpenAPI
-        </button>
       </div>
       <div className="flex space-x-4 h-full">
         <div className="w-1/5 flex flex-col">
@@ -119,7 +125,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         </div>
         <div className="flex-1 h-full">
           <h2 className="text-xl font-bold mb-2">Input</h2>
-          <MonacoEditorWrapper value={input} onChange={setInput}/>
+          <MonacoEditorWrapper value={input} onChange={handleInputChange}/>
         </div>
         <div className="flex-1 h-full">
           <h2 className="text-xl font-bold mb-2">Output</h2>
