@@ -3,6 +3,8 @@
 import React, {useState} from 'react';
 import MonacoEditorWrapper from './MonacoEditorWrapper';
 
+import defaultSort from '../defaults/defaultSort.json'
+
 interface OpenApiPlaygroundProps {
   input: string;
   setInput: (value: string) => void;
@@ -13,7 +15,7 @@ interface OpenApiPlaygroundProps {
 const OpenApiPlayground: React.FC<OpenApiPlaygroundProps> = ({input, setInput, output, setOutput}) => {
   const [sort, setSort] = useState<boolean>(true);
   const [filterOptions, setFilterOptions] = useState<string>('');
-  const [sortOptions, setSortOptions] = useState<string>('');
+  const [sortOptions, setSortOptions] = useState<string>(JSON.stringify(defaultSort, null, 2));
   const [isFilterOptionsCollapsed, setFilterOptionsCollapsed] = useState<boolean>(false);
   const [isSortOptionsCollapsed, setSortOptionsCollapsed] = useState<boolean>(true);
 
@@ -24,7 +26,7 @@ const OpenApiPlayground: React.FC<OpenApiPlaygroundProps> = ({input, setInput, o
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({openapiString: input, sort: sort, filterOptions: filterOptions}),
+        body: JSON.stringify({openapiString: input, sort: sort, filterOptions: filterOptions, sortOptions: sortOptions}),
       });
 
       const res = await response.json();
@@ -96,7 +98,7 @@ const OpenApiPlayground: React.FC<OpenApiPlaygroundProps> = ({input, setInput, o
             </h3>
             {!isSortOptionsCollapsed && (
               <div className="h-full">
-                <MonacoEditorWrapper value={sortOptions} onChange={setSortOptions}/>
+                <MonacoEditorWrapper value={sortOptions} onChange={setSortOptions} language="json"/>
               </div>
             )}
           </div>

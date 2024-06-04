@@ -2,15 +2,17 @@ import type {NextApiRequest, NextApiResponse} from 'next';
 import {
   detectFormat,
   openapiFilter,
-  OpenAPIFilterOptions, OpenAPIFilterSet, OpenAPIResult,
+  OpenAPIFilterOptions, OpenAPIFilterSet, OpenAPIResult, openapiSort, OpenAPISortOptions, OpenAPISortSet,
   parseString, stringify
 } from 'openapi-format';
 
-import defaultFilterJson from './defaults/defaultFilter.json'
+import defaultFilterJson from '../../defaults/defaultFilter.json'
+import defaultSortJson from '../../defaults/defaultSort.json'
+import defaultSortComponents from '../../defaults/defaultSortComponents.json'
 import {OpenAPIV3} from "openapi-types";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const {openapiString, sort, filterOptions} = req.body;
+  const {openapiString, sort, filterOptions, sortOptions} = req.body;
 
   try {
     const format = await detectFormat(openapiString)
@@ -18,9 +20,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let output = {data: oaObj} as OpenAPIResult
 
     // Sort OpenAPI
-    // if (sort) {
-    //   formatted = await openapiSort(openapiString, {} as OpenAPISortOptions);
-    // }
+    if (sort) {
+      const sortOpts = await parseString(sortOptions) as OpenAPISortSet
+      const defaultOpts = defaultSortJson as OpenAPISortSet
+      const options = {sortSet: Object.assign({}, defaultOpts, sortOpts), sortComponentsSet: []} as OpenAPISortOptions
+      output = await openapiSort(oaObj, options) as OpenAPIResult;
+    }
 
     // Filter OpenAPI
     if (filterOptions) {

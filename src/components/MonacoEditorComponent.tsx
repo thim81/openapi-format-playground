@@ -5,9 +5,10 @@ import * as monacoEditor from 'monaco-editor';
 interface MonacoEditorProps {
   value: string;
   onChange: (value: string) => void;
+  language?: string;
 }
 
-const MonacoEditorComponent: React.FC<MonacoEditorProps> = ({value, onChange}) => {
+const MonacoEditorComponent: React.FC<MonacoEditorProps> = ({value, onChange, language}) => {
   const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor | null>(null);
 
   const handleEditorDidMount: OnMount = (editor, monaco) => {
@@ -16,7 +17,10 @@ const MonacoEditorComponent: React.FC<MonacoEditorProps> = ({value, onChange}) =
 
   useEffect(() => {
     if (editorRef.current) {
-      editorRef.current.setValue(value);
+      const model = editorRef.current.getModel();
+      if (model && model.getValue() !== value) {
+        model.setValue(value);
+      }
     }
   }, [value]);
 
@@ -40,12 +44,13 @@ const MonacoEditorComponent: React.FC<MonacoEditorProps> = ({value, onChange}) =
     minimap: { enabled: false },
     tabSize: 2,
     automaticLayout: true
-  }
+  };
 
   return (
     <Editor
       height="90vh"
       defaultLanguage="yaml"
+      language={language}
       defaultValue={value}
       value={value}
       onChange={(value) => onChange(value || '')}

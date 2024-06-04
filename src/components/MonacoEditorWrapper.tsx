@@ -11,10 +11,11 @@ const MonacoEditorComponent = dynamic(() => import('./MonacoEditorComponent'), {
 interface MonacoEditorProps {
   value: string;
   onChange: (value: string) => void;
+  language?: string;
 }
 
-const MonacoEditorWrapper: React.FC<MonacoEditorProps> = ({value, onChange}) => {
-  return <MonacoEditorComponent value={value} onChange={onChange}/>;
+const MonacoEditorWrapper: React.FC<MonacoEditorProps> = ({value, onChange, language}) => {
+  return <MonacoEditorComponent value={value} onChange={onChange} language={language}/>;
 };
 
 export default MonacoEditorWrapper;

@@ -22,6 +22,7 @@ declare module 'openapi-format' {
 
   interface OpenAPISortOptions {
     sortSet: OpenAPISortSet
+    sortComponentsSet?: string[]
   }
 
   interface OpenAPIFilterSet {
