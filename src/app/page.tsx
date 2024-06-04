@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useState} from 'react';
-import OpenApiPlayground from '../components/OpenApiPlayground';
+import Playground from '../components/Playground';
 import {HeaderBar} from "@/components/HeaderBar";
 
 const Home: React.FC = () => {
@@ -23,7 +23,7 @@ const Home: React.FC = () => {
     <div className="min-h-screen bg-gray-100">
       <HeaderBar onAction1={handleAction1} onAction2={handleAction2} />
       <div className="p-4">
-        <OpenApiPlayground input={input} setInput={setInput} output={output} setOutput={setOutput} />
+        <Playground input={input} setInput={setInput} output={output} setOutput={setOutput} />
       </div>
     </div>
   );

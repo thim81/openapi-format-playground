@@ -4,20 +4,22 @@ import React, {useState} from 'react';
 import MonacoEditorWrapper from './MonacoEditorWrapper';
 
 import defaultSort from '../defaults/defaultSort.json'
+import DownloadButton from "@/components/DownloadButton";
 
-interface OpenApiPlaygroundProps {
+interface PlaygroundProps {
   input: string;
   setInput: (value: string) => void;
   output: string;
   setOutput: (value: string) => void;
 }
 
-const OpenApiPlayground: React.FC<OpenApiPlaygroundProps> = ({input, setInput, output, setOutput}) => {
+const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutput}) => {
   const [sort, setSort] = useState<boolean>(true);
   const [filterOptions, setFilterOptions] = useState<string>('');
   const [sortOptions, setSortOptions] = useState<string>(JSON.stringify(defaultSort, null, 2));
   const [isFilterOptionsCollapsed, setFilterOptionsCollapsed] = useState<boolean>(false);
   const [isSortOptionsCollapsed, setSortOptionsCollapsed] = useState<boolean>(true);
+  const [outputLanguage, setOutputLanguage] = useState<'json' | 'yaml'>('yaml');
 
   const handleFormat = async () => {
     try {
@@ -26,7 +28,7 @@ const OpenApiPlayground: React.FC<OpenApiPlaygroundProps> = ({input, setInput, o
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({openapiString: input, sort: sort, filterOptions: filterOptions, sortOptions: sortOptions}),
+        body: JSON.stringify({openapiString: input, sort, filterOptions, sortOptions}),
       });
 
       const res = await response.json();
@@ -54,7 +56,8 @@ const OpenApiPlayground: React.FC<OpenApiPlaygroundProps> = ({input, setInput, o
 
   return (
     <div className="mt-4 h-screen">
-      <div className="flex justify-between mb-4">
+      <div className="flex justify-end mb-4">
+        <DownloadButton data={output} filename="openapi-formatted" format={outputLanguage}/>
         <button
           onClick={handleFormat}
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
@@ -63,17 +66,28 @@ const OpenApiPlayground: React.FC<OpenApiPlaygroundProps> = ({input, setInput, o
         </button>
       </div>
       <div className="flex space-x-4 h-full">
-        <div className="w-1/4 flex flex-col">
+        <div className="w-1/5 flex flex-col">
           <h2 className="text-xl font-bold mb-2">Config</h2>
           <div className="mb-4">
-            <label className="flex items-center">
+            <label className="block mb-1 font-medium text-gray-700">Output format</label>
+            <select
+              value={outputLanguage}
+              onChange={(e) => setOutputLanguage(e.target.value as 'json' | 'yaml')}
+              className="p-2 border rounded w-full"
+            >
+              <option value="json">JSON</option>
+              <option value="yaml">YAML</option>
+            </select>
+          </div>
+          <div className="mb-4">
+            <label className="flex items-center font-medium text-gray-700">
+              Sort OpenAPI
               <input
                 type="checkbox"
                 checked={sort}
                 onChange={() => setSort(!sort)}
-                className="mr-2"
+                className="ml-2"
               />
-              Sort
             </label>
           </div>
           <div className="flex-1 overflow-auto mb-4">
@@ -116,4 +130,4 @@ const OpenApiPlayground: React.FC<OpenApiPlaygroundProps> = ({input, setInput, o
   );
 };
 
-export default OpenApiPlayground;
+export default Playground;

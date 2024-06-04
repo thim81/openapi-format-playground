@@ -1,7 +1,7 @@
 // openapi-format.d.ts
 
 declare module 'openapi-format' {
-  import { OpenAPIV3 } from 'openapi-types'
+  import {OpenAPIV3} from 'openapi-types'
 
   interface OpenAPISortSet {
     root?: Array<'openapi' | 'info' | 'servers' | 'paths' | 'components' | 'tags' | 'x-tagGroups' | 'externalDocs'>
@@ -58,9 +58,9 @@ declare module 'openapi-format' {
    * @param {OpenAPISortOptions} options OpenAPI-format sort options
    * @returns {Promise<OpenAPIResult>} Sorted OpenAPI document
    */
-  export async function  openapiSort(
-      oaObj: OpenAPIV3.Document,
-      options: OpenAPISortOptions
+  export async function openapiSort(
+    oaObj: OpenAPIV3.Document,
+    options: OpenAPISortOptions
   ): Promise<OpenAPIResult>
 
   /**
@@ -93,7 +93,7 @@ declare module 'openapi-format' {
   export async function parseString(
     input: string,
     options: Record<string, unknown> = {}
-  ): Promise< OpenAPIResult | OpenAPISortOptions | OpenAPIFilterOptions | Record<string, unknown>>
+  ): Promise<OpenAPIResult | OpenAPISortOptions | OpenAPIFilterOptions | Record<string, unknown>>
 
   /**
    * OpenAPI-format parse function
@@ -124,5 +124,5 @@ declare module 'openapi-format' {
    */
   export function changeCase(valueAsString: string, caseType: string): string
 
-  export async function stringify(document: Document<{}>, options: Record<string, unknown> = {}):  Promise<string>
+  export async function stringify(document: Document<{}>, options: Record<string, unknown> = {}): Promise<string>
 }
