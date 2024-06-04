@@ -44,7 +44,7 @@ const MonacoEditorComponent: React.FC<MonacoEditorProps> = ({value, onChange, la
     minimap: { enabled: false },
     tabSize: 2,
     automaticLayout: true
-  };
+  }
 
   return (
     <Editor

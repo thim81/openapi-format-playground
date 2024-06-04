@@ -53,24 +53,18 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   const toggleFilterOptions = () => {
     setFilterOptionsCollapsed(!isFilterOptionsCollapsed);
-    setSortOptionsCollapsed(isFilterOptionsCollapsed); // Collapse Sort options when Filter options is expanded
   };
 
   const toggleSortOptions = () => {
     setSortOptionsCollapsed(!isSortOptionsCollapsed);
-    setFilterOptionsCollapsed(isSortOptionsCollapsed); // Collapse Filter options when Sort options is expanded
   };
 
   const handleInputChange = (newValue: string) => {
-    console.log("Input changed:", newValue);
     setInput(newValue);
   };
 
   return (
     <div className="mt-4 h-screen">
-      <div className="flex justify-end mb-4">
-        <DownloadButton data={output} filename="openapi-formatted" format={outputLanguage}/>
-      </div>
       <div className="flex space-x-4 h-full">
         <div className="w-1/5 flex flex-col">
           <h2 className="text-xl font-bold mb-2">Config</h2>
@@ -124,12 +118,17 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           </div>
         </div>
         <div className="flex-1 h-full">
-          <h2 className="text-xl font-bold mb-2">Input</h2>
+          <h2 className="text-xl font-bold mb-2">OpenAPI Input</h2>
           <MonacoEditorWrapper value={input} onChange={handleInputChange}/>
         </div>
-        <div className="flex-1 h-full">
-          <h2 className="text-xl font-bold mb-2">Output</h2>
-          <MonacoEditorWrapper value={output} onChange={setOutput}/>
+        <div className="flex-1 h-full flex flex-col">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-xl font-bold">OpenAPI Output</h2>
+            <DownloadButton data={output} filename="openapi-formatted" format={outputLanguage}/>
+          </div>
+          <div className="flex-1">
+            <MonacoEditorWrapper value={output} onChange={setOutput}/>
+          </div>
         </div>
       </div>
     </div>
