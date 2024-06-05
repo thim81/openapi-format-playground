@@ -1,7 +1,7 @@
 // openapi-format.d.ts
 
 declare module 'openapi-format' {
-  import {OpenAPIV3} from 'openapi-types'
+  import { OpenAPIV3 } from 'openapi-types'
 
   interface OpenAPISortSet {
     root?: Array<'openapi' | 'info' | 'servers' | 'paths' | 'components' | 'tags' | 'x-tagGroups' | 'externalDocs'>
@@ -52,11 +52,10 @@ declare module 'openapi-format' {
   }
 
   /**
-   * OpenAPI-format sort function
-   * Traverse through the OpenAPI document and sort the props according to the sort configuration.
-   * @param {OpenAPIV3.Document} oaObj OpenAPI document
-   * @param {OpenAPISortOptions} options OpenAPI-format sort options
-   * @returns {Promise<OpenAPIResult>} Sorted OpenAPI document
+   * Sorts the properties of an OpenAPI document according to the specified sort configuration.
+   * @param {OpenAPIV3.Document} oaObj - The OpenAPI document to be sorted.
+   * @param {OpenAPISortOptions} options - The sorting options.
+   * @returns {Promise<OpenAPIResult>} The sorted OpenAPI document.
    */
   export async function openapiSort(
     oaObj: OpenAPIV3.Document,
@@ -64,11 +63,10 @@ declare module 'openapi-format' {
   ): Promise<OpenAPIResult>
 
   /**
-   * OpenAPI-format filter function
-   * Traverse through all keys and based on the key name, filter the props according to the filter configuration.
-   * @param {OpenAPIV3.Document} oaObj OpenAPI document
-   * @param {OpenAPIFilterOptions} options OpenAPI-format filter options
-   * @returns {Promise<OpenAPIResult>} Filtered OpenAPI document
+   * Filters the properties of an OpenAPI document based on the specified filter configuration.
+   * @param {OpenAPIV3.Document} oaObj - The OpenAPI document to be filtered.
+   * @param {OpenAPIFilterOptions} options - The filtering options.
+   * @returns {Promise<OpenAPIResult>} The filtered OpenAPI document.
    */
   export async function openapiFilter(
     oaObj: OpenAPIV3.Document,
@@ -76,9 +74,10 @@ declare module 'openapi-format' {
   ): Promise<OpenAPIResult>
 
   /**
-   * OpenAPI-format parse function
-   * Parse a JSON/YAML document
-   * @returns {Promise<Record<string, unknown>} Data object
+   * Parses a JSON or YAML file into a JavaScript object.
+   * @param {string} filePath - The path to the JSON or YAML file.
+   * @param {Record<string, unknown>} [options={}] - Additional parsing options.
+   * @returns {Promise<Record<string, unknown>>} The parsed data object.
    */
   export async function parseFile(
     filePath: string,
@@ -86,9 +85,10 @@ declare module 'openapi-format' {
   ): Promise<Record<string, unknown>>
 
   /**
-   * OpenAPI-format parse function
-   * Parse a JSON/YAML string
-   * @returns {Promise<Record<string, unknown>} Data object
+   * Parses a JSON or YAML string into a JavaScript object.
+   * @param {string} input - The JSON or YAML string.
+   * @param {Record<string, unknown>} [options={}] - Additional parsing options.
+   * @returns {Promise<Record<string, unknown>>} The parsed data object.
    */
   export async function parseString(
     input: string,
@@ -96,19 +96,20 @@ declare module 'openapi-format' {
   ): Promise<OpenAPIResult | OpenAPISortOptions | OpenAPIFilterOptions | Record<string, unknown>>
 
   /**
-   * OpenAPI-format parse function
-   * Parse a JSON/YAML string
+   * Detects the format of a given string as either JSON or YAML.
+   * @param {string} input - The string to detect the format of.
+   * @returns {Promise<'json' | 'yaml' | 'unknown'>} The detected format.
    */
   export async function detectFormat(
     input: string,
   ): Promise<'json' | 'yaml' | 'unknown'>
 
   /**
-   * OpenAPI-format write function for JSON/YAML
-   * @param filePath Path to the output file.
-   * @param data Data object.
-   * @param options Write options
-   * @returns {Promise<void>}
+   * Writes a JavaScript object to a file in JSON or YAML format.
+   * @param {string} filePath - The path to the output file.
+   * @param {Record<string, unknown> | OpenAPIV3.Document} data - The data object to write.
+   * @param {WriteFileOptions} [options={}] - Additional write options.
+   * @returns {Promise<void>} Resolves when the file has been written.
    */
   export async function writeFile(
     filePath: string,
@@ -117,12 +118,18 @@ declare module 'openapi-format' {
   ): Promise<void>
 
   /**
-   * OpenAPI-format change case function
-   * @param {string} valueAsString - The input string to change case.
-   * @param {string} caseType - The type of case to change to (e.g.'camelCase', 'pascalCase', 'kebabCase', 'snakeCase').
-   * @returns {string} - The string with the specified case.
+   * Changes the case of a given string to the specified case type.
+   * @param {string} valueAsString - The input string to change the case of.
+   * @param {string} caseType - The target case type (e.g., 'camelCase', 'pascalCase', 'kebabCase', 'snakeCase').
+   * @returns {string} The string with the specified case.
    */
   export function changeCase(valueAsString: string, caseType: string): string
 
+  /**
+   * Converts an OpenAPI document to a string representation.
+   * @param {Document<{}>} document - The OpenAPI document to convert.
+   * @param {Record<string, unknown>} [options={}] - Additional stringification options.
+   * @returns {Promise<string>} The string representation of the OpenAPI document.
+   */
   export async function stringify(document: Document<{}>, options: Record<string, unknown> = {}): Promise<string>
 }
