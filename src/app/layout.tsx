@@ -13,6 +13,12 @@ export default function RootLayout({children,}: Readonly<{ children: React.React
   return (
     <html lang="en">
     <body className={inter.className}>{children}</body>
+    <script
+      async
+      defer
+      data-domain="openapi-format-playground.vercel.app"
+      src="https://penkle.com/scripts/penkle.min.js"
+    ></script>
     </html>
   );
 }
