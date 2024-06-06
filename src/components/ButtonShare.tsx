@@ -1,9 +1,9 @@
-// components/ShareButton.tsx
+// components/ButtonShare.tsx
 import React from 'react';
 import {Base64} from "js-base64";
 import { gzip } from 'pako'
 
-interface ShareButtonProps {
+interface ButtonShareProps {
   data: string;
   config: {
     sort: boolean;
@@ -15,7 +15,7 @@ interface ShareButtonProps {
   };
 }
 
-const ShareButton: React.FC<ShareButtonProps> = ({data, config }) => {
+const ButtonShare: React.FC<ButtonShareProps> = ({data, config }) => {
   const handleShare = async () => {
     // Encode
     const url = new URL(globalThis.location.href)
@@ -41,4 +41,4 @@ const ShareButton: React.FC<ShareButtonProps> = ({data, config }) => {
   );
 };
 
-export default ShareButton;
+export default ButtonShare;
