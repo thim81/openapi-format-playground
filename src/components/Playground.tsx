@@ -2,13 +2,15 @@
 
 import React, {useEffect, useState} from 'react';
 import MonacoEditorWrapper from './MonacoEditorWrapper';
+import DiffEditorModal from './DiffEditorModal';
 
 import defaultSort from '../defaults/defaultSort.json'
-import DownloadButton from '@/components/DownloadButton';
-import ShareButton from '@/components/ShareButton';
+
 import {ungzip} from 'pako';
-import {Base64} from "js-base64";
-import useDebounce from "@/hooks/useDebounce";
+import {Base64} from 'js-base64';
+import useDebounce from '@/hooks/useDebounce';
+import ButtonDownload from '@/components/ButtonDownload';
+import ButtonShare from "@/components/ButtonShare";
 
 interface PlaygroundProps {
   input: string;
@@ -25,6 +27,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [isSortOptionsCollapsed, setSortOptionsCollapsed] = useState<boolean>(true);
   const [outputLanguage, setOutputLanguage] = useState<'json' | 'yaml'>('yaml');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isDiffModalOpen, setDiffModalOpen] = useState(false);
 
   const dInput = useDebounce(input, 600);
   const dFilterOptions = useDebounce(filterOptions, 600);
@@ -114,6 +117,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setInput(newValue);
   };
 
+  const openDiffModal = () => {
+    setDiffModalOpen(true);
+  };
+
   return (
     <div className="mt-4 h-screen">
       <div className="flex flex-col h-full">
@@ -182,8 +189,9 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-xl font-bold">OpenAPI Output</h2>
               <div className="space-x-4">
-                <ShareButton data={input} config={config}/>
-                <DownloadButton data={output} filename="openapi-formatted" format={outputLanguage}/>
+                <button onClick={openDiffModal} className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-4 rounded border border-green-500">Show Diff</button>
+                <ButtonShare data={input} config={config}/>
+                <ButtonDownload data={output} filename="openapi-formatted" format={outputLanguage}/>
               </div>
             </div>
             <div className="flex-1">
@@ -192,6 +200,14 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           </div>
         </div>
       </div>
+
+      <DiffEditorModal
+        isOpen={isDiffModalOpen}
+        onRequestClose={() => setDiffModalOpen(false)}
+        original={input}
+        modified={output}
+        language={outputLanguage}
+      />
     </div>
   );
 };

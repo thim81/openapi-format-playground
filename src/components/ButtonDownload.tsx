@@ -1,15 +1,15 @@
-// components/DownloadButton.tsx
+// components/ButtonDownload.tsx
 import React from 'react';
 import {saveAs} from 'file-saver';
 import {parseString, stringify} from "openapi-format";
 
-interface DownloadButtonProps {
+interface ButtonDownloadProps {
   data: string;
   filename: string;
   format: 'json' | 'yaml';
 }
 
-const DownloadButton: React.FC<DownloadButtonProps> = ({data, filename, format}) => {
+const ButtonDownload: React.FC<ButtonDownloadProps> = ({data, filename, format}) => {
   const handleDownload = async () => {
     let blob;
     const obj = await parseString(data)
@@ -31,4 +31,4 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({data, filename, format})
   );
 };
 
-export default DownloadButton;
+export default ButtonDownload;
