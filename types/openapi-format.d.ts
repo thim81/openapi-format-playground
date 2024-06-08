@@ -51,6 +51,17 @@ declare module 'openapi-format' {
     resultData: Record<string, never>
   }
 
+  export interface AnalyzeOpenApiResult {
+    operations?: string[];
+    methods?: string[];
+    paths?: string[];
+    flags?: string[];
+    operationIds?: string[];
+    flagValues?: string[];
+    responseContent?: string[];
+    tags?: string[];
+  }
+
   /**
    * Sorts the properties of an OpenAPI document according to the specified sort configuration.
    * @param {OpenAPIV3.Document} oaObj - The OpenAPI document to be sorted.
@@ -93,7 +104,7 @@ declare module 'openapi-format' {
   export async function parseString(
     input: string,
     options: Record<string, unknown> = {}
-  ): Promise<OpenAPIResult | OpenAPISortOptions | OpenAPIFilterOptions | Record<string, unknown>>
+  ): Promise<OpenAPIResult | OpenAPISortOptions | OpenAPIFilterOptions | OpenAPIV3.Document | Record<string, unknown>>
 
   /**
    * Detects the format of a given string as either JSON or YAML.
@@ -124,6 +135,13 @@ declare module 'openapi-format' {
    * @returns {string} The string with the specified case.
    */
   export function changeCase(valueAsString: string, caseType: string): string
+
+  /**
+   * Analyze the OpenAPI document.
+   * @param {OpenAPIV3.Document} oaObj - The OpenAPI document as a JSON object.
+   * @returns {AnalyzeOpenApiResult}
+   */
+  export function analyzeOpenApi(oaObj: Record<string, unknown> | OpenAPIV3.Document): AnalyzeOpenApiResult
 
   /**
    * Converts an OpenAPI document to a string representation.

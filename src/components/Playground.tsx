@@ -3,14 +3,17 @@
 import React, {useEffect, useState} from 'react';
 import MonacoEditorWrapper from './MonacoEditorWrapper';
 import DiffEditorModal from './DiffEditorModal';
+import FilterFormModal from './FilterFormModal';
+import useDebounce from '@/hooks/useDebounce';
+import ButtonDownload from '@/components/ButtonDownload';
+import ButtonShare from "@/components/ButtonShare";
 
 import defaultSort from '../defaults/defaultSort.json'
 
 import {ungzip} from 'pako';
 import {Base64} from 'js-base64';
-import useDebounce from '@/hooks/useDebounce';
-import ButtonDownload from '@/components/ButtonDownload';
-import ButtonShare from "@/components/ButtonShare";
+import {analyzeOpenApi, AnalyzeOpenApiResult, parseString, stringify} from "openapi-format";
+import {OpenAPIV3} from "openapi-types";
 
 interface PlaygroundProps {
   input: string;
@@ -28,6 +31,9 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [outputLanguage, setOutputLanguage] = useState<'json' | 'yaml'>('yaml');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDiffModalOpen, setDiffModalOpen] = useState(false);
+  const [isFormModalOpen, setFormModalOpen] = useState(false);
+  const [filterFormOptions, setFilterFormOptions] = useState<AnalyzeOpenApiResult>({});
+  const [selectedOptions, setSelectedOptions] = useState<any>({});
 
   const dInput = useDebounce(input, 600);
   const dFilterOptions = useDebounce(filterOptions, 600);
@@ -86,18 +92,18 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         const encodedConfig = url.searchParams.get('config');
         if (encodedInput) {
           const urlInput = ungzip(Base64.toUint8Array(encodedInput), {to: 'string'});
-          setInput(urlInput);
+          await handleInputChange(urlInput)
         }
         if (encodedConfig) {
           const urlConfig = ungzip(Base64.toUint8Array(encodedConfig), {to: 'string'});
-          const parsedConfig = JSON.parse(urlConfig);
+          const config = JSON.parse(urlConfig);
 
-          setSort(parsedConfig.sort ?? true);
-          setFilterOptions(parsedConfig.filterOptions ?? '');
-          setSortOptions(parsedConfig.sortOptions ?? JSON.stringify(defaultSort, null, 2));
-          setFilterOptionsCollapsed(parsedConfig.isFilterOptionsCollapsed ?? false);
-          setSortOptionsCollapsed(parsedConfig.isSortOptionsCollapsed ?? true);
-          setOutputLanguage(parsedConfig.outputLanguage ?? 'yaml');
+          setSort(config.sort ?? true);
+          setFilterOptions(config.filterOptions ?? '');
+          setSortOptions(config.sortOptions ?? JSON.stringify(defaultSort, null, 2));
+          setFilterOptionsCollapsed(config.isFilterOptionsCollapsed ?? false);
+          setSortOptionsCollapsed(config.isSortOptionsCollapsed ?? true);
+          setOutputLanguage(config.outputLanguage ?? 'yaml');
         }
       }
     };
@@ -114,11 +120,29 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   };
 
   const handleInputChange = async (newValue: string) => {
+    const oaObj = await parseString(newValue) as OpenAPIV3.Document;
+    const meta = analyzeOpenApi(oaObj);
+    setFilterFormOptions(meta);
     setInput(newValue);
   };
 
   const openDiffModal = () => {
     setDiffModalOpen(true);
+  };
+
+  const openFormModal = () => {
+    setFormModalOpen(true);
+  };
+
+  const handleFormSubmit = async (selectedOptions: any) => {
+    const _selectedOptions = Object.fromEntries(
+      Object.entries(selectedOptions).filter(([_, value]) => (value as string[]).length > 0)
+    );
+    const filterFormOptionsString = await stringify(_selectedOptions);
+    console.log('filterFormOptionsString', filterFormOptionsString);
+    setFilterOptions(filterFormOptionsString);
+    setSelectedOptions(_selectedOptions);
+    setFormModalOpen(false);
   };
 
   return (
@@ -200,6 +224,20 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           </div>
         </div>
       </div>
+
+      {Object.keys(filterFormOptions).length > 0 && (
+        <button onClick={openFormModal}
+                className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded-full shadow-lg">
+          Open Filter Form
+        </button>
+      )}
+
+      <FilterFormModal
+        isOpen={isFormModalOpen}
+        onRequestClose={() => setFormModalOpen(false)}
+        onSubmit={handleFormSubmit}
+        filterOptions={filterFormOptions}
+      />
 
       <DiffEditorModal
         isOpen={isDiffModalOpen}
