@@ -14,12 +14,22 @@ import {ungzip} from 'pako';
 import {Base64} from 'js-base64';
 import {analyzeOpenApi, AnalyzeOpenApiResult, parseString, stringify} from "openapi-format";
 import {OpenAPIV3} from "openapi-types";
+import {decodeShareUrl} from "@/utils";
 
 interface PlaygroundProps {
   input: string;
   setInput: (value: string) => void;
   output: string;
   setOutput: (value: string) => void;
+}
+
+export interface PlaygroundConfig {
+  sort: boolean;
+  filterOptions: string;
+  sortOptions: string;
+  isFilterOptionsCollapsed: boolean;
+  isSortOptionsCollapsed: boolean;
+  outputLanguage: 'json' | 'yaml';
 }
 
 const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutput}) => {
@@ -46,7 +56,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     isFilterOptionsCollapsed,
     isSortOptionsCollapsed,
     outputLanguage
-  } || {}
+  } || {} as PlaygroundConfig;
 
   const handleInputChange = useCallback(async (newValue: string) => {
     const oaObj = await parseString(newValue) as OpenAPIV3.Document;
@@ -92,30 +102,26 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   // Decode Share URL
   useEffect(() => {
-    const decodeShareUrl = async () => {
+    const decodeUrl = async () => {
       if (typeof window !== 'undefined') {
-        const url = new URL(window.location.href);
-        const encodedInput = url.searchParams.get('input');
-        const encodedConfig = url.searchParams.get('config');
-        if (encodedInput) {
-          const urlInput = ungzip(Base64.toUint8Array(encodedInput), {to: 'string'});
-          await handleInputChange(urlInput)
+        const url = window.location.href;
+        const result = await decodeShareUrl(url);
+        if (result?.openapi) {
+          await handleInputChange(result.openapi)
         }
-        if (encodedConfig) {
-          const urlConfig = ungzip(Base64.toUint8Array(encodedConfig), {to: 'string'});
-          const config = JSON.parse(urlConfig);
 
-          setSort(config.sort ?? true);
-          setFilterOptions(config.filterOptions ?? '');
-          setSortOptions(config.sortOptions ?? JSON.stringify(defaultSort, null, 2));
-          setFilterOptionsCollapsed(config.isFilterOptionsCollapsed ?? false);
-          setSortOptionsCollapsed(config.isSortOptionsCollapsed ?? true);
-          setOutputLanguage(config.outputLanguage ?? 'yaml');
+        if (result?.config) {
+          setSort(result.config.sort ?? true);
+          setFilterOptions(result.config.filterOptions ?? '');
+          setSortOptions(result.config.sortOptions ?? JSON.stringify(defaultSort, null, 2));
+          setFilterOptionsCollapsed(result.config.isFilterOptionsCollapsed ?? false);
+          setSortOptionsCollapsed(result.config.isSortOptionsCollapsed ?? true);
+          setOutputLanguage(result.config.outputLanguage ?? 'yaml');
         }
       }
     };
 
-    decodeShareUrl();
+    decodeUrl();
   }, [handleInputChange]);
 
   const toggleFilterOptions = () => {
@@ -213,9 +219,12 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-xl font-bold">OpenAPI Output</h2>
               <div className="space-x-4">
-                <button onClick={openDiffModal} className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-4 rounded border border-green-500">Show Diff</button>
-                <ButtonShare data={input} config={config}/>
-                <ButtonDownload data={output} filename="openapi-formatted" format={outputLanguage}/>
+                <button onClick={openDiffModal}
+                        className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-4 rounded border border-green-500">Show
+                  Diff
+                </button>
+                <ButtonShare openapi={input} config={config}/>
+                <ButtonDownload openapi={output} filename="openapi-formatted" format={outputLanguage}/>
               </div>
             </div>
             <div className="flex-1">
