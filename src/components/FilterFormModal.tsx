@@ -16,6 +16,14 @@ const FilterFormModal: React.FC<FilterFormModalProps> = ({ isOpen, onRequestClos
 
   useEffect(() => {
     if (filterOptions) {
+      // Remove "paths"
+      delete filterOptions.paths
+      // Remove keys with empty arrays
+      Object.keys(filterOptions).forEach(key => {
+        if (filterOptions[key].length === 0) {
+          delete filterOptions[key];
+        }
+      });
       const initialSelectedOptions: any = {};
       Object.keys(filterOptions).forEach((category) => {
         initialSelectedOptions[category] = [];
@@ -33,23 +41,44 @@ const FilterFormModal: React.FC<FilterFormModalProps> = ({ isOpen, onRequestClos
     }));
   };
 
+  const handleSelectAll = (category: string) => {
+    setSelectedOptions((prev: any) => ({
+      ...prev,
+      [category]: selectedOptions[category].length === filterOptions[category].length
+        ? []
+        : [...filterOptions[category]]
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(selectedOptions);
+    const cleanedSelectedOptions = Object.fromEntries(
+      Object.entries(selectedOptions).filter(([_, value]) => value.length > 0)
+    );
+    onSubmit(cleanedSelectedOptions);
   };
 
   if (!filterOptions) {
-    return null; // or a loading indicator
+    return null;
   }
 
   return (
-    <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose}>
+    <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="60%">
       <h2 className="text-xl font-bold mb-4">Filter Options</h2>
       <form onSubmit={handleSubmit} className="p-4">
         {Object.keys(filterOptions).map((category) => (
           <div key={category} className="mb-4">
-            <label className="block font-medium mb-2">{category}</label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex items-center mb-2">
+              <label className="block font-medium mr-4">{category}</label>
+              <button
+                type="button"
+                onClick={() => handleSelectAll(category)}
+                className="text-sm text-blue-500"
+              >
+                {selectedOptions[category]?.length === filterOptions[category].length ? 'Deselect All' : 'Select All'}
+              </button>
+            </div>
+            <div className={`grid gap-2 ${filterOptions[category].length > 4 ? 'grid-cols-4' : 'grid-cols-1'}`}>
               {filterOptions[category].map((option: string) => (
                 <div key={option} className="flex items-center">
                   <input
