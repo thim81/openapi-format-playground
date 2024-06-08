@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import MonacoEditorWrapper from './MonacoEditorWrapper';
 import DiffEditorModal from './DiffEditorModal';
 import FilterFormModal from './FilterFormModal';
@@ -47,6 +47,13 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     isSortOptionsCollapsed,
     outputLanguage
   } || {}
+
+  const handleInputChange = useCallback(async (newValue: string) => {
+    const oaObj = await parseString(newValue) as OpenAPIV3.Document;
+    const oaElements = analyzeOpenApi(oaObj);
+    setFilterFormOptions(oaElements);
+    setInput(newValue);
+  }, [setInput]);
 
   useEffect(() => {
     const handleFormat = async () => {
@@ -109,7 +116,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     };
 
     decodeShareUrl();
-  }, [setInput, setSort, setFilterOptions, setSortOptions, setFilterOptionsCollapsed, setSortOptionsCollapsed, setOutputLanguage]);
+  }, [handleInputChange]);
 
   const toggleFilterOptions = () => {
     setFilterOptionsCollapsed(!isFilterOptionsCollapsed);
@@ -117,13 +124,6 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   const toggleSortOptions = () => {
     setSortOptionsCollapsed(!isSortOptionsCollapsed);
-  };
-
-  const handleInputChange = async (newValue: string) => {
-    const oaObj = await parseString(newValue) as OpenAPIV3.Document;
-    const meta = analyzeOpenApi(oaObj);
-    setFilterFormOptions(meta);
-    setInput(newValue);
   };
 
   const openDiffModal = () => {
