@@ -90,7 +90,6 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
         const res = await response.json();
         if (response.ok) {
-          // console.log(res);
           setOutput(res.data);
           setErrorMessage(null);
         } else {
@@ -150,7 +149,6 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       Object.entries(selectedOptions).filter(([_, value]) => (value as string[]).length > 0)
     );
     const filterFormOptionsString = await stringify(_selectedOptions);
-    console.log('filterFormOptionsString', filterFormOptionsString);
     setFilterSet(filterFormOptionsString);
     setSelectedOptions(_selectedOptions);
     setFormModalOpen(false);
