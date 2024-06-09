@@ -8,32 +8,45 @@ import {
 
 import defaultFilterJson from '../../defaults/defaultFilter.json'
 import defaultSortJson from '../../defaults/defaultSort.json'
-import defaultSortComponents from '../../defaults/defaultSortComponents.json'
 import {OpenAPIV3} from "openapi-types";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const {openapiString, sort, filterOptions, sortOptions, format} = req.body;
+export default async function format(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    res.status(405).json({message: 'Method not allowed'});
+    return;
+  }
+
+  const {openapi, config} = req.body;
+  const {sort, filterSet, sortSet, format} = config || {};
+
+  if (!openapi) {
+    res.status(422).json({message: 'Missing openapi'});
+    return;
+  }
 
   try {
-    const _format = format || await detectFormat(openapiString)
-    let oaObj = await parseString(openapiString) as OpenAPIV3.Document || ''
+    const _format = format || await detectFormat(openapi)
+    let oaObj = await parseString(openapi) as OpenAPIV3.Document || ''
     let output = {data: oaObj} as OpenAPIResult
 
-    // Sort OpenAPI
-    if (sort) {
-      const sortOpts = await parseString(sortOptions) as OpenAPISortSet
-      const defaultOpts = defaultSortJson as OpenAPISortSet
-      const options = {sortSet: Object.assign({}, defaultOpts, sortOpts), sortComponentsSet: []} as OpenAPISortOptions
-      output = await openapiSort(oaObj, options) as OpenAPIResult;
-      oaObj = output.data as OpenAPIV3.Document || {data: oaObj}
-    }
-
     // Filter OpenAPI
-    if (filterOptions) {
-      const filterOpts = await parseString(filterOptions) as OpenAPIFilterSet
+    if (filterSet) {
+      const filterOpts = await parseString(filterSet) as OpenAPIFilterSet
       const defaultOpts = defaultFilterJson as OpenAPIFilterSet
       const options = {filterSet: filterOpts, defaultFilter: defaultOpts} as OpenAPIFilterOptions
       output = await openapiFilter(oaObj, options) as OpenAPIResult;
+      oaObj = output.data as OpenAPIV3.Document || {data: oaObj}
+    }
+
+    // Sort OpenAPI
+    if (sort) {
+      let sortOpts = {}
+      if (sortSet) {
+        sortOpts = await parseString(sortSet) as OpenAPISortSet
+      }
+      const defaultOpts = defaultSortJson as OpenAPISortSet
+      const options = {sortSet: Object.assign({}, defaultOpts, sortOpts), sortComponentsSet: []} as OpenAPISortOptions
+      output = await openapiSort(oaObj, options) as OpenAPIResult;
     }
 
     // Convert output to JSON/YAML format

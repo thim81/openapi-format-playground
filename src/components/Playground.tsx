@@ -14,7 +14,7 @@ import {ungzip} from 'pako';
 import {Base64} from 'js-base64';
 import {analyzeOpenApi, AnalyzeOpenApiResult, parseString, stringify} from "openapi-format";
 import {OpenAPIV3} from "openapi-types";
-import {decodeShareUrl} from "@/utils";
+import {DecodedShareUrl, decodeShareUrl} from "@/utils";
 
 interface PlaygroundProps {
   input: string;
@@ -23,19 +23,23 @@ interface PlaygroundProps {
   setOutput: (value: string) => void;
 }
 
-export interface PlaygroundConfig {
-  sort: boolean;
-  filterOptions: string;
-  sortOptions: string;
-  isFilterOptionsCollapsed: boolean;
-  isSortOptionsCollapsed: boolean;
-  outputLanguage: 'json' | 'yaml';
+export interface PlaygroundConfig extends openapiFormatConfig {
+  isFilterOptionsCollapsed?: boolean;
+  isSortOptionsCollapsed?: boolean;
+  outputLanguage?: 'json' | 'yaml';
+}
+
+export interface openapiFormatConfig {
+  sort?: boolean;
+  filterSet?: string;
+  sortSet?: string;
+  format?: string
 }
 
 const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutput}) => {
   const [sort, setSort] = useState<boolean>(true);
-  const [filterOptions, setFilterOptions] = useState<string>('');
-  const [sortOptions, setSortOptions] = useState<string>(JSON.stringify(defaultSort, null, 2));
+  const [filterSet, setFilterSet] = useState<string>('');
+  const [sortSet, setSortSet] = useState<string>(JSON.stringify(defaultSort, null, 2));
   const [isFilterOptionsCollapsed, setFilterOptionsCollapsed] = useState<boolean>(false);
   const [isSortOptionsCollapsed, setSortOptionsCollapsed] = useState<boolean>(true);
   const [outputLanguage, setOutputLanguage] = useState<'json' | 'yaml'>('yaml');
@@ -46,13 +50,13 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [selectedOptions, setSelectedOptions] = useState<any>({});
 
   const dInput = useDebounce(input, 600);
-  const dFilterOptions = useDebounce(filterOptions, 600);
-  const dSortOptions = useDebounce(sortOptions, 600);
+  const dFilterSet = useDebounce(filterSet, 600);
+  const dSortSet = useDebounce(sortSet, 600);
 
   const config = {
     sort,
-    filterOptions,
-    sortOptions,
+    filterSet,
+    sortSet,
     isFilterOptionsCollapsed,
     isSortOptionsCollapsed,
     outputLanguage
@@ -74,11 +78,13 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            openapiString: dInput,
-            sort,
-            filterOptions: dFilterOptions,
-            sortOptions: dSortOptions,
-            format: outputLanguage,
+            openapi: dInput,
+            config: {
+              sort,
+              filterSet: dFilterSet,
+              sortSet: dSortSet,
+              format: outputLanguage
+            }
           }),
         });
 
@@ -98,22 +104,21 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     if (dInput) {
       handleFormat();
     }
-  }, [dInput, sort, dFilterOptions, dSortOptions, outputLanguage, setOutput]);
+  }, [dInput, sort, dFilterSet, dSortSet, outputLanguage, setOutput]);
 
   // Decode Share URL
   useEffect(() => {
     const decodeUrl = async () => {
       if (typeof window !== 'undefined') {
         const url = window.location.href;
-        const result = await decodeShareUrl(url);
+        const result = await decodeShareUrl(url) as DecodedShareUrl;
         if (result?.openapi) {
           await handleInputChange(result.openapi)
         }
-
         if (result?.config) {
           setSort(result.config.sort ?? true);
-          setFilterOptions(result.config.filterOptions ?? '');
-          setSortOptions(result.config.sortOptions ?? JSON.stringify(defaultSort, null, 2));
+          setFilterSet(result.config.filterSet ?? '');
+          setSortSet(result.config.sortSet ?? JSON.stringify(defaultSort, null, 2));
           setFilterOptionsCollapsed(result.config.isFilterOptionsCollapsed ?? false);
           setSortOptionsCollapsed(result.config.isSortOptionsCollapsed ?? true);
           setOutputLanguage(result.config.outputLanguage ?? 'yaml');
@@ -146,7 +151,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     );
     const filterFormOptionsString = await stringify(_selectedOptions);
     console.log('filterFormOptionsString', filterFormOptionsString);
-    setFilterOptions(filterFormOptionsString);
+    setFilterSet(filterFormOptionsString);
     setSelectedOptions(_selectedOptions);
     setFormModalOpen(false);
   };
@@ -193,7 +198,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               </h3>
               {!isFilterOptionsCollapsed && (
                 <div className="h-full">
-                  <MonacoEditorWrapper value={filterOptions} onChange={setFilterOptions}/>
+                  <MonacoEditorWrapper value={filterSet} onChange={setFilterSet}/>
                 </div>
               )}
             </div>
@@ -206,7 +211,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               </h3>
               {!isSortOptionsCollapsed && (
                 <div className="h-full">
-                  <MonacoEditorWrapper value={sortOptions} onChange={setSortOptions} language="json"/>
+                  <MonacoEditorWrapper value={sortSet} onChange={setSortSet} language="json"/>
                 </div>
               )}
             </div>
@@ -218,7 +223,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           <div className="flex-1 h-full flex flex-col">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-xl font-bold">OpenAPI Output</h2>
-              <div className="space-x-4">
+              <div className="space-x-2">
                 <button onClick={openDiffModal}
                         className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-4 rounded border border-green-500">Show
                   Diff

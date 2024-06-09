@@ -1,0 +1,131 @@
+openapi: 3.0.0
+info:
+  title: OpenAPI-Format Playground API
+  description: API for formatting an OpenAPI document
+  version: 1.0.0
+paths:
+  /format:
+    post:
+      summary: Format OpenAPI specification
+      description: Formats an OpenAPI specification with sorting and filtering options.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                openapiString:
+                  type: string
+                  description: The OpenAPI specification as a string.
+                sort:
+                  type: boolean
+                  description: Whether to sort the OpenAPI specification.
+                filterOptions:
+                  type: string
+                  description: Filter options in string format.
+                sortOptions:
+                  type: string
+                  description: Sort options in string format.
+                format:
+                  type: string
+                  description: Desired format of the output (e.g., json, yaml).
+      responses:
+        '200':
+          description: OpenAPI formatted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: string
+                    description: The formatted OpenAPI specification.
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+  /share:
+    post:
+      summary: Generate a share URL
+      description: Generates a share URL based on the provided OpenAPI and config parameters.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                openapi:
+                  type: string
+                  description: The OpenAPI specification as JSON/YAML string.
+                config:
+                  type: object
+                  description: Configuration settings.
+                  properties:
+                    filterSet:
+                      type: string
+                      example: |
+                        flags:
+                          - x-visibility
+                        flagValues: []
+                        tags: []
+                        operationIds:
+                          - addPet
+                          - findPetsByStatus
+                    sort:
+                      type: boolean
+                      example: false
+              required:
+                - openapi
+                - config
+      responses:
+        '200':
+          description: Share URL generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shareUrl:
+                    type: string
+                    description: The generated share URL.
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Method not allowed
+        '422':
+          description: Missing OpenAPI or config
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Missing openapi or config
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Internal server error
+                  error:
+                    type: string
+                    description: Error message

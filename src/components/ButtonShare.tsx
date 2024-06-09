@@ -14,7 +14,7 @@ const ButtonShare: React.FC<ButtonShareProps> = ({openapi, config }) => {
   const handleShare = async () => {
     try {
       const origin = window?.location?.origin || 'https://openapi-format-playground.vercel.app/';
-      const shareUrl = generateShareUrl(origin, openapi, config);
+      const shareUrl = await generateShareUrl(origin, openapi, config);
 
       if (typeof window !== 'undefined') {
         window.history.replaceState(null, '', shareUrl);

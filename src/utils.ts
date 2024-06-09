@@ -1,7 +1,15 @@
 import {Base64} from 'js-base64';
 import {gzip, ungzip} from 'pako';
+import {stringify} from "../../openapi-format/openapi-format";
+import {PlaygroundConfig} from "@/components/Playground";
+import {parseString} from "openapi-format";
 
-export const generateShareUrl = (origin: string, openapi?: string, config?: object): string => {
+export interface DecodedShareUrl {
+  openapi?: string;
+  config?: PlaygroundConfig;
+}
+
+export const generateShareUrl = async (origin: string, openapi?: string, config?: PlaygroundConfig): Promise<string> => {
   const url = new URL(`${origin}`);
 
   if (openapi && openapi.length > 0) {
@@ -10,17 +18,24 @@ export const generateShareUrl = (origin: string, openapi?: string, config?: obje
   }
 
   if (config && Object.keys(config).length > 0) {
+    const configOps = {} as PlaygroundConfig;
+
+    if (config.sortSet !== undefined) configOps.sortSet = await stringify(config.sortSet);
+    if (config.filterSet !== undefined) configOps.filterSet = await stringify(config.filterSet);
+    // if (options.casingSet !== undefined) config.casingSet = await stringify(options.casingSet);
+    if (config.sort !== undefined) configOps.sort = config.sort;
+    // if (options.rename !== undefined) config.rename = options.rename;
+    // if (options.convertTo !== undefined) config.convertTo = options.convertTo
+
+    if (config.isFilterOptionsCollapsed !== undefined) configOps.isFilterOptionsCollapsed = config.isFilterOptionsCollapsed;
+    if (config.isSortOptionsCollapsed !== undefined) configOps.isSortOptionsCollapsed = config.isSortOptionsCollapsed;
+    if (config.outputLanguage !== undefined) configOps.outputLanguage = config.outputLanguage;
+
     const encodedConfig = Base64.fromUint8Array(gzip(JSON.stringify(config)));
     url.searchParams.set('config', encodedConfig);
   }
-
   return url.toString();
 };
-
-interface DecodedShareUrl {
-  openapi?: string;
-  config?: any;
-}
 
 export const decodeShareUrl = async (url: string): Promise<DecodedShareUrl> => {
   const urlObj = new URL(url);
@@ -30,14 +45,11 @@ export const decodeShareUrl = async (url: string): Promise<DecodedShareUrl> => {
   const result: DecodedShareUrl = {};
 
   if (encodedInput) {
-    const oa = ungzip(Base64.toUint8Array(encodedInput), {to: 'string'});
-    result.openapi = oa;
+    result.openapi = ungzip(Base64.toUint8Array(encodedInput), {to: 'string'});
   }
-
   if (encodedConfig) {
-    const urlConfig = ungzip(Base64.toUint8Array(encodedConfig), {to: 'string'});
-    result.config = JSON.parse(urlConfig);
+    const urlConfig = ungzip(Base64.toUint8Array(encodedConfig), {to: 'string'})
+    result.config = await parseString(urlConfig) as PlaygroundConfig
   }
-
   return result;
 };
