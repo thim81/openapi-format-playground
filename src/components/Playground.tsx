@@ -12,9 +12,9 @@ import defaultSort from '../defaults/defaultSort.json'
 
 import {ungzip} from 'pako';
 import {Base64} from 'js-base64';
-import {analyzeOpenApi, AnalyzeOpenApiResult, parseString, stringify} from "openapi-format";
+import {analyzeOpenApi, AnalyzeOpenApiResult, OpenAPIFilterSet, parseString, stringify} from "openapi-format";
 import {OpenAPIV3} from "openapi-types";
-import {DecodedShareUrl, decodeShareUrl} from "@/utils";
+import {DecodedShareUrl, decodeShareUrl, includeUnusedComponents, toggleUnusedComponents} from "@/utils";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface PlaygroundProps {
@@ -39,6 +39,7 @@ export interface openapiFormatConfig {
 
 const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutput}) => {
   const [sort, setSort] = useState<boolean>(true);
+  const [filterUnused, setFilterUnused] = useState<boolean>(false);
   const [filterSet, setFilterSet] = useState<string>('');
   const [sortSet, setSortSet] = useState<string>(JSON.stringify(defaultSort, null, 2));
   const [isFilterOptionsCollapsed, setFilterOptionsCollapsed] = useState<boolean>(false);
@@ -126,19 +127,21 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setFilterOptionsCollapsed(result.config.isFilterOptionsCollapsed ?? false);
           setSortOptionsCollapsed(result.config.isSortOptionsCollapsed ?? true);
           setOutputLanguage(result.config.outputLanguage ?? 'yaml');
+          setFilterUnused(result?.config?.filterSet?.includes('unusedComponents') ?? false);
         }
+        setLoading(false);
       }
     };
 
     decodeUrl();
   }, [handleInputChange]);
 
-  const toggleFilterOptions = () => {
-    setFilterOptionsCollapsed(!isFilterOptionsCollapsed);
-  };
-
-  const toggleSortOptions = () => {
-    setSortOptionsCollapsed(!isSortOptionsCollapsed);
+  const toggleFilterUnused = async () => {
+    const filterSetObj = await parseString(filterSet) as OpenAPIFilterSet;
+    includeUnusedComponents(filterSetObj, !filterUnused);
+    const filterSetString = await stringify(filterSetObj) as string;
+    setFilterSet(filterSetString);
+    setFilterUnused(!filterUnused);
   };
 
   const openDiffModal = () => {
@@ -153,6 +156,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     const _selectedOptions = Object.fromEntries(
       Object.entries(selectedOptions).filter(([_, value]) => (value as string[]).length > 0)
     );
+    includeUnusedComponents(_selectedOptions, filterUnused);
     const filterFormOptionsString = await stringify(_selectedOptions);
     setFilterSet(filterFormOptionsString);
     setSelectedOptions(_selectedOptions);
@@ -168,7 +172,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           </div>
         )}
         <div className="flex space-x-4 h-full">
-          <div className="w-1/5 flex flex-col">
+          <div className="w-1/5 flex flex-col h-screen overflow-auto mb-2">
             <h2 className="text-xl font-bold mb-2">Config</h2>
             <div className="mb-4">
               <label className="block mb-1 font-medium text-gray-700">Output format</label>
@@ -192,29 +196,38 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 />
               </label>
             </div>
-            <div className="flex-1 overflow-auto mb-4">
+            <div className="mb-4">
               <h3
                 className="text-lg font-semibold mb-2 cursor-pointer"
-                onClick={toggleFilterOptions}
+                onClick={() => setFilterOptionsCollapsed(!isFilterOptionsCollapsed)}
               >
-                Filter options {isFilterOptionsCollapsed ? '▼' : '▲'}
+                Filter options {isFilterOptionsCollapsed ? '▲' : '▼'}
               </h3>
               {!isFilterOptionsCollapsed && (
-                <div className="h-full">
-                  <MonacoEditorWrapper value={filterSet} onChange={setFilterSet}/>
+                <div>
+                  <MonacoEditorWrapper value={filterSet} onChange={setFilterSet} height='40vh'/>
                 </div>
               )}
+              <label className="flex items-center font-medium text-gray-700">
+                Filter Unused Components
+                <input
+                  type="checkbox"
+                  checked={filterUnused}
+                  onChange={toggleFilterUnused}
+                  className="ml-2"
+                />
+              </label>
             </div>
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1">
               <h3
                 className="text-lg font-semibold mb-2 cursor-pointer"
-                onClick={toggleSortOptions}
+                onClick={() => setSortOptionsCollapsed(!isSortOptionsCollapsed)}
               >
-                Sort options {isSortOptionsCollapsed ? '▼' : '▲'}
+                Sort options {isSortOptionsCollapsed ? '▲' : '▼'}
               </h3>
               {!isSortOptionsCollapsed && (
-                <div className="h-full">
-                  <MonacoEditorWrapper value={sortSet} onChange={setSortSet} language="json"/>
+                <div>
+                  <MonacoEditorWrapper value={sortSet} onChange={setSortSet} language="json" height='40vh'/>
                 </div>
               )}
             </div>
@@ -226,7 +239,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           <div className="flex-1 h-full flex flex-col">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-xl font-bold">OpenAPI Output</h2>
-              {loading && <LoadingSpinner />}
+              {loading && <LoadingSpinner/>}
               <div className="space-x-2">
                 <button onClick={openDiffModal}
                         className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-4 rounded border border-green-500">Show

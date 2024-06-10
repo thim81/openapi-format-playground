@@ -65,7 +65,7 @@ const FilterFormModal: React.FC<FilterFormModalProps> = ({ isOpen, onRequestClos
   return (
     <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="60%">
       <h2 className="text-xl font-bold mb-4">Filter Options</h2>
-      <form onSubmit={handleSubmit} className="p-4">
+      <form onSubmit={handleSubmit} className="px-4">
         {Object.keys(filterOptions).map((category) => (
           <div key={category} className="mb-4">
             <div className="flex items-center mb-2">

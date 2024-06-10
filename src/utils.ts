@@ -2,7 +2,7 @@ import {Base64} from 'js-base64';
 import {gzip, ungzip} from 'pako';
 import {stringify} from "../../openapi-format/openapi-format";
 import {PlaygroundConfig} from "@/components/Playground";
-import {parseString} from "openapi-format";
+import {OpenAPIFilterSet, parseString} from "openapi-format";
 
 export interface DecodedShareUrl {
   openapi?: string;
@@ -53,3 +53,25 @@ export const decodeShareUrl = async (url: string): Promise<DecodedShareUrl> => {
   }
   return result;
 };
+
+export const includeUnusedComponents = (obj: OpenAPIFilterSet, include:boolean) => {
+  const components = [
+    "schemas",
+    "parameters",
+    "examples",
+    "headers",
+    "requestBodies",
+    "responses"
+  ];
+  if (include) {
+    if (!obj.hasOwnProperty('unusedComponents')) {
+      obj.unusedComponents = components;
+    }
+  } else {
+    if (obj.hasOwnProperty('unusedComponents')) {
+      delete obj.unusedComponents;
+    }
+  }
+
+  return obj;
+}

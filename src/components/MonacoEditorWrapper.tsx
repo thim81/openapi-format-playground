@@ -12,10 +12,11 @@ interface MonacoEditorProps {
   value: string;
   onChange: (value: string) => void;
   language?: string;
+  height?: string;
 }
 
-const MonacoEditorWrapper: React.FC<MonacoEditorProps> = ({value, onChange, language}) => {
-  return <MonacoEditorComponent value={value} onChange={onChange} language={language}/>;
+const MonacoEditorWrapper: React.FC<MonacoEditorProps> = ({value, onChange, language, height}) => {
+  return <MonacoEditorComponent value={value} onChange={onChange} language={language} height={height}/>;
 };
 
 export default MonacoEditorWrapper;
