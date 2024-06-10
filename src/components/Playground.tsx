@@ -15,6 +15,7 @@ import {Base64} from 'js-base64';
 import {analyzeOpenApi, AnalyzeOpenApiResult, parseString, stringify} from "openapi-format";
 import {OpenAPIV3} from "openapi-types";
 import {DecodedShareUrl, decodeShareUrl} from "@/utils";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface PlaygroundProps {
   input: string;
@@ -48,10 +49,11 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [isFormModalOpen, setFormModalOpen] = useState(false);
   const [filterFormOptions, setFilterFormOptions] = useState<AnalyzeOpenApiResult>({});
   const [selectedOptions, setSelectedOptions] = useState<any>({});
+  const [loading, setLoading] = useState(false);
 
-  const dInput = useDebounce(input, 600);
-  const dFilterSet = useDebounce(filterSet, 600);
-  const dSortSet = useDebounce(sortSet, 600);
+  const dInput = useDebounce(input, 1000);
+  const dFilterSet = useDebounce(filterSet, 1000);
+  const dSortSet = useDebounce(sortSet, 1000);
 
   const config = {
     sort,
@@ -63,6 +65,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   } || {} as PlaygroundConfig;
 
   const handleInputChange = useCallback(async (newValue: string) => {
+    setLoading(true);
     const oaObj = await parseString(newValue) as OpenAPIV3.Document;
     const oaElements = analyzeOpenApi(oaObj);
     setFilterFormOptions(oaElements);
@@ -98,6 +101,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       } catch (error) {
         setErrorMessage(`Error: ${error}`);
       }
+      setLoading(false);
     };
 
     if (dInput) {
@@ -109,6 +113,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   useEffect(() => {
     const decodeUrl = async () => {
       if (typeof window !== 'undefined') {
+        setLoading(true);
         const url = window.location.href;
         const result = await decodeShareUrl(url) as DecodedShareUrl;
         if (result?.openapi) {
@@ -221,6 +226,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           <div className="flex-1 h-full flex flex-col">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-xl font-bold">OpenAPI Output</h2>
+              {loading && <LoadingSpinner />}
               <div className="space-x-2">
                 <button onClick={openDiffModal}
                         className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-4 rounded border border-green-500">Show
