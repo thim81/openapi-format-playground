@@ -4,15 +4,15 @@ import {saveAs} from 'file-saver';
 import {parseString, stringify} from "openapi-format";
 
 interface ButtonDownloadProps {
-  data: string;
+  openapi: string;
   filename: string;
   format: 'json' | 'yaml';
 }
 
-const ButtonDownload: React.FC<ButtonDownloadProps> = ({data, filename, format}) => {
+const ButtonDownload: React.FC<ButtonDownloadProps> = ({openapi, filename, format}) => {
   const handleDownload = async () => {
     let blob;
-    const obj = await parseString(data)
+    const obj = await parseString(openapi)
     if (format === 'json') {
       const jsonString = await stringify(obj, {format: 'json'});
       blob = new Blob([jsonString], {type: 'application/json'}) as Blob;

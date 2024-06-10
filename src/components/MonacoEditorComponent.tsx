@@ -6,9 +6,10 @@ interface MonacoEditorProps {
   value: string;
   onChange: (value: string) => void;
   language?: string;
+  height?: string;
 }
 
-const MonacoEditorComponent: React.FC<MonacoEditorProps> = ({value, onChange, language}) => {
+const MonacoEditorComponent: React.FC<MonacoEditorProps> = ({value, onChange, language, height = '90vh'}) => {
   const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor | null>(null);
 
   const handleEditorDidMount: OnMount = (editor, monaco) => {
@@ -36,19 +37,19 @@ const MonacoEditorComponent: React.FC<MonacoEditorProps> = ({value, onChange, la
     }
   }
 
-  const editorOptions= {
+  const editorOptions = {
     fontFamily: '"Cascadia Code", "Jetbrains Mono", "Fira Code", "Menlo", "Consolas", monospace',
     fontLigatures: true,
     fontSize: 12,
     lineHeight: 20,
-    minimap: { enabled: false },
+    minimap: {enabled: false},
     tabSize: 2,
     automaticLayout: true
   }
 
   return (
     <Editor
-      height="90vh"
+      height={height}
       defaultLanguage="yaml"
       language={language}
       defaultValue={value}

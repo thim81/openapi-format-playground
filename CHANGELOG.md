@@ -1,5 +1,9 @@
 ## unreleased
 
+## [0.1.3] - 2024-06-11
+
+- Added UI for selecting filter options
+
 ## [0.1.2] - 2024-06-06
 
 - Added option to compare/diff the input and output
