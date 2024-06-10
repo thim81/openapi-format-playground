@@ -1,8 +1,7 @@
 import {Base64} from 'js-base64';
 import {gzip, ungzip} from 'pako';
-import {stringify} from "../../openapi-format/openapi-format";
 import {PlaygroundConfig} from "@/components/Playground";
-import {OpenAPIFilterSet, parseString} from "openapi-format";
+import {OpenAPIFilterSet, parseString, stringify} from "openapi-format";
 
 export interface DecodedShareUrl {
   openapi?: string;
