@@ -14,7 +14,7 @@ import {ungzip} from 'pako';
 import {Base64} from 'js-base64';
 import {analyzeOpenApi, AnalyzeOpenApiResult, OpenAPIFilterSet, parseString, stringify} from "openapi-format";
 import {OpenAPIV3} from "openapi-types";
-import {DecodedShareUrl, decodeShareUrl, includeUnusedComponents, toggleUnusedComponents} from "@/utils";
+import {DecodedShareUrl, decodeShareUrl, includeUnusedComponents} from "@/utils";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface PlaygroundProps {

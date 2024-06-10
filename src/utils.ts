@@ -53,7 +53,7 @@ export const decodeShareUrl = async (url: string): Promise<DecodedShareUrl> => {
   return result;
 };
 
-export const includeUnusedComponents = (obj: OpenAPIFilterSet, include:boolean) => {
+export const includeUnusedComponents = (obj: OpenAPIFilterSet, include: boolean) => {
   const components = [
     "schemas",
     "parameters",
