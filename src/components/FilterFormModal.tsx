@@ -1,6 +1,6 @@
 // components/FilterFormModal.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import SimpleModal from './SimpleModal';
 import {AnalyzeOpenApiResult} from "openapi-format";
 
@@ -11,20 +11,25 @@ interface FilterFormModalProps {
   filterOptions: AnalyzeOpenApiResult;
 }
 
-const FilterFormModal: React.FC<FilterFormModalProps> = ({ isOpen, onRequestClose, onSubmit, filterOptions }) => {
-  const [selectedOptions, setSelectedOptions] = useState<any>({});
+type SelectedOptions = {
+  [key: string]: string[];
+};
+
+const FilterFormModal: React.FC<FilterFormModalProps> = ({isOpen, onRequestClose, onSubmit, filterOptions}) => {
+  const [selectedOptions, setSelectedOptions] = useState<SelectedOptions>({});
 
   useEffect(() => {
     if (filterOptions) {
       // Remove "paths"
-      delete filterOptions.paths
+      delete filterOptions.paths;
       Object.keys(filterOptions).forEach(key => {
         // Remove keys with empty arrays
-        if (filterOptions[key].length === 0) {
+        const value = filterOptions[key];
+        if (value && value.length === 0) {
           delete filterOptions[key];
         }
       });
-      const initialSelectedOptions: any = {};
+      const initialSelectedOptions: SelectedOptions = {};
       Object.keys(filterOptions).forEach((category) => {
         initialSelectedOptions[category] = [];
       });
@@ -33,7 +38,7 @@ const FilterFormModal: React.FC<FilterFormModalProps> = ({ isOpen, onRequestClos
   }, [filterOptions]);
 
   const handleChange = (category: string, value: string) => {
-    setSelectedOptions((prev: any) => ({
+    setSelectedOptions((prev: SelectedOptions) => ({
       ...prev,
       [category]: prev[category].includes(value)
         ? prev[category].filter((v: string) => v !== value)
@@ -42,12 +47,17 @@ const FilterFormModal: React.FC<FilterFormModalProps> = ({ isOpen, onRequestClos
   };
 
   const handleSelectAll = (category: string) => {
-    setSelectedOptions((prev: any) => ({
-      ...prev,
-      [category]: selectedOptions[category].length === filterOptions[category].length
-        ? []
-        : [...filterOptions[category]]
-    }));
+    setSelectedOptions((prev: SelectedOptions) => {
+      const selectedCategory = selectedOptions[category] || [];
+      const filterCategory = filterOptions[category] || [];
+
+      return {
+        ...prev,
+        [category]: selectedCategory.length === filterCategory.length
+          ? []
+          : [...filterCategory]
+      };
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -75,11 +85,12 @@ const FilterFormModal: React.FC<FilterFormModalProps> = ({ isOpen, onRequestClos
                 onClick={() => handleSelectAll(category)}
                 className="text-sm text-blue-500"
               >
-                {selectedOptions[category]?.length === filterOptions[category].length ? 'Deselect All' : 'Select All'}
+                {selectedOptions[category]?.length === filterOptions[category]?.length ? 'Deselect All' : 'Select All'}
               </button>
             </div>
-            <div className={`grid gap-2 ${filterOptions[category].length > 4 ? 'grid-cols-4' : 'grid-cols-1'}`}>
-              {filterOptions[category].map((option: string) => (
+            <div
+              className={`grid gap-2 ${((filterOptions[category]?.length ?? 0) > 4) ? 'grid-cols-4' : 'grid-cols-1'}`}>
+              {(filterOptions[category] || []).map((option: string) => (
                 <div key={option} className="flex items-center">
                   <input
                     type="checkbox"

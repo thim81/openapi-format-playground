@@ -60,6 +60,7 @@ declare module 'openapi-format' {
     flagValues?: string[];
     responseContent?: string[];
     tags?: string[];
+    [key: string]: string[] | undefined;
   }
 
   /**
