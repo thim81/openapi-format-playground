@@ -16,6 +16,8 @@ The playground is powered by the [openapi-format](https://www.npmjs.com/package/
 - Filter OpenAPI document content
 - Support for both JSON and YAML formats
 - Download formatted OpenAPI documents
+- Share the OpenAPI document and configuration
+- Compare the difference before and after the formatting
 
 ## Usage
 
