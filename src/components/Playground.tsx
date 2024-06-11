@@ -16,6 +16,7 @@ import {analyzeOpenApi, AnalyzeOpenApiResult, OpenAPIFilterSet, parseString, str
 import {OpenAPIV3} from "openapi-types";
 import {DecodedShareUrl, decodeShareUrl, includeUnusedComponents} from "@/utils";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import ButtonUpload from "@/components/ButtonUpload";
 
 interface PlaygroundProps {
   input: string;
@@ -96,13 +97,15 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         if (response.ok) {
           setOutput(res.data);
           setErrorMessage(null);
+          setLoading(false);
         } else {
           setErrorMessage(`Error: ${res.error}`);
+          setLoading(false);
         }
       } catch (error) {
         setErrorMessage(`Error: ${error}`);
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     if (dInput) {
@@ -150,6 +153,11 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   const openFormModal = () => {
     setFormModalOpen(true);
+  };
+
+  const handleFileLoad = async (content: string | null) => {
+    setLoading(true);
+    await handleInputChange(content || '');
   };
 
   const handleFormSubmit = async (selectedOptions: any) => {
@@ -233,7 +241,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             </div>
           </div>
           <div className="flex-1 h-full">
-            <h2 className="text-xl font-bold mb-2">OpenAPI Input</h2>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xl font-bold">OpenAPI Input</h2>
+              <ButtonUpload onFileLoad={handleFileLoad}/>
+            </div>
             <MonacoEditorWrapper value={input} onChange={handleInputChange}/>
           </div>
           <div className="flex-1 h-full flex flex-col">

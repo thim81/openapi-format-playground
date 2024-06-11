@@ -26,7 +26,7 @@ const ButtonDownload: React.FC<ButtonDownloadProps> = ({openapi, filename, forma
 
   return (
     <button onClick={handleDownload} className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded">
-      Download output
+      Download Output
     </button>
   );
 };
