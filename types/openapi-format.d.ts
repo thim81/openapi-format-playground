@@ -104,7 +104,7 @@ declare module 'openapi-format' {
    */
   export async function parseString(
     input: string,
-    options: Record<string, unknown> = {}
+    options?: Record<string, unknown> = {}
   ): Promise<OpenAPIResult | OpenAPISortOptions | OpenAPIFilterOptions | OpenAPIV3.Document | Record<string, unknown>>
 
   /**
@@ -150,5 +150,5 @@ declare module 'openapi-format' {
    * @param {Record<string, unknown>} [options={}] - Additional stringification options.
    * @returns {Promise<string>} The string representation of the OpenAPI document.
    */
-  export async function stringify(document: Document<{}>, options: Record<string, unknown> = {}): Promise<string>
+  export async function stringify(document: Document<{}>, options?: Record<string, unknown> = {}): Promise<string>
 }

@@ -1,6 +1,6 @@
 ## unreleased
 
-## [0.1.4] - 2024-06-11
+## [0.1.4] - 2024-06-12
 
 - Added upload file option
 

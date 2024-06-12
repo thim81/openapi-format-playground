@@ -145,7 +145,14 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   }, [handleInputChange]);
 
   const toggleFilterUnused = async () => {
-    const filterSetObj = await parseString(filterSet) as OpenAPIFilterSet;
+    let filterSetObj: OpenAPIFilterSet;
+
+    if (filterSet.trim()) {
+      filterSetObj = await parseString(filterSet) as OpenAPIFilterSet;
+    } else {
+      filterSetObj = {};
+    }
+
     includeUnusedComponents(filterSetObj, !filterUnused);
     const filterSetString = await stringify(filterSetObj) as string;
     setFilterSet(filterSetString);
