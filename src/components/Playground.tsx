@@ -16,6 +16,7 @@ import {analyzeOpenApi, AnalyzeOpenApiResult, OpenAPIFilterSet, parseString, str
 import {OpenAPIV3} from "openapi-types";
 import {DecodedShareUrl, decodeShareUrl, includeUnusedComponents} from "@/utils";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import ButtonUpload from "@/components/ButtonUpload";
 
 interface PlaygroundProps {
   input: string;
@@ -67,6 +68,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   const handleInputChange = useCallback(async (newValue: string) => {
     setLoading(true);
+    setErrorMessage(null);
     const oaObj = await parseString(newValue) as OpenAPIV3.Document;
     const oaElements = analyzeOpenApi(oaObj);
     setFilterFormOptions(oaElements);
@@ -96,18 +98,24 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         if (response.ok) {
           setOutput(res.data);
           setErrorMessage(null);
+          setLoading(false);
         } else {
-          setErrorMessage(`Error: ${res.error}`);
+          setErrorMessage(`Error: ${res.message}`);
+          setLoading(false);
         }
       } catch (error) {
         setErrorMessage(`Error: ${error}`);
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     if (dInput) {
       handleFormat();
+    } else {
+      // Empty output when the input is cleared
+      setOutput('');
     }
+    setLoading(false);
   }, [dInput, sort, dFilterSet, dSortSet, outputLanguage, setOutput]);
 
   // Decode Share URL
@@ -137,9 +145,15 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   }, [handleInputChange]);
 
   const toggleFilterUnused = async () => {
-    const filterSetObj = await parseString(filterSet) as OpenAPIFilterSet;
+    let filterSetObj: OpenAPIFilterSet;
+    if (filterSet.trim()) {
+      filterSetObj = await parseString(filterSet) as OpenAPIFilterSet;
+    } else {
+      filterSetObj = {};
+    }
     includeUnusedComponents(filterSetObj, !filterUnused);
-    const filterSetString = await stringify(filterSetObj) as string;
+    let filterSetString = await stringify(filterSetObj) as string;
+    filterSetString = (filterSetString.trim() == '{}') ? '' : filterSetString;
     setFilterSet(filterSetString);
     setFilterUnused(!filterUnused);
   };
@@ -150,6 +164,11 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   const openFormModal = () => {
     setFormModalOpen(true);
+  };
+
+  const handleFileLoad = async (content: string | null) => {
+    setLoading(true);
+    await handleInputChange(content || '');
   };
 
   const handleFormSubmit = async (selectedOptions: any) => {
@@ -233,7 +252,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             </div>
           </div>
           <div className="flex-1 h-full">
-            <h2 className="text-xl font-bold mb-2">OpenAPI Input</h2>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xl font-bold">OpenAPI Input</h2>
+              <ButtonUpload onFileLoad={handleFileLoad}/>
+            </div>
             <MonacoEditorWrapper value={input} onChange={handleInputChange}/>
           </div>
           <div className="flex-1 h-full flex flex-col">
