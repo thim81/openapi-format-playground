@@ -1,15 +1,15 @@
 // components/ButtonUpload.tsx
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {parseString, stringify} from "openapi-format";
 
 interface FileUploadProps {
   onFileLoad: (content: string | null) => void;
 }
 
-const ButtonUpload: React.FC<FileUploadProps> = ({ onFileLoad }) => {
+const ButtonUpload: React.FC<FileUploadProps> = ({onFileLoad}) => {
   const [error, setError] = useState<string | null>(null);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -39,6 +39,8 @@ const ButtonUpload: React.FC<FileUploadProps> = ({ onFileLoad }) => {
     };
 
     reader.readAsText(file);
+    // Clear the input value to allow the same file to be uploaded again
+    event.target.value = '';
   };
 
   return (

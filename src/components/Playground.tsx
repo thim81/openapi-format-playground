@@ -68,6 +68,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   const handleInputChange = useCallback(async (newValue: string) => {
     setLoading(true);
+    setErrorMessage(null);
     const oaObj = await parseString(newValue) as OpenAPIV3.Document;
     const oaElements = analyzeOpenApi(oaObj);
     setFilterFormOptions(oaElements);
@@ -99,7 +100,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setErrorMessage(null);
           setLoading(false);
         } else {
-          setErrorMessage(`Error: ${res.error}`);
+          setErrorMessage(`Error: ${res.message}`);
           setLoading(false);
         }
       } catch (error) {
@@ -110,7 +111,11 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
     if (dInput) {
       handleFormat();
+    } else {
+      // Empty output when the input is cleared
+      setOutput('');
     }
+    setLoading(false);
   }, [dInput, sort, dFilterSet, dSortSet, outputLanguage, setOutput]);
 
   // Decode Share URL
