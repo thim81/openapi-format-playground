@@ -1,5 +1,9 @@
 ## unreleased
 
+## [0.1.5] - 2024-06-16
+
+- Added metrics bar
+
 ## [0.1.4] - 2024-06-12
 
 - Added upload file option
