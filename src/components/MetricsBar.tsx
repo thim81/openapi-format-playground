@@ -37,7 +37,7 @@ const ComponentSection: React.FC<{ title: string; items: string[] }> = ({ title,
             {items.length}
           </span>
           {items.length > 0 && (
-            <span className="ml-2">{isCollapsed ? '▼' : '▲'}</span>
+            <span className="ml-2">{isCollapsed ? '▲' : '▼'}</span>
           )}
         </h4>
         {!isCollapsed && items.length > 0 && (
@@ -63,7 +63,9 @@ const MetricsBar: React.FC<MetricsBarProps> = ({
   const [expandableHeight, setExpandableHeight] = useState(0);
 
   const toggleMetricsBar = () => {
-    setExpandableHeight((prevHeight) => (prevHeight === 0 ? 200 : 0));
+    if (totalComponents > 0) {
+      setExpandableHeight((prevHeight) => (prevHeight === 0 ? 200 : 0));
+    }
   };
 
   const componentSections = [
