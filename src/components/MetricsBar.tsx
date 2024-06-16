@@ -92,8 +92,8 @@ const MetricsBar: React.FC<MetricsBarProps> = ({
         <div className="flex space-x-4">
           <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">Paths: {totalPaths}</span>
           <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">Tags: {totalTags}</span>
-          <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">Components: {totalComponents}</span>
-          <span className="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-0.5 rounded">Unused Components: {totalUnusedComponents}</span>
+          {totalComponents > 0 && (<span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">Components: {totalComponents}</span>)}
+          {totalUnusedComponents > 0 && (<span className="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-0.5 rounded">Unused Components: {totalUnusedComponents}</span>)}
         </div>
       </div>
       {expandableHeight > 0 && (
