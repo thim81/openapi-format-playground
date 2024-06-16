@@ -10,13 +10,24 @@ import ButtonShare from "@/components/ButtonShare";
 
 import defaultSort from '../defaults/defaultSort.json'
 
-import {ungzip} from 'pako';
-import {Base64} from 'js-base64';
 import {analyzeOpenApi, AnalyzeOpenApiResult, OpenAPIFilterSet, parseString, stringify} from "openapi-format";
 import {OpenAPIV3} from "openapi-types";
 import {DecodedShareUrl, decodeShareUrl, includeUnusedComponents} from "@/utils";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ButtonUpload from "@/components/ButtonUpload";
+import MetricsBar, {ComponentMetrics} from "@/components/MetricsBar";
+
+const defaultCompMetrics = {
+  schemas: [],
+  responses: [],
+  parameters: [],
+  examples: [],
+  requestBodies: [],
+  headers: [],
+  meta: {
+    total: 0
+  }
+}
 
 interface PlaygroundProps {
   input: string;
@@ -35,7 +46,7 @@ export interface openapiFormatConfig {
   sort?: boolean;
   filterSet?: string;
   sortSet?: string;
-  format?: string
+  format?: string;
 }
 
 const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutput}) => {
@@ -52,6 +63,14 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [filterFormOptions, setFilterFormOptions] = useState<AnalyzeOpenApiResult>({});
   const [selectedOptions, setSelectedOptions] = useState<any>({});
   const [loading, setLoading] = useState(false);
+
+  const [components, setComponents] = useState<ComponentMetrics>(defaultCompMetrics);
+  const [unusedComponents, setUnusedComponents] = useState<ComponentMetrics>(defaultCompMetrics);
+
+  const [totalComponents, setTotalComponents] = useState(0);
+  const [totalUnusedComponents, setTotalUnusedComponents] = useState(0);
+  const [totalTags, setTotalTags] = useState(0);
+  const [totalPaths, setTotalPaths] = useState(0);
 
   const dInput = useDebounce(input, 1000);
   const dFilterSet = useDebounce(filterSet, 1000);
@@ -71,6 +90,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setErrorMessage(null);
     const oaObj = await parseString(newValue) as OpenAPIV3.Document;
     const oaElements = analyzeOpenApi(oaObj);
+    setTotalPaths(oaElements.operations?.length || 0);
+    setTotalTags(oaElements.tags?.length || 0);
     setFilterFormOptions(oaElements);
     setInput(newValue);
   }, [setInput]);
@@ -97,6 +118,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         const res = await response.json();
         if (response.ok) {
           setOutput(res.data);
+          setTotalComponents(res.resultData.totalComp.meta.total)
+          setTotalUnusedComponents(res.resultData.unusedComp.meta.total)
+          setComponents(res.resultData.totalComp)
+          setUnusedComponents(res.resultData.unusedComp)
           setErrorMessage(null);
           setLoading(false);
         } else {
@@ -126,7 +151,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         const url = window.location.href;
         const result = await decodeShareUrl(url) as DecodedShareUrl;
         if (result?.openapi) {
-          await handleInputChange(result.openapi)
+          await handleInputChange(result.openapi);
         }
         if (result?.config) {
           setSort(result.config.sort ?? true);
@@ -183,15 +208,15 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   };
 
   return (
-    <div className="mt-4 h-screen">
-      <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full">
+      <div className="flex-1 flex flex-col">
         {errorMessage && (
           <div className="error-message bg-red-100 text-red-700 p-2 mb-4 rounded">
             {errorMessage}
           </div>
         )}
-        <div className="flex space-x-4 h-full">
-          <div className="w-1/5 flex flex-col h-screen overflow-auto mb-2">
+        <div className="flex space-x-4 flex-grow">
+          <div className="w-1/5 flex flex-col h-full overflow-auto mb-2">
             <h2 className="text-xl font-bold mb-2">Config</h2>
             <div className="mb-4">
               <label className="block mb-1 font-medium text-gray-700">Output format</label>
@@ -251,36 +276,43 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               )}
             </div>
           </div>
-          <div className="flex-1 h-full">
+          <div className="flex-1 flex flex-col">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-xl font-bold">OpenAPI Input</h2>
               <ButtonUpload onFileLoad={handleFileLoad}/>
             </div>
             <MonacoEditorWrapper value={input} onChange={handleInputChange}/>
           </div>
-          <div className="flex-1 h-full flex flex-col">
+          <div className="flex-1 flex flex-col">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-xl font-bold">OpenAPI Output</h2>
               {loading && <LoadingSpinner/>}
               <div className="space-x-2">
                 <button onClick={openDiffModal}
-                        className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-4 rounded border border-green-500">Show
-                  Diff
+                        className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-4 rounded border border-green-500">
+                  Show Diff
                 </button>
                 <ButtonShare openapi={input} config={config}/>
                 <ButtonDownload openapi={output} filename="openapi-formatted" format={outputLanguage}/>
               </div>
             </div>
-            <div className="flex-1">
-              <MonacoEditorWrapper value={output} onChange={setOutput}/>
-            </div>
+            <MonacoEditorWrapper value={output} onChange={setOutput}/>
           </div>
         </div>
       </div>
 
+      <MetricsBar
+        totalPaths={totalPaths}
+        totalTags={totalTags}
+        totalComponents={totalComponents}
+        totalUnusedComponents={totalUnusedComponents}
+        components={components}
+        unusedComponents={unusedComponents}
+      />
+
       {Object.keys(filterFormOptions).length > 0 && (
         <button onClick={openFormModal}
-                className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded-full shadow-lg">
+                className="fixed bottom-12 right-4 bg-blue-500 text-white p-4 rounded-full shadow-lg">
           Open Filter Form
         </button>
       )}

@@ -20,9 +20,9 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 flex flex-col">
       <HeaderBar onAction1={handleAction1} onAction2={handleAction2} />
-      <div className="px-4">
+      <div className="flex-grow p-4">
         <Playground input={input} setInput={setInput} output={output} setOutput={setOutput} />
       </div>
     </div>

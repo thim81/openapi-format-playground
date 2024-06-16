@@ -35,7 +35,7 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
       const defaultOpts = defaultFilterJson as OpenAPIFilterSet
       const options = {filterSet: filterOpts, defaultFilter: defaultOpts} as OpenAPIFilterOptions
       output = await openapiFilter(oaObj, options) as OpenAPIResult;
-      oaObj = output.data as OpenAPIV3.Document || {data: oaObj}
+      oaObj = output.data as OpenAPIV3.Document || {data: oaObj};
     }
 
     // Sort OpenAPI
@@ -44,9 +44,10 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
       if (sortSet) {
         sortOpts = await parseString(sortSet) as OpenAPISortSet
       }
-      const defaultOpts = defaultSortJson as OpenAPISortSet
-      const options = {sortSet: Object.assign({}, defaultOpts, sortOpts), sortComponentsSet: []} as OpenAPISortOptions
-      output = await openapiSort(oaObj, options) as OpenAPIResult;
+      const defaultOpts = defaultSortJson as OpenAPISortSet;
+      const options = {sortSet: Object.assign({}, defaultOpts, sortOpts), sortComponentsSet: []} as OpenAPISortOptions;
+      const sortedRes = await openapiSort(oaObj, options) as OpenAPIResult;
+      output.data = sortedRes.data;
     }
 
     // Convert output to JSON/YAML format
