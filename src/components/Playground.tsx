@@ -118,10 +118,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         const res = await response.json();
         if (response.ok) {
           setOutput(res.data);
-          setTotalComponents(res.resultData.totalComp.meta.total)
-          setTotalUnusedComponents(res.resultData.unusedComp.meta.total)
-          setComponents(res.resultData.totalComp)
-          setUnusedComponents(res.resultData.unusedComp)
+          setTotalComponents(res.resultData?.totalComp?.meta?.total || 0);
+          setTotalUnusedComponents(res.resultData?.unusedComp?.meta?.total || 0);
+          setComponents(res.resultData?.totalComp || defaultCompMetrics);
+          setUnusedComponents(res.resultData?.unusedComp || defaultCompMetrics);
           setErrorMessage(null);
           setLoading(false);
         } else {
@@ -312,7 +312,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
       {Object.keys(filterFormOptions).length > 0 && (
         <button onClick={openFormModal}
-                className="fixed bottom-12 right-4 bg-blue-500 text-white p-4 rounded-full shadow-lg">
+                className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded-full shadow-lg">
           Open Filter Form
         </button>
       )}

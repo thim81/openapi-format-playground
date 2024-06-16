@@ -90,13 +90,10 @@ const MetricsBar: React.FC<MetricsBarProps> = ({
     >
       <div className="flex items-center justify-between px-4 py-2 bg-gray-200 hover:bg-gray-300 cursor-pointer" onClick={toggleMetricsBar}>
         <div className="flex space-x-4">
-          <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">Total Paths: {totalPaths}</span>
-          <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">Total Tags: {totalTags}</span>
+          <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">Paths: {totalPaths}</span>
+          <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">Tags: {totalTags}</span>
           <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">Components: {totalComponents}</span>
           <span className="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-0.5 rounded">Unused Components: {totalUnusedComponents}</span>
-        </div>
-        <div className="text-center cursor-pointer" onClick={toggleMetricsBar}>
-          {expandableHeight > 0 ? 'Collapse ▼' : 'Expand ▲'}
         </div>
       </div>
       {expandableHeight > 0 && (
