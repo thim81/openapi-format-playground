@@ -86,7 +86,7 @@ const FilterFormModal: React.FC<FilterFormModalProps> = ({isOpen, onRequestClose
       <h2 className="text-xl font-bold mb-4">Filter Options</h2>
       <form onSubmit={handleSubmit} className="px-4">
         {Object.keys(filterOptions).map((category) => {
-          const options = filterOptions[category] || [];
+          const options = (filterOptions[category] || []).sort();
           const numColumns = calculateColumns(options);
           return (
             <div key={category} className="mb-4">
