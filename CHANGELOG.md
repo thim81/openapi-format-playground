@@ -1,5 +1,9 @@
 ## unreleased
 
+## [0.1.6] - 2024-07-11
+
+- Minor UI improvements
+
 ## [0.1.5] - 2024-06-16
 
 - Added metrics bar
