@@ -242,10 +242,20 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             </div>
             <div className="mb-4">
               <h3
-                className="text-lg font-semibold mb-2 cursor-pointer"
+                className="text-lg font-semibold mb-2 cursor-pointer flex items-center"
                 onClick={() => setFilterOptionsCollapsed(!isFilterOptionsCollapsed)}
               >
                 Filter options {isFilterOptionsCollapsed ? '▲' : '▼'}
+                {Object.keys(filterFormOptions).length > 0 && (
+                  <button
+                    className="ml-2 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openFormModal();
+                    }}>
+                    Configure
+                  </button>
+                )}
               </h3>
               {!isFilterOptionsCollapsed && (
                 <div>

@@ -41,11 +41,13 @@ const ComponentSection: React.FC<{ title: string; items: string[] }> = ({ title,
           )}
         </h4>
         {!isCollapsed && items.length > 0 && (
-          <ul className="list-disc list-inside mt-2">
-            {items.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
+          <div className="mt-2">
+            <ul className="list-disc list-inside max-h-60 overflow-y-auto">
+              {items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
     </div>
