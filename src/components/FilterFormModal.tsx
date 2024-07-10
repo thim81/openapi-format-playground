@@ -72,40 +72,53 @@ const FilterFormModal: React.FC<FilterFormModalProps> = ({isOpen, onRequestClose
     return null;
   }
 
+  const calculateColumns = (options: string[]) => {
+    const totalCharacters = options.reduce((sum, option) => sum + option.length, 0);
+    const averageCharactersPerOption = totalCharacters / options.length;
+    if (averageCharactersPerOption < 16) return 4;
+    if (averageCharactersPerOption < 30) return 3;
+    if (averageCharactersPerOption < 40) return 2;
+    return 1;
+  };
+
   return (
     <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="60%">
       <h2 className="text-xl font-bold mb-4">Filter Options</h2>
       <form onSubmit={handleSubmit} className="px-4">
-        {Object.keys(filterOptions).map((category) => (
-          <div key={category} className="mb-4">
-            <div className="flex items-center mb-2">
-              <label className="block font-medium mr-4">{category}</label>
-              <button
-                type="button"
-                onClick={() => handleSelectAll(category)}
-                className="text-sm text-blue-500"
-              >
-                {selectedOptions[category]?.length === filterOptions[category]?.length ? 'Deselect All' : 'Select All'}
-              </button>
+        {Object.keys(filterOptions).map((category) => {
+          const options = (filterOptions[category] || []).sort();
+          const numColumns = calculateColumns(options);
+          return (
+            <div key={category} className="mb-4">
+              <div className="flex items-center mb-2">
+                <label className="block font-medium mr-4">{category}</label>
+                <button
+                  type="button"
+                  onClick={() => handleSelectAll(category)}
+                  className="text-sm text-blue-500"
+                >
+                  {selectedOptions[category]?.length === options.length ? 'Deselect All' : 'Select All'}
+                </button>
+              </div>
+              <div
+                className={`grid gap-2 ${numColumns === 4 ? 'grid-cols-4' : numColumns === 3 ? 'grid-cols-3' : numColumns === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                {options.map((option: string) => (
+                  <div key={option} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={`${category}-${option}`}
+                      value={option}
+                      checked={selectedOptions[category]?.includes(option) || false}
+                      onChange={() => handleChange(category, option)}
+                      className="mr-2"
+                    />
+                    <label htmlFor={`${category}-${option}`}>{option}</label>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div
-              className={`grid gap-2 ${((filterOptions[category]?.length ?? 0) > 4) ? 'grid-cols-4' : 'grid-cols-1'}`}>
-              {(filterOptions[category] || []).map((option: string) => (
-                <div key={option} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id={`${category}-${option}`}
-                    value={option}
-                    checked={selectedOptions[category]?.includes(option) || false}
-                    onChange={() => handleChange(category, option)}
-                    className="mr-2"
-                  />
-                  <label htmlFor={`${category}-${option}`}>{option}</label>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+          );
+        })}
         <div className="flex justify-end space-x-2">
           <button type="button" onClick={onRequestClose} className="bg-gray-300 p-2 rounded">Cancel</button>
           <button type="submit" className="bg-blue-500 text-white p-2 rounded">Submit</button>
