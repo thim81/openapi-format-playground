@@ -4,15 +4,18 @@ import {saveAs} from 'file-saver';
 import {parseString, stringify} from "openapi-format";
 
 interface ButtonDownloadProps {
-  openapi: string;
+  content: string;
   filename: string;
   format: 'json' | 'yaml';
+  label?: string;
+  className?: string;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
-const ButtonDownload: React.FC<ButtonDownloadProps> = ({openapi, filename, format}) => {
+const ButtonDownload: React.FC<ButtonDownloadProps> = ({ content, filename, format, label, className, onClick }) => {
   const handleDownload = async () => {
     let blob;
-    const obj = await parseString(openapi)
+    const obj = await parseString(content)
     if (format === 'json') {
       const jsonString = await stringify(obj, {format: 'json'});
       blob = new Blob([jsonString], {type: 'application/json'}) as Blob;
@@ -23,10 +26,14 @@ const ButtonDownload: React.FC<ButtonDownloadProps> = ({openapi, filename, forma
       saveAs(blob, `${filename}.${format}`);
     }
   };
+  const classes = className || "bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded"
 
   return (
-    <button onClick={handleDownload} className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded">
-      Download Output
+    <button  onClick={(e) => {
+      e.stopPropagation();
+      handleDownload();
+    }} className={classes}>
+      {label || 'Download Output'}
     </button>
   );
 };

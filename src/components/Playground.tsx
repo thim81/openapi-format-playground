@@ -247,14 +247,21 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               >
                 Filter options {isFilterOptionsCollapsed ? '▲' : '▼'}
                 {Object.keys(filterFormOptions).length > 0 && (
-                  <button
-                    className="ml-2 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openFormModal();
-                    }}>
-                    Configure
-                  </button>
+                  <>
+                    <button
+                      className="ml-2 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openFormModal();
+                      }}>
+                      Configure
+                    </button>
+                    <ButtonDownload
+                      content={filterSet} filename="openapi-filter"
+                      format={outputLanguage}
+                      label="Download filter"
+                      className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
+                    /></>
                 )}
               </h3>
               {!isFilterOptionsCollapsed && (
@@ -303,7 +310,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                   Show Diff
                 </button>
                 <ButtonShare openapi={input} config={config}/>
-                <ButtonDownload openapi={output} filename="openapi-formatted" format={outputLanguage}/>
+                <ButtonDownload content={output} filename="openapi-formatted" format={outputLanguage}/>
               </div>
             </div>
             <MonacoEditorWrapper value={output} onChange={setOutput}/>
