@@ -1,5 +1,9 @@
 ## unreleased
 
+## [0.1.7] - 2024-07-21
+
+- Added download filter option
+
 ## [0.1.6] - 2024-07-11
 
 - Minor UI improvements
