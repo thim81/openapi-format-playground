@@ -1,5 +1,9 @@
 ## unreleased
 
+## [0.1.8] - 2024-08-02
+
+- Updated openapi-format to version 1.21.2
+
 ## [0.1.7] - 2024-07-21
 
 - Added download filter option
