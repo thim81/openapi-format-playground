@@ -10,7 +10,7 @@ const MonacoEditorComponent = dynamic(() => import('./MonacoEditorComponent'), {
 
 interface MonacoEditorProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange?: (value: string) => void;
   language?: string;
   height?: string;
 }
