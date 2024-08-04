@@ -42,7 +42,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
     <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="80%" height={dynamicHeight}>
       <h2 className="text-xl font-bold mb-4">How to Use openapi-format CLI</h2>
       <p>You can use your current configuration, by following the steps below.</p>
-      <p>The online playground provides a limited set of options of OpenAPI-Format, more options can be found
+      <p>The online playground provides an initial set of options of OpenAPI-Format, more options can be found
         in the <Link href="https://github.com/thim81/openapi-format?tab=readme-ov-file#command-line-interfacet"
                      passHref
                      target="_blank">
