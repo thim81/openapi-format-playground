@@ -47,6 +47,8 @@ interface PlaygroundProps {
 export interface PlaygroundConfig extends openapiFormatConfig {
   isFilterOptionsCollapsed?: boolean;
   isSortOptionsCollapsed?: boolean;
+  defaultFieldSorting?: boolean;
+  pathSort?: 'original' | 'path' | 'tags';
   outputLanguage?: 'json' | 'yaml';
 }
 
@@ -55,7 +57,6 @@ export interface openapiFormatConfig {
   filterSet?: string;
   sortSet?: string;
   format?: string;
-  pathSort?: 'original' | 'path' | 'tags';
 }
 
 const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutput}) => {
@@ -173,12 +174,15 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setSort(result.config.sort ?? true);
           setFilterSet(result.config.filterSet ?? '');
           setSortSet(result.config.sortSet ?? '');
-          setFilterOptionsCollapsed(result.config.isFilterOptionsCollapsed ?? false);
-          setSortOptionsCollapsed(result.config.isSortOptionsCollapsed ?? true);
+
           setOutputLanguage(result.config.outputLanguage ?? 'yaml');
           setFilterUnused(result?.config?.filterSet?.includes('unusedComponents') ?? false);
+
+          setFilterOptionsCollapsed(result.config.isFilterOptionsCollapsed ?? false);
+          setSortOptionsCollapsed(result.config.isSortOptionsCollapsed ?? true);
+
           setPathSort(result.config.pathSort ?? 'original');
-          setDefaultFieldSorting(result.config.sortSet ? false : true);
+          setDefaultFieldSorting(result.config.defaultFieldSorting ? false : true);
         }
         setLoading(false);
       }
@@ -250,7 +254,6 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   const handlePathSortChange = async (newPathSort: 'original' | 'path' | 'tags') => {
     setPathSort(newPathSort);
-    console.log('sortSetBefore', sortSet)
 
     let sortSetObj: OpenAPISortSet = {} as OpenAPISortSet;
     if (sortSet.trim() !== '') {
@@ -267,14 +270,12 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         sortSetStr = ''
       }
       setSortSet(sortSetStr)
-      console.log('sortSetAfter', sortSetStr)
     }
 
     if(newPathSort !=='original') {
       sortSetObj.sortPathsBy = newPathSort
       const sortSetStr = await stringify(sortSetObj, { format:outputLanguage });
       setSortSet(sortSetStr)
-      console.log('sortSetAfter', sortSetStr)
     }
   };
 

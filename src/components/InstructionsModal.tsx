@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import SimpleModal from './SimpleModal';
 import MonacoEditorWrapper from "@/components/MonacoEditorWrapper";
 import ButtonDownload from "@/components/ButtonDownload";
+import Link from "next/link";
 
 interface InstructionsModalProps {
   isOpen: boolean;
@@ -26,16 +27,31 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
 ) => {
   const [activeTab, setActiveTab] = useState('npx');
 
+  const sortContent = sort ? sortSet : ''
+
   const fileExtension = format === 'json' ? 'json' : 'yaml';
   const sortFileName = `openapi-sort.${fileExtension}`;
-  const sortFileOption = sortSet.length ? ` --sortFile ${sortFileName}` : '';
+  const sortFileOption = sortContent.length ? ` --sortFile ${sortFileName}` : '';
   const filterFileName = `openapi-filter.${fileExtension}`;
   const filterFileOption = filterSet.length ? ` --filterFile ${filterFileName}` : '';
   const sortOption = !sort ? ` --no-sort` : '';
 
+  const dynamicHeight = sortContent.length && filterSet.length ? `90%` : sortContent.length || filterSet.length ? `72%` : '50%';
+
   return (
-    <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="80%" height="90%">
+    <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="80%" height={dynamicHeight}>
       <h2 className="text-xl font-bold mb-4">How to Use openapi-format CLI</h2>
+      <p>You can use your current configuration, by following the steps below.</p>
+      <p>The online playground provides a limited set of options of OpenAPI-Format, more options can be found
+        in the <Link href="https://github.com/thim81/openapi-format?tab=readme-ov-file#command-line-interfacet"
+                     passHref
+                     target="_blank">
+          <span
+            className="bg-gray-300 text-gray-800 font-medium text-xs py-1 px-2 rounded-md cursor-pointer hover:bg-gray-400">
+            readme
+          </span>
+        </Link>.
+      </p>
       <div className="border-b mb-4">
         <nav className="flex space-x-4">
           <button
@@ -69,7 +85,9 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
                 {`npx openapi-format openapi.yaml -o openapi-sorted.yaml${sortOption}${sortFileOption}${filterFileOption}`}
               </code>
             </pre>
-            <li>Ensure that the sort and filter set files ({sortFileName} and {filterFileName}) are in the appropriate format.</li>
+            <li>Review the command and ensure that the OpenAPI input & output, match your local or remote file.
+              The sort and filter options can be downloaded as files below.
+            </li>
           </ol>
         </div>
       )}
@@ -89,7 +107,9 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
                 {`openapi-format openapi.yaml -o openapi-sorted.yaml${sortOption}${sortFileOption}${filterFileOption}`}
               </code>
             </pre>
-            <li>Ensure that the sort and filter set files ({sortFileName} and {filterFileName}) are in the appropriate format.</li>
+            <li>Review the command and ensure that the OpenAPI input & output, match your local or remote file.
+              The sort and filter options can be downloaded as files below.
+            </li>
           </ol>
         </div>
       )}
@@ -106,19 +126,24 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
             <li>Run the Docker container with the appropriate options:</li>
             <pre className="bg-gray-100 p-2 rounded mb-2">
               <code>
-                {`docker run --rm -v $(pwd):/openapi ghcr.io/google/openapi-format openapi.yaml -o openapi-sorted.yaml ${sortOption}--sortSet /openapi/${sortFileName} --filterSet /openapi/${filterFileName}`}
+                {`docker run --rm -v $(pwd):/ ghcr.io/google/openapi-format openapi.yaml -o openapi-sorted.yaml${sortOption}${sortFileOption}${filterFileOption}`}
               </code>
             </pre>
-            <li>Ensure that the sort and filter set files ({sortFileName} and {filterFileName}) are in the appropriate format and located in the current working directory.</li>
+            <li>Review the command and ensure that the OpenAPI input & output, match your local or remote file.
+              The sort and filter options can be downloaded as files below.
+            </li>
           </ol>
         </div>
       )}
-      {sortSet.length > 0 && (
+      {(filterSet.length > 0)|| (sortContent.length > 0 && sort) && (
+      <h2 className="text-xl font-bold mb-4">OpenAPI-format CLI options to download</h2>
+      )}
+      {(sortContent.length > 0 && sort) && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold">Sort Options:</h3>
             <ButtonDownload
-              content={sortSet}
+              content={sortContent}
               filename="openapi-sort"
               format={format}
               label="Download sort"
