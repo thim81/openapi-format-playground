@@ -32,7 +32,7 @@ export const generateShareUrl = async (origin: string, openapi?: string, config?
 
     if (config.pathSort !== undefined) configOps.pathSort = config.pathSort;
     if (config.defaultFieldSorting !== undefined) configOps.defaultFieldSorting = config.defaultFieldSorting;
-    
+
     const encodedConfig = Base64.fromUint8Array(gzip(JSON.stringify(config)));
     url.searchParams.set('config', encodedConfig);
   }

@@ -194,11 +194,17 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   // Set default Sort Set
   useEffect(() => {
     const convertSortSet = async () => {
-      const result = await stringify(defaultSort, { format:outputLanguage });
+      const result = await stringify(defaultSort, {format: outputLanguage});
       setDefaultSortSet(result);
+    };
+    const convertFilterSet = async () => {
+      const filterObj = await parseString(filterSet)
+      const result = await stringify(filterObj, {format: outputLanguage});
+      setFilterSet(result);
     };
 
     convertSortSet();
+    convertFilterSet();
   }, [outputLanguage]);
 
   const toggleFilterUnused = async () => {
@@ -209,8 +215,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       filterSetObj = {};
     }
     includeUnusedComponents(filterSetObj, !filterUnused);
-    let filterSetString = await stringify(filterSetObj) as string;
-    filterSetString = (filterSetString.trim() == '{}') ? '' : filterSetString;
+    let filterSetString = await stringify(filterSetObj, {format: outputLanguage}) as string;
+    filterSetString = (filterSetString.trim() === '{}') ? '' : filterSetString;
     setFilterSet(filterSetString);
     setFilterUnused(!filterUnused);
   };
@@ -243,26 +249,32 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setFormModalOpen(false);
   };
 
-  const handleDefaultFieldSortingChange = () => {
+  const handleDefaultFieldSortingChange = async () => {
     setDefaultFieldSorting(!defaultFieldSorting);
     if (defaultFieldSorting) {
-      setSortSet(defaultSortSet);
+      let newSortSet = defaultSortSet;
+      if (sortSet.trim() !== '') {
+        newSortSet = defaultSortSet
+      }
+      setSortSet(newSortSet);
+      await handlePathSortChange(pathSort, newSortSet)
     } else {
-      setSortSet('');
+      let newSortSet = '';
+      setSortSet(newSortSet);
+      await handlePathSortChange(pathSort, newSortSet)
     }
   };
 
-  const handlePathSortChange = async (newPathSort: 'original' | 'path' | 'tags') => {
+  const handlePathSortChange = async (newPathSort: 'original' | 'path' | 'tags', sortSetStr?: string) => {
     setPathSort(newPathSort);
 
     let sortSetObj: OpenAPISortSet = {} as OpenAPISortSet;
-    if (sortSet.trim() !== '') {
-      sortSetObj = (await parseString(sortSet)) as OpenAPISortSet;
+    if (sortSetStr && sortSetStr.trim() !== '') {
+      sortSetObj = (await parseString(sortSetStr)) as OpenAPISortSet;
     }
 
     // Original path order
     if (newPathSort === 'original') {
-      let sortSetStr
       delete sortSetObj.sortPathsBy
       sortSetStr = await stringify(sortSetObj, {format: outputLanguage});
 
@@ -272,9 +284,9 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       setSortSet(sortSetStr)
     }
 
-    if(newPathSort !=='original') {
+    if (newPathSort !== 'original') {
       sortSetObj.sortPathsBy = newPathSort
-      const sortSetStr = await stringify(sortSetObj, { format:outputLanguage });
+      const sortSetStr = await stringify(sortSetObj, {format: outputLanguage});
       setSortSet(sortSetStr)
     }
   };
@@ -312,28 +324,32 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                   className="ml-2"
                 />
               </label>
-              <label className="flex items-center font-medium text-gray-700">
-                Default OpenAPI field sorting
-                <input
-                  type="checkbox"
-                  checked={defaultFieldSorting}
-                  onChange={handleDefaultFieldSortingChange}
-                  className="ml-2"
-                />
-              </label>
+              {sort && (
+                <label className="flex items-center font-medium text-gray-700">
+                  Default OpenAPI field sorting
+                  <input
+                    type="checkbox"
+                    checked={defaultFieldSorting}
+                    onChange={handleDefaultFieldSortingChange}
+                    className="ml-2"
+                  />
+                </label>
+              )}
             </div>
-            <div className="mb-4">
-              <label className="block mb-1 font-medium text-gray-700">Sort Paths By</label>
-              <select
-                value={pathSort}
-                onChange={(e) => handlePathSortChange(e.target.value as 'original' | 'path' | 'tags')}
-                className="p-2 border rounded w-full"
-              >
-                <option value="original">Original order</option>
-                <option value="path">Path</option>
-                <option value="tags">Tag name</option>
-              </select>
-            </div>
+            {sort && (
+              <div className="mb-4">
+                <label className="block mb-1 font-medium text-gray-700">Sort Paths By</label>
+                <select
+                  value={pathSort}
+                  onChange={(e) => handlePathSortChange(e.target.value as 'original' | 'path' | 'tags', sortSet)}
+                  className="p-2 border rounded w-full"
+                >
+                  <option value="original">Original order</option>
+                  <option value="path">Path</option>
+                  <option value="tags">Tag name</option>
+                </select>
+              </div>
+            )}
             <div className="mb-4">
               <h3
                 className="text-lg font-semibold mb-2 cursor-pointer flex items-center"
@@ -351,7 +367,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                       Configure
                     </button>
                     <ButtonDownload
-                      content={filterSet} filename="openapi-filter"
+                      content={filterSet} filename="oaf-filter"
                       format={outputLanguage}
                       label="Download filter"
                       className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
@@ -382,7 +398,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                   Custom field sorting {isSortOptionsCollapsed ? '▲' : '▼'}
                   <ButtonDownload
                     content={sortSet}
-                    filename="openapi-sort"
+                    filename="oaf-sort"
                     format={outputLanguage}
                     label="Download sort"
                     className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
@@ -420,7 +436,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 <ButtonDownload content={output} filename="openapi-formatted" format={outputLanguage}/>
               </div>
             </div>
-            <MonacoEditorWrapper value={output} onChange={setOutput} />
+            <MonacoEditorWrapper value={output} onChange={setOutput}/>
           </div>
         </div>
       </div>

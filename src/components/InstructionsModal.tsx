@@ -1,10 +1,11 @@
 // components/InstructionsModal.tsx
 
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import SimpleModal from './SimpleModal';
 import MonacoEditorWrapper from "@/components/MonacoEditorWrapper";
 import ButtonDownload from "@/components/ButtonDownload";
 import Link from "next/link";
+import {stringify} from "openapi-format";
 
 interface InstructionsModalProps {
   isOpen: boolean;
@@ -26,17 +27,48 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
   }
 ) => {
   const [activeTab, setActiveTab] = useState('npx');
+  const [configFileContent, setConfigFileContent] = useState('');
+  const [fileExt, setFileExt] = useState(format === 'json' ? 'json' : 'yaml');
 
   const sortContent = sort ? sortSet : ''
 
-  const fileExtension = format === 'json' ? 'json' : 'yaml';
-  const sortFileName = `openapi-sort.${fileExtension}`;
+  const sortFileName = `oaf-sort.${fileExt}`;
   const sortFileOption = sortContent.length ? ` --sortFile ${sortFileName}` : '';
-  const filterFileName = `openapi-filter.${fileExtension}`;
+  const sortFileDocker = sortContent.length ? ` --sortFile /workspace/${sortFileName}` : '';
+  const filterFileName = `oaf-filter.${fileExt}`;
   const filterFileOption = filterSet.length ? ` --filterFile ${filterFileName}` : '';
+  const filterFileDocker = filterSet.length ? ` --filterFile /workspace/${filterFileName}` : '';
   const sortOption = !sort ? ` --no-sort` : '';
+  const configFileName = `oaf-config`;
 
   const dynamicHeight = sortContent.length && filterSet.length ? `90%` : sortContent.length || filterSet.length ? `72%` : '50%';
+
+  useEffect(() => {
+    setFileExt(format === 'json' ? 'json' : 'yaml');
+  }, [format]);
+
+  useEffect(() => {
+    const generateConfigFileContent = async () => {
+      let configInput: { [key: string]: any } = {
+        output: `openapi-formatted.${fileExt}`,
+        sort: sort ? true : false,
+        filterSet: filterSet.length ? filterFileName : undefined,
+        sortSet: sortSet.length ? sortFileName : undefined,
+      };
+
+      // Delete undefined keys
+      Object.keys(configInput).forEach(key => {
+        if (configInput[key] === undefined) {
+          delete configInput[key];
+        }
+      });
+
+      const configContent = await stringify(configInput, {format: format});
+      setConfigFileContent(configContent);
+    };
+
+    generateConfigFileContent();
+  }, [sort, filterSet, sortSet, format]);
 
   return (
     <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="80%" height={dynamicHeight}>
@@ -67,6 +99,12 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
             Using NPM install & run command
           </button>
           <button
+            className={`py-2 px-4 ${activeTab === 'configFile' ? 'border-b-2 border-indigo-500' : ''}`}
+            onClick={() => setActiveTab('configFile')}
+          >
+            Using Config File
+          </button>
+          <button
             className={`py-2 px-4 ${activeTab === 'docker' ? 'border-b-2 border-indigo-500' : ''}`}
             onClick={() => setActiveTab('docker')}
           >
@@ -82,7 +120,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
             <li>To format your OpenAPI file, run the following command:</li>
             <pre className="bg-gray-100 p-2 rounded mb-2">
               <code>
-                {`npx openapi-format openapi.yaml -o openapi-sorted.yaml${sortOption}${sortFileOption}${filterFileOption}`}
+                {`npx openapi-format openapi.${fileExt} -o openapi-formatted.${fileExt}${sortOption}${sortFileOption}${filterFileOption}`}
               </code>
             </pre>
             <li>Review the command and ensure that the OpenAPI input & output, match your local or remote file.
@@ -104,7 +142,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
             <li>Run the following command to format your OpenAPI file:</li>
             <pre className="bg-gray-100 p-2 rounded mb-2">
               <code>
-                {`openapi-format openapi.yaml -o openapi-sorted.yaml${sortOption}${sortFileOption}${filterFileOption}`}
+                {`openapi-format openapi.${fileExt} -o openapi-formatted.${fileExt}${sortOption}${sortFileOption}${filterFileOption}`}
               </code>
             </pre>
             <li>Review the command and ensure that the OpenAPI input & output, match your local or remote file.
@@ -118,15 +156,15 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
           <h3 className="font-semibold mb-2">Using openapi-format with Docker</h3>
           <ol className="list-decimal list-inside ml-4">
             <li>Pull the Docker image:</li>
-            <pre className="bg-gray-100 p-2 rounded mb-2">
+            <pre className="bg-gray-100 p-2 rounded mb-2 break-words whitespace-pre-wrap">
               <code>
-                docker pull ghcr.io/google/openapi-format:latest
+                docker pull ghcr.io/thim81/openapi-format:latest
               </code>
             </pre>
             <li>Run the Docker container with the appropriate options:</li>
-            <pre className="bg-gray-100 p-2 rounded mb-2">
+            <pre className="bg-gray-100 p-2 rounded mb-2 break-words whitespace-pre-wrap">
               <code>
-                {`docker run --rm -v $(pwd):/ ghcr.io/google/openapi-format openapi.yaml -o openapi-sorted.yaml${sortOption}${sortFileOption}${filterFileOption}`}
+                {`docker run --rm -v $(pwd):/workspace ghcr.io/thim81/openapi-format /workspace/openapi.${fileExt} -o /workspace/openapi-formatted.${fileExt}${sortOption}${sortFileDocker}${filterFileDocker}`}
               </code>
             </pre>
             <li>Review the command and ensure that the OpenAPI input & output, match your local or remote file.
@@ -135,8 +173,36 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
           </ol>
         </div>
       )}
-      {(filterSet.length > 0)|| (sortContent.length > 0 && sort) && (
-      <h2 className="text-xl font-bold mb-4">OpenAPI-format CLI options to download</h2>
+      {activeTab === 'configFile' && (
+        <div className="mb-4">
+          <h3 className="font-semibold mb-2">Using openapi-format with a Config File</h3>
+          <ol className="list-decimal list-inside ml-4">
+            <li>Create or Download a config file (e.g., openapi-config.{fileExt}) with the following content:
+              <ButtonDownload
+                content={configFileContent}
+                filename={configFileName}
+                format={format}
+                label="Download config file"
+                className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
+              />
+            </li>
+            <pre className="bg-gray-100 p-2 rounded mb-2">
+            <MonacoEditorWrapper value={configFileContent} height="11vh"/>
+            </pre>
+            <li>To format your OpenAPI file using the config file, run the following command:</li>
+            <pre className="bg-gray-100 p-2 rounded mb-2">
+              <code>
+                {`npx openapi-format openapi.${fileExt} --configFile oaf-config.${fileExt}`}
+              </code>
+            </pre>
+            <li>Review the options and ensure that the OpenAPI input & output, match your local or remote file.
+              The sort and filter options can be downloaded as files below.
+            </li>
+          </ol>
+        </div>
+      )}
+      {(filterSet.length > 0) || (sortContent.length > 0 && sort) && (
+        <h2 className="text-xl font-bold mb-4">OpenAPI-format CLI options to download</h2>
       )}
       {(sortContent.length > 0 && sort) && (
         <div className="mb-4">
@@ -144,13 +210,15 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
             <h3 className="font-semibold">Sort Options:</h3>
             <ButtonDownload
               content={sortContent}
-              filename="openapi-sort"
+              filename="oaf-sort"
               format={format}
               label="Download sort"
               className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
             />
           </div>
+          <pre className="bg-gray-100 p-2 rounded mb-2">
           <MonacoEditorWrapper value={sortSet} height="20vh"/>
+          </pre>
         </div>
       )}
       {filterSet.length > 0 && (
@@ -159,13 +227,15 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
             <h3 className="font-semibold">Filter Options:</h3>
             <ButtonDownload
               content={filterSet}
-              filename="openapi-filter"
+              filename="oaf-filter"
               format={format}
               label="Download filter"
               className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
             />
           </div>
+          <pre className="bg-gray-100 p-2 rounded mb-2">
           <MonacoEditorWrapper value={filterSet} height="20vh"/>
+          </pre>
         </div>
       )}
     </SimpleModal>
