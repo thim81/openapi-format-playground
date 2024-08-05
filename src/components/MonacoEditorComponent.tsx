@@ -4,7 +4,7 @@ import * as monacoEditor from 'monaco-editor';
 
 interface MonacoEditorProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange?: (value: string) => void;
   language?: string;
   height?: string;
 }
@@ -44,7 +44,8 @@ const MonacoEditorComponent: React.FC<MonacoEditorProps> = ({value, onChange, la
     lineHeight: 20,
     minimap: {enabled: false},
     tabSize: 2,
-    automaticLayout: true
+    automaticLayout: true,
+    scrollBeyondLastLine: false
   }
 
   return (
@@ -54,7 +55,7 @@ const MonacoEditorComponent: React.FC<MonacoEditorProps> = ({value, onChange, la
       language={language}
       defaultValue={value}
       value={value}
-      onChange={(value) => onChange(value || '')}
+      onChange={onChange ? (value) => onChange(value || '') : undefined}
       onMount={handleEditorDidMount}
       options={editorOptions}
     />

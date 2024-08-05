@@ -10,12 +10,20 @@ import ButtonShare from "@/components/ButtonShare";
 
 import defaultSort from '../defaults/defaultSort.json'
 
-import {analyzeOpenApi, AnalyzeOpenApiResult, OpenAPIFilterSet, parseString, stringify} from "openapi-format";
+import {
+  analyzeOpenApi,
+  AnalyzeOpenApiResult,
+  OpenAPIFilterSet,
+  OpenAPISortSet,
+  parseString,
+  stringify
+} from "openapi-format";
 import {OpenAPIV3} from "openapi-types";
 import {DecodedShareUrl, decodeShareUrl, includeUnusedComponents} from "@/utils";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ButtonUpload from "@/components/ButtonUpload";
 import MetricsBar, {ComponentMetrics} from "@/components/MetricsBar";
+import InstructionsModal from "@/components/InstructionsModal";
 
 const defaultCompMetrics = {
   schemas: [],
@@ -39,6 +47,8 @@ interface PlaygroundProps {
 export interface PlaygroundConfig extends openapiFormatConfig {
   isFilterOptionsCollapsed?: boolean;
   isSortOptionsCollapsed?: boolean;
+  defaultFieldSorting?: boolean;
+  pathSort?: 'original' | 'path' | 'tags';
   outputLanguage?: 'json' | 'yaml';
 }
 
@@ -53,13 +63,15 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [sort, setSort] = useState<boolean>(true);
   const [filterUnused, setFilterUnused] = useState<boolean>(false);
   const [filterSet, setFilterSet] = useState<string>('');
-  const [sortSet, setSortSet] = useState<string>(JSON.stringify(defaultSort, null, 2));
+  const [defaultSortSet, setDefaultSortSet] = useState<string>('');
+  const [sortSet, setSortSet] = useState<string>(defaultSortSet);
   const [isFilterOptionsCollapsed, setFilterOptionsCollapsed] = useState<boolean>(false);
   const [isSortOptionsCollapsed, setSortOptionsCollapsed] = useState<boolean>(true);
   const [outputLanguage, setOutputLanguage] = useState<'json' | 'yaml'>('yaml');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDiffModalOpen, setDiffModalOpen] = useState(false);
   const [isFormModalOpen, setFormModalOpen] = useState(false);
+  const [isInstructionsModalOpen, setInstructionsModalOpen] = useState(false);
   const [filterFormOptions, setFilterFormOptions] = useState<AnalyzeOpenApiResult>({});
   const [selectedOptions, setSelectedOptions] = useState<any>({});
   const [loading, setLoading] = useState(false);
@@ -72,6 +84,9 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [totalTags, setTotalTags] = useState(0);
   const [totalPaths, setTotalPaths] = useState(0);
 
+  const [pathSort, setPathSort] = useState<'original' | 'path' | 'tags'>('original');
+  const [defaultFieldSorting, setDefaultFieldSorting] = useState<boolean>(true);
+
   const dInput = useDebounce(input, 1000);
   const dFilterSet = useDebounce(filterSet, 1000);
   const dSortSet = useDebounce(sortSet, 1000);
@@ -82,7 +97,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     sortSet,
     isFilterOptionsCollapsed,
     isSortOptionsCollapsed,
-    outputLanguage
+    outputLanguage,
+    pathSort
   } || {} as PlaygroundConfig;
 
   const handleInputChange = useCallback(async (newValue: string) => {
@@ -96,6 +112,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setInput(newValue);
   }, [setInput]);
 
+  // Handle format conversion
   useEffect(() => {
     const handleFormat = async () => {
       try {
@@ -141,7 +158,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       setOutput('');
     }
     setLoading(false);
-  }, [dInput, sort, dFilterSet, dSortSet, outputLanguage, setOutput]);
+  }, [dInput, sort, dFilterSet, dSortSet, outputLanguage, pathSort, setOutput]);
 
   // Decode Share URL
   useEffect(() => {
@@ -156,11 +173,16 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         if (result?.config) {
           setSort(result.config.sort ?? true);
           setFilterSet(result.config.filterSet ?? '');
-          setSortSet(result.config.sortSet ?? JSON.stringify(defaultSort, null, 2));
-          setFilterOptionsCollapsed(result.config.isFilterOptionsCollapsed ?? false);
-          setSortOptionsCollapsed(result.config.isSortOptionsCollapsed ?? true);
+          setSortSet(result.config.sortSet ?? '');
+
           setOutputLanguage(result.config.outputLanguage ?? 'yaml');
           setFilterUnused(result?.config?.filterSet?.includes('unusedComponents') ?? false);
+
+          setFilterOptionsCollapsed(result.config.isFilterOptionsCollapsed ?? false);
+          setSortOptionsCollapsed(result.config.isSortOptionsCollapsed ?? true);
+
+          setPathSort(result.config.pathSort ?? 'original');
+          setDefaultFieldSorting(result.config.defaultFieldSorting ? false : true);
         }
         setLoading(false);
       }
@@ -168,6 +190,22 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
     decodeUrl();
   }, [handleInputChange]);
+
+  // Set default Sort Set
+  useEffect(() => {
+    const convertSortSet = async () => {
+      const result = await stringify(defaultSort, {format: outputLanguage});
+      setDefaultSortSet(result);
+    };
+    const convertFilterSet = async () => {
+      const filterObj = await parseString(filterSet)
+      const result = await stringify(filterObj, {format: outputLanguage});
+      setFilterSet(result);
+    };
+
+    convertSortSet();
+    convertFilterSet();
+  }, [outputLanguage]);
 
   const toggleFilterUnused = async () => {
     let filterSetObj: OpenAPIFilterSet;
@@ -177,8 +215,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       filterSetObj = {};
     }
     includeUnusedComponents(filterSetObj, !filterUnused);
-    let filterSetString = await stringify(filterSetObj) as string;
-    filterSetString = (filterSetString.trim() == '{}') ? '' : filterSetString;
+    let filterSetString = await stringify(filterSetObj, {format: outputLanguage}) as string;
+    filterSetString = (filterSetString.trim() === '{}') ? '' : filterSetString;
     setFilterSet(filterSetString);
     setFilterUnused(!filterUnused);
   };
@@ -189,6 +227,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   const openFormModal = () => {
     setFormModalOpen(true);
+  };
+
+  const openInstructionsModal = () => {
+    setInstructionsModalOpen(true);
   };
 
   const handleFileLoad = async (content: string | null) => {
@@ -205,6 +247,48 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setFilterSet(filterFormOptionsString);
     setSelectedOptions(_selectedOptions);
     setFormModalOpen(false);
+  };
+
+  const handleDefaultFieldSortingChange = async () => {
+    setDefaultFieldSorting(!defaultFieldSorting);
+    if (defaultFieldSorting) {
+      let newSortSet = defaultSortSet;
+      if (sortSet.trim() !== '') {
+        newSortSet = defaultSortSet
+      }
+      setSortSet(newSortSet);
+      await handlePathSortChange(pathSort, newSortSet)
+    } else {
+      let newSortSet = '';
+      setSortSet(newSortSet);
+      await handlePathSortChange(pathSort, newSortSet)
+    }
+  };
+
+  const handlePathSortChange = async (newPathSort: 'original' | 'path' | 'tags', sortSetStr?: string) => {
+    setPathSort(newPathSort);
+
+    let sortSetObj: OpenAPISortSet = {} as OpenAPISortSet;
+    if (sortSetStr && sortSetStr.trim() !== '') {
+      sortSetObj = (await parseString(sortSetStr)) as OpenAPISortSet;
+    }
+
+    // Original path order
+    if (newPathSort === 'original') {
+      delete sortSetObj.sortPathsBy
+      sortSetStr = await stringify(sortSetObj, {format: outputLanguage});
+
+      if (Object.keys(sortSetObj).length === 0) {
+        sortSetStr = ''
+      }
+      setSortSet(sortSetStr)
+    }
+
+    if (newPathSort !== 'original') {
+      sortSetObj.sortPathsBy = newPathSort
+      const sortSetStr = await stringify(sortSetObj, {format: outputLanguage});
+      setSortSet(sortSetStr)
+    }
   };
 
   return (
@@ -230,6 +314,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               </select>
             </div>
             <div className="mb-4">
+              <h3 className="text-lg font-semibold mb-2">Sort Options</h3>
               <label className="flex items-center font-medium text-gray-700">
                 Sort OpenAPI
                 <input
@@ -239,7 +324,32 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                   className="ml-2"
                 />
               </label>
+              {sort && (
+                <label className="flex items-center font-medium text-gray-700">
+                  Default OpenAPI field sorting
+                  <input
+                    type="checkbox"
+                    checked={defaultFieldSorting}
+                    onChange={handleDefaultFieldSortingChange}
+                    className="ml-2"
+                  />
+                </label>
+              )}
             </div>
+            {sort && (
+              <div className="mb-4">
+                <label className="block mb-1 font-medium text-gray-700">Sort Paths By</label>
+                <select
+                  value={pathSort}
+                  onChange={(e) => handlePathSortChange(e.target.value as 'original' | 'path' | 'tags', sortSet)}
+                  className="p-2 border rounded w-full"
+                >
+                  <option value="original">Original order</option>
+                  <option value="path">Path</option>
+                  <option value="tags">Tag name</option>
+                </select>
+              </div>
+            )}
             <div className="mb-4">
               <h3
                 className="text-lg font-semibold mb-2 cursor-pointer flex items-center"
@@ -257,7 +367,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                       Configure
                     </button>
                     <ButtonDownload
-                      content={filterSet} filename="openapi-filter"
+                      content={filterSet} filename="oaf-filter"
                       format={outputLanguage}
                       label="Download filter"
                       className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
@@ -279,19 +389,28 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 />
               </label>
             </div>
-            <div className="flex-1">
-              <h3
-                className="text-lg font-semibold mb-2 cursor-pointer"
-                onClick={() => setSortOptionsCollapsed(!isSortOptionsCollapsed)}
-              >
-                Sort options {isSortOptionsCollapsed ? '▲' : '▼'}
-              </h3>
-              {!isSortOptionsCollapsed && (
-                <div>
-                  <MonacoEditorWrapper value={sortSet} onChange={setSortSet} language="json" height='40vh'/>
-                </div>
-              )}
-            </div>
+            {!defaultFieldSorting && (
+              <div className="flex-1">
+                <h3
+                  className="text-lg font-semibold mb-2 cursor-pointer"
+                  onClick={() => setSortOptionsCollapsed(!isSortOptionsCollapsed)}
+                >
+                  Custom field sorting {isSortOptionsCollapsed ? '▲' : '▼'}
+                  <ButtonDownload
+                    content={sortSet}
+                    filename="oaf-sort"
+                    format={outputLanguage}
+                    label="Download sort"
+                    className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
+                  />
+                </h3>
+                {!isSortOptionsCollapsed && (
+                  <div>
+                    <MonacoEditorWrapper value={sortSet} onChange={setSortSet} language="json" height='40vh'/>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex-1 flex flex-col">
             <div className="flex items-center justify-between mb-2">
@@ -308,6 +427,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 <button onClick={openDiffModal}
                         className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-4 rounded border border-green-500">
                   Show Diff
+                </button>
+                <button onClick={openInstructionsModal}
+                        className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded">
+                  CLI instructions
                 </button>
                 <ButtonShare openapi={input} config={config}/>
                 <ButtonDownload content={output} filename="openapi-formatted" format={outputLanguage}/>
@@ -347,6 +470,15 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         original={input}
         modified={output}
         language={outputLanguage}
+      />
+
+      <InstructionsModal
+        isOpen={isInstructionsModalOpen}
+        onRequestClose={() => setInstructionsModalOpen(false)}
+        sort={sort}
+        sortSet={sortSet}
+        filterSet={filterSet}
+        format={outputLanguage}
       />
     </div>
   );

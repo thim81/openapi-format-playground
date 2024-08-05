@@ -18,6 +18,7 @@ declare module 'openapi-format' {
     schema?: Array<'description' | 'type' | 'items' | 'properties' | 'format' | 'example' | 'default'>
     schemas?: Array<'description' | 'type' | 'items' | 'properties' | 'format' | 'example' | 'default'>
     properties?: Array<'description' | 'type' | 'items' | 'format' | 'example' | 'default' | 'enum'>
+    sortPathsBy?: 'original' | 'path' | 'tags'
   }
 
   interface OpenAPISortOptions {

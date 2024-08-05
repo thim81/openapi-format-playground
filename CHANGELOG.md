@@ -1,5 +1,11 @@
 ## unreleased
 
+## [0.1.9] - 2024-08-04
+
+- Updated openapi-format to version 1.22.0
+- Added option to sort paths by
+- Added option to show CLI instructions 
+
 ## [0.1.8] - 2024-08-02
 
 - Updated openapi-format to version 1.21.2
