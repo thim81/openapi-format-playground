@@ -9,7 +9,7 @@ interface MonacoEditorProps {
   height?: string;
 }
 
-const MonacoEditorComponent: React.FC<MonacoEditorProps> = ({value, onChange, language, height = '90vh'}) => {
+const MonacoEditorComponent: React.FC<MonacoEditorProps> = ({value, onChange, language, height = '85vh'}) => {
   const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor | null>(null);
 
   const handleEditorDidMount: OnMount = (editor, monaco) => {

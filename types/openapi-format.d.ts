@@ -36,10 +36,11 @@ declare module 'openapi-format' {
     inverseMethods?: string[]
     inverseTags?: string[]
     inverseOperationIds?: string[]
-    unusedComponents?: string[]
-    stripFlags?: string[]
     responseContent?: string[]
     inverseResponseContent?: string[]
+    unusedComponents?: string[]
+    stripFlags?: string[]
+    preserveEmptyObjects?: boolean | string[];
   }
 
   interface OpenAPIFilterOptions {
