@@ -19,7 +19,7 @@ import {
   stringify
 } from "openapi-format";
 import {OpenAPIV3} from "openapi-types";
-import {DecodedShareUrl, decodeShareUrl, includeUnusedComponents} from "@/utils";
+import {DecodedShareUrl, decodeShareUrl, includePreserve, includeUnusedComponents} from "@/utils";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ButtonUpload from "@/components/ButtonUpload";
 import MetricsBar, {ComponentMetrics} from "@/components/MetricsBar";
@@ -62,6 +62,7 @@ export interface openapiFormatConfig {
 const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutput}) => {
   const [sort, setSort] = useState<boolean>(true);
   const [filterUnused, setFilterUnused] = useState<boolean>(false);
+  const [filterPrevent, setFilterPrevent] = useState<boolean>(false);
   const [filterSet, setFilterSet] = useState<string>('');
   const [defaultSortSet, setDefaultSortSet] = useState<string>('');
   const [sortSet, setSortSet] = useState<string>(defaultSortSet);
@@ -219,6 +220,20 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     filterSetString = (filterSetString.trim() === '{}') ? '' : filterSetString;
     setFilterSet(filterSetString);
     setFilterUnused(!filterUnused);
+  };
+
+  const togglePreserve = async () => {
+    let filterSetObj: OpenAPIFilterSet;
+    if (filterSet.trim()) {
+      filterSetObj = await parseString(filterSet) as OpenAPIFilterSet;
+    } else {
+      filterSetObj = {};
+    }
+    includePreserve(filterSetObj, !filterPrevent);
+    let filterSetString = await stringify(filterSetObj, {format: outputLanguage}) as string;
+    filterSetString = (filterSetString.trim() === '{}') ? '' : filterSetString;
+    setFilterSet(filterSetString);
+    setFilterPrevent(!filterPrevent);
   };
 
   const openDiffModal = () => {
@@ -385,6 +400,15 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                   type="checkbox"
                   checked={filterUnused}
                   onChange={toggleFilterUnused}
+                  className="ml-2"
+                />
+              </label>
+              <label className="flex items-center font-medium text-gray-700">
+                Preserve Empty objects
+                <input
+                  type="checkbox"
+                  checked={filterPrevent}
+                  onChange={togglePreserve}
                   className="ml-2"
                 />
               </label>

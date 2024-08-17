@@ -1,5 +1,9 @@
 ## unreleased
 
+## [0.1.11] - 2024-08-17
+
+- Minor UI improvements: better spacing, preserveEmptyObjects option
+
 ## [0.1.10] - 2024-08-16
 
 - Updated openapi-format to version 1.22.2

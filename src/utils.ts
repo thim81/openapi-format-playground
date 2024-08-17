@@ -77,3 +77,17 @@ export const includeUnusedComponents = (obj: OpenAPIFilterSet, include: boolean)
 
   return obj;
 }
+
+export const includePreserve = (obj: OpenAPIFilterSet, include: boolean) => {
+  if (include) {
+    if (!obj.hasOwnProperty('preserveEmptyObjects')) {
+      obj.preserveEmptyObjects = true;
+    }
+  } else {
+    if (obj.hasOwnProperty('preserveEmptyObjects')) {
+      delete obj.preserveEmptyObjects;
+    }
+  }
+
+  return obj;
+}
