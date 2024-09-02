@@ -23,9 +23,13 @@ const FilterFormModal: React.FC<FilterFormModalProps> = ({isOpen, onRequestClose
       // Remove "paths"
       delete filterOptions.paths;
       Object.keys(filterOptions).forEach(key => {
-        // Remove keys with empty arrays
         const value = filterOptions[key];
+        if (Array.isArray(value)) {
+          // Remove duplicates
+          filterOptions[key] = Array.from(new Set(value));
+        }
         if (value && value.length === 0) {
+          // Remove keys with empty arrays
           delete filterOptions[key];
         }
       });

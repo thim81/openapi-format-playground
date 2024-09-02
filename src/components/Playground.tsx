@@ -199,9 +199,11 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       setDefaultSortSet(result);
     };
     const convertFilterSet = async () => {
-      const filterObj = await parseString(filterSet)
-      const result = await stringify(filterObj, {format: outputLanguage});
-      setFilterSet(result);
+      if (filterSet && filterSet.length > 0) {
+        const filterObj = await parseString(filterSet)
+        const result = await stringify(filterObj, {format: outputLanguage});
+        setFilterSet(result);
+      }
     };
 
     convertSortSet();
@@ -258,7 +260,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       Object.entries(selectedOptions).filter(([_, value]) => (value as string[]).length > 0)
     );
     includeUnusedComponents(_selectedOptions, filterUnused);
-    const filterFormOptionsString = await stringify(_selectedOptions);
+
+    let filterFormOptionsString = await stringify(_selectedOptions) || '';
+    filterFormOptionsString = filterFormOptionsString.replace(/- '/g, '- ').replace(/'\n/g, '\n');
+
     setFilterSet(filterFormOptionsString);
     setSelectedOptions(_selectedOptions);
     setFormModalOpen(false);
