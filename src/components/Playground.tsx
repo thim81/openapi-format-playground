@@ -199,9 +199,11 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       setDefaultSortSet(result);
     };
     const convertFilterSet = async () => {
-      const filterObj = await parseString(filterSet)
-      const result = await stringify(filterObj, {format: outputLanguage});
-      setFilterSet(result);
+      if (filterSet && filterSet.length > 0) {
+        const filterObj = await parseString(filterSet)
+        const result = await stringify(filterObj, {format: outputLanguage});
+        setFilterSet(result);
+      }
     };
 
     convertSortSet();
