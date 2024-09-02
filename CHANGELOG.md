@@ -3,6 +3,7 @@
 ## [0.1.13] - 2024-09-02
 
 - Fixed bug with flagValues
+- Handle duplicate operationIds
 
 ## [0.1.12] - 2024-08-19
 
