@@ -1,5 +1,9 @@
 ## unreleased
 
+## [0.1.13] - 2024-09-02
+
+- Fixed bug with flagValues
+
 ## [0.1.12] - 2024-08-19
 
 - Updated openapi-format to version 1.22.3
