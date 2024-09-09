@@ -6,6 +6,9 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directory: "/" 
+    directory: "/"
     schedule:
       interval: "weekly"
+    allow:
+      - dependency-name: "@monaco-editor/react"
+      - dependency-name: "openapi-format"
