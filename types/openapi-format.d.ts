@@ -43,6 +43,36 @@ declare module 'openapi-format' {
     preserveEmptyObjects?: boolean | string[];
   }
 
+  interface OpenAPICasingOptions {
+    casingSet?: OpenAPICasingSet
+  }
+
+  interface OpenAPICasingSet {
+    operationId?: string
+    properties?: string
+    parametersQuery?: string
+    parametersHeader?: string
+    parametersPath?: string
+    componentsExamples?: string
+    componentsSchemas?: string
+    componentsHeaders?: string
+    componentsResponses?: string
+    componentsRequestBodies?: string
+    componentsSecuritySchemes?: string
+    componentsParametersQuery?: string
+    componentsParametersHeader?: string
+    componentsParametersPath?: string
+  }
+
+  interface OpenAPIGenerateOptions {
+    generateSet?: OpenAPIGenerateSet
+  }
+
+  interface OpenAPIGenerateSet {
+    operationIdTemplate?: string
+    overwriteExisting?: boolean
+  }
+
   interface OpenAPIFilterOptions {
     filterSet?: OpenAPIFilterSet
     defaultFilter?: OpenAPIFilterSet
@@ -85,6 +115,28 @@ declare module 'openapi-format' {
   export async function openapiFilter(
     oaObj: OpenAPIV3.Document,
     options: OpenAPIFilterOptions
+  ): Promise<OpenAPIResult>
+
+  /**
+   * Generate elements for an OpenAPI document based on the specified generate configuration.
+   * @param {OpenAPIV3.Document} oaObj - The OpenAPI document.
+   * @param {OpenAPIGenerateOptions} options - The generate options.
+   * @returns {Promise<OpenAPIResult>} The enriched OpenAPI document.
+   */
+  export async function openapiGenerate(
+    oaObj: OpenAPIV3.Document,
+    options: OpenAPIGenerateOptions
+  ): Promise<OpenAPIResult>
+
+  /**
+   * Change the case of properties an OpenAPI document based on the specified casing configuration.
+   * @param {OpenAPIV3.Document} oaObj - The OpenAPI document.
+   * @param {OpenAPICasingOptions} options - The casing options.
+   * @returns {Promise<OpenAPIResult>} The cased OpenAPI document.
+   */
+  export async function openapiChangeCase(
+    oaObj: OpenAPIV3.Document,
+    options: OpenAPICasingOptions
   ): Promise<OpenAPIResult>
 
   /**

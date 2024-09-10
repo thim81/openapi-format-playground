@@ -14,6 +14,7 @@ interface InstructionsModalProps {
   sortSet: string;
   filterSet: string;
   sort: boolean;
+  keepComments: boolean;
 }
 
 const InstructionsModal: React.FC<InstructionsModalProps> = (
@@ -23,7 +24,8 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
     format,
     sortSet,
     filterSet,
-    sort
+    sort,
+    keepComments
   }
 ) => {
   const [activeTab, setActiveTab] = useState('npx');
@@ -39,6 +41,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
   const filterFileOption = filterSet.length ? ` --filterFile ${filterFileName}` : '';
   const filterFileDocker = filterSet.length ? ` --filterFile /workspace/${filterFileName}` : '';
   const sortOption = !sort ? ` --no-sort` : '';
+  const keepCommentsOption = keepComments && format === 'yaml' ? ` --keepComments` : '';
   const configFileName = `oaf-config`;
 
   const dynamicHeight = sortContent.length && filterSet.length ? `90%` : sortContent.length || filterSet.length ? `72%` : '50%';
@@ -52,9 +55,14 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
       let configInput: { [key: string]: any } = {
         output: `openapi-formatted.${fileExt}`,
         sort: sort ? true : false,
+        keepComments: keepComments,
         filterSet: filterSet.length ? filterFileName : undefined,
         sortSet: sortSet.length ? sortFileName : undefined,
       };
+
+      if (!keepComments || format === 'json') {
+        delete configInput.keepComments;
+      }
 
       // Delete undefined keys
       Object.keys(configInput).forEach(key => {
@@ -68,7 +76,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
     };
 
     generateConfigFileContent();
-  }, [sort, filterSet, sortSet, format]);
+  }, [sort, keepComments, filterSet, sortSet, format, fileExt, filterFileName, sortFileName]);
 
   return (
     <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="80%" height={dynamicHeight}>
@@ -120,7 +128,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
             <li>To format your OpenAPI file, run the following command:</li>
             <pre className="bg-gray-100 p-2 rounded mb-2">
               <code>
-                {`npx openapi-format openapi.${fileExt} -o openapi-formatted.${fileExt}${sortOption}${sortFileOption}${filterFileOption}`}
+                {`npx openapi-format openapi.${fileExt} -o openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileOption}${filterFileOption}`}
               </code>
             </pre>
             <li>Review the command and ensure that the OpenAPI input & output, match your local or remote file.
@@ -142,7 +150,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
             <li>Run the following command to format your OpenAPI file:</li>
             <pre className="bg-gray-100 p-2 rounded mb-2">
               <code>
-                {`openapi-format openapi.${fileExt} -o openapi-formatted.${fileExt}${sortOption}${sortFileOption}${filterFileOption}`}
+                {`openapi-format openapi.${fileExt} -o openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileOption}${filterFileOption}`}
               </code>
             </pre>
             <li>Review the command and ensure that the OpenAPI input & output, match your local or remote file.
@@ -164,7 +172,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
             <li>Run the Docker container with the appropriate options:</li>
             <pre className="bg-gray-100 p-2 rounded mb-2 break-words whitespace-pre-wrap">
               <code>
-                {`docker run --rm -v $(pwd):/workspace ghcr.io/thim81/openapi-format /workspace/openapi.${fileExt} -o /workspace/openapi-formatted.${fileExt}${sortOption}${sortFileDocker}${filterFileDocker}`}
+                {`docker run --rm -v $(pwd):/workspace ghcr.io/thim81/openapi-format /workspace/openapi.${fileExt} -o /workspace/openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileDocker}${filterFileDocker}`}
               </code>
             </pre>
             <li>Review the command and ensure that the OpenAPI input & output, match your local or remote file.
