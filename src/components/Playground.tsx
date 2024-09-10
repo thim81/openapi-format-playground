@@ -117,7 +117,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setTotalTags(oaElements.tags?.length || 0);
     setFilterFormOptions(oaElements);
     setInput(newValue);
-  }, [setInput, keepComments]);
+  }, [setInput]);
 
   // Handle format conversion
   useEffect(() => {
