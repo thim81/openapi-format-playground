@@ -24,6 +24,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import ButtonUpload from "@/components/ButtonUpload";
 import MetricsBar, {ComponentMetrics} from "@/components/MetricsBar";
 import InstructionsModal from "@/components/InstructionsModal";
+import RawConfigModal from "@/components/RawConfigModal";
 
 const defaultCompMetrics = {
   schemas: [],
@@ -54,6 +55,7 @@ export interface PlaygroundConfig extends openapiFormatConfig {
 
 export interface openapiFormatConfig {
   sort?: boolean;
+  keepComments?: boolean;
   filterSet?: string;
   sortSet?: string;
   format?: string;
@@ -61,6 +63,7 @@ export interface openapiFormatConfig {
 
 const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutput}) => {
   const [sort, setSort] = useState<boolean>(true);
+  const [keepComments, setKeepComments] = useState<boolean>(false);
   const [filterUnused, setFilterUnused] = useState<boolean>(false);
   const [filterPrevent, setFilterPrevent] = useState<boolean>(false);
   const [filterSet, setFilterSet] = useState<string>('');
@@ -73,6 +76,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [isDiffModalOpen, setDiffModalOpen] = useState(false);
   const [isFormModalOpen, setFormModalOpen] = useState(false);
   const [isInstructionsModalOpen, setInstructionsModalOpen] = useState(false);
+  const [isRawConfigModalOpen, setRawConfigModalOpen] = useState(false);
   const [filterFormOptions, setFilterFormOptions] = useState<AnalyzeOpenApiResult>({});
   const [selectedOptions, setSelectedOptions] = useState<any>({});
   const [loading, setLoading] = useState(false);
@@ -94,6 +98,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   const config = {
     sort,
+    keepComments,
     filterSet,
     sortSet,
     isFilterOptionsCollapsed,
@@ -105,7 +110,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const handleInputChange = useCallback(async (newValue: string) => {
     setLoading(true);
     setErrorMessage(null);
-    const oaObj = await parseString(newValue) as OpenAPIV3.Document;
+    let convertOptions = {keepComments: keepComments || false};
+    const oaObj = await parseString(newValue,convertOptions) as OpenAPIV3.Document;
     const oaElements = analyzeOpenApi(oaObj);
     setTotalPaths(oaElements.operations?.length || 0);
     setTotalTags(oaElements.tags?.length || 0);
@@ -126,6 +132,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             openapi: dInput,
             config: {
               sort,
+              keepComments: keepComments,
               filterSet: dFilterSet,
               sortSet: dSortSet,
               format: outputLanguage
@@ -159,7 +166,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       setOutput('');
     }
     setLoading(false);
-  }, [dInput, sort, dFilterSet, dSortSet, outputLanguage, pathSort, setOutput]);
+  }, [dInput, sort, keepComments, dFilterSet, dSortSet, outputLanguage, pathSort, setOutput]);
 
   // Decode Share URL
   useEffect(() => {
@@ -173,6 +180,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         }
         if (result?.config) {
           setSort(result.config.sort ?? true);
+          setKeepComments(result.config.keepComments ?? false);
           setFilterSet(result.config.filterSet ?? '');
           setSortSet(result.config.sortSet ?? '');
 
@@ -208,7 +216,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
     convertSortSet();
     convertFilterSet();
-  }, [outputLanguage]);
+  }, [outputLanguage, filterSet]);
 
   const toggleFilterUnused = async () => {
     let filterSetObj: OpenAPIFilterSet;
@@ -248,6 +256,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   const openInstructionsModal = () => {
     setInstructionsModalOpen(true);
+  };
+
+  const openRawConfigModal = () => {
+    setRawConfigModalOpen(true);
   };
 
   const handleFileLoad = async (content: string | null) => {
@@ -321,7 +333,18 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         )}
         <div className="flex space-x-4 flex-grow">
           <div className="w-1/5 flex flex-col h-full overflow-auto mb-2">
-            <h2 className="text-xl font-bold mb-2">Config</h2>
+            <div className="flex items-center mb-2">
+              <h2 className="text-xl font-bold">Configuration</h2>
+              {/*<button*/}
+              {/*  className="ml-2 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"*/}
+              {/*  onClick={(e) => {*/}
+              {/*    e.stopPropagation();*/}
+              {/*    openRawConfigModal();*/}
+              {/*  }}*/}
+              {/*>*/}
+              {/*  Configure*/}
+              {/*</button>*/}
+            </div>
             <div className="mb-4">
               <label className="block mb-1 font-medium text-gray-700">Output format</label>
               <select
@@ -333,6 +356,20 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 <option value="yaml">YAML</option>
               </select>
             </div>
+            {outputLanguage === 'yaml' && (
+              <>
+                <div className="mb-4">
+                  <label className="flex items-center font-medium text-gray-700">
+                    Keep comments
+                    <input
+                      type="checkbox"
+                      checked={keepComments}
+                      onChange={() => setKeepComments(!keepComments)}
+                      className="ml-2"/>
+                  </label>
+                </div>
+              </>
+            )}
             <div className="mb-4">
               <h3 className="text-lg font-semibold mb-2">Sort Options</h3>
               <label className="flex items-center font-medium text-gray-700">
@@ -341,8 +378,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                   type="checkbox"
                   checked={sort}
                   onChange={() => setSort(!sort)}
-                  className="ml-2"
-                />
+                  className="ml-2"/>
               </label>
               {sort && (
                 <label className="flex items-center font-medium text-gray-700">
@@ -351,8 +387,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                     type="checkbox"
                     checked={defaultFieldSorting}
                     onChange={handleDefaultFieldSortingChange}
-                    className="ml-2"
-                  />
+                    className="ml-2"/>
                 </label>
               )}
             </div>
@@ -451,66 +486,80 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           <div className="flex-1 flex flex-col">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-xl font-bold">OpenAPI Output</h2>
-              {loading && <LoadingSpinner/>}
-              <div className="space-x-2">
-                <button onClick={openDiffModal}
-                        className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-4 rounded border border-green-500">
-                  Show Diff
-                </button>
-                <button onClick={openInstructionsModal}
-                        className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded">
-                  CLI instructions
-                </button>
-                <ButtonShare openapi={input} config={config}/>
-                <ButtonDownload content={output} filename="openapi-formatted" format={outputLanguage}/>
-              </div>
+            {loading && <LoadingSpinner/>}
+            <div className="space-x-2">
+              <button onClick={openDiffModal}
+                      className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-4 rounded border border-green-500">
+                Show Diff
+              </button>
+              <button onClick={openInstructionsModal}
+                      className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded">
+                CLI instructions
+              </button>
+              <ButtonShare openapi={input} config={config}/>
+              <ButtonDownload content={output} filename="openapi-formatted" format={outputLanguage}/>
             </div>
-            <MonacoEditorWrapper value={output} onChange={setOutput}/>
           </div>
+          <MonacoEditorWrapper value={output} onChange={setOutput}/>
         </div>
       </div>
-
-      <MetricsBar
-        totalPaths={totalPaths}
-        totalTags={totalTags}
-        totalComponents={totalComponents}
-        totalUnusedComponents={totalUnusedComponents}
-        components={components}
-        unusedComponents={unusedComponents}
-      />
-
-      {Object.keys(filterFormOptions).length > 0 && (
-        <button onClick={openFormModal}
-                className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded-full shadow-lg">
-          Open Filter Form
-        </button>
-      )}
-
-      <FilterFormModal
-        isOpen={isFormModalOpen}
-        onRequestClose={() => setFormModalOpen(false)}
-        onSubmit={handleFormSubmit}
-        filterOptions={filterFormOptions}
-      />
-
-      <DiffEditorModal
-        isOpen={isDiffModalOpen}
-        onRequestClose={() => setDiffModalOpen(false)}
-        original={input}
-        modified={output}
-        language={outputLanguage}
-      />
-
-      <InstructionsModal
-        isOpen={isInstructionsModalOpen}
-        onRequestClose={() => setInstructionsModalOpen(false)}
-        sort={sort}
-        sortSet={sortSet}
-        filterSet={filterSet}
-        format={outputLanguage}
-      />
     </div>
-  );
+
+  <MetricsBar
+    totalPaths={totalPaths}
+    totalTags={totalTags}
+    totalComponents={totalComponents}
+    totalUnusedComponents={totalUnusedComponents}
+    components={components}
+    unusedComponents={unusedComponents}
+  />
+
+  {
+    Object.keys(filterFormOptions).length > 0 && (
+      <button onClick={openFormModal}
+              className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded-full shadow-lg">
+        Open Filter Form
+      </button>
+    )
+  }
+
+  <FilterFormModal
+    isOpen={isFormModalOpen}
+    onRequestClose={() => setFormModalOpen(false)}
+    onSubmit={handleFormSubmit}
+    filterOptions={filterFormOptions}
+  />
+
+  <DiffEditorModal
+    isOpen={isDiffModalOpen}
+    onRequestClose={() => setDiffModalOpen(false)}
+    original={input}
+    modified={output}
+    language={outputLanguage}
+  />
+
+  <InstructionsModal
+    isOpen={isInstructionsModalOpen}
+    onRequestClose={() => setInstructionsModalOpen(false)}
+    sort={sort}
+    keepComments={keepComments}
+    sortSet={sortSet}
+    filterSet={filterSet}
+    format={outputLanguage}
+  />
+
+  <RawConfigModal
+    isOpen={isRawConfigModalOpen}
+    onRequestClose={() => setRawConfigModalOpen(false)}
+    sort={sort}
+    keepComments={keepComments}
+    sortSet={sortSet}
+    filterSet={filterSet}
+    format={outputLanguage}
+  />
+</div>
+)
+  ;
 };
 
 export default Playground;

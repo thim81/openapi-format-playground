@@ -1,5 +1,8 @@
 ## unreleased
 
+- Added option to keep/strip YAML comments
+- Updated openapi-format to version 1.23.0
+
 ## [0.1.15] - 2024-09-06
 
 - Updated openapi-format to version 1.22.5
@@ -16,7 +19,7 @@
 ## [0.1.12] - 2024-08-19
 
 - Updated openapi-format to version 1.22.3
-- 
+
 ## [0.1.11] - 2024-08-17
 
 - Minor UI improvements: better spacing, preserveEmptyObjects option
