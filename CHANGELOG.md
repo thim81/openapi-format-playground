@@ -1,5 +1,11 @@
 ## unreleased
 
+## [0.1.17] - 2024-09-11
+
+- Updated openapi-format to version 1.23.0
+
+## [0.1.16] - 2024-09-10
+
 - Added option to keep/strip YAML comments
 - Updated openapi-format to version 1.23.0
 
