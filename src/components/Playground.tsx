@@ -208,6 +208,14 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     };
     const convertFilterSet = async () => {
       if (filterSet && filterSet.length > 0) {
+
+        // Check if flagValues is an array and not converted to an object
+        // if (Array.isArray(filterObj?.flagValues)) {
+        //   filterObj.flagValues = filterObj.flagValues.map(value =>
+        //     typeof value === 'string' ? value : Object.keys(value)[0]
+        //   );
+        // }
+
         const filterObj = await parseString(filterSet)
         const result = await stringify(filterObj, {format: outputLanguage});
         setFilterSet(result);
@@ -216,7 +224,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
     convertSortSet();
     convertFilterSet();
-  }, [outputLanguage, filterSet]);
+  }, [outputLanguage, dFilterSet]);
 
   const toggleFilterUnused = async () => {
     let filterSetObj: OpenAPIFilterSet;
