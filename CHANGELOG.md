@@ -1,8 +1,12 @@
 ## unreleased
 
+## [0.1.18] - 2024-09-16
+
+- Updated openapi-format to version 1.23.2
+
 ## [0.1.17] - 2024-09-11
 
-- Updated openapi-format to version 1.23.0
+- Updated openapi-format to version 1.23.1
 
 ## [0.1.16] - 2024-09-10
 
