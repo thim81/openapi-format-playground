@@ -379,7 +379,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               </>
             )}
             <div className="mb-4">
-              <h3 className="text-lg font-semibold mb-2">Sort Options</h3>
+              <h3 className="text-lg font-semibold mb-2">Sort options</h3>
               <label className="flex items-center font-medium text-gray-700">
                 Sort OpenAPI
                 <input
