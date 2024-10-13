@@ -1,6 +1,6 @@
 import type {NextApiRequest, NextApiResponse} from 'next';
 import {
-  detectFormat, OpenAPICasingOptions, openapiChangeCase,
+  detectFormat, OpenAPICasingOptions, OpenAPICasingSet, openapiChangeCase,
   openapiFilter,
   OpenAPIFilterOptions,
   OpenAPIFilterSet,
@@ -37,10 +37,10 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
     let oaObj = await parseString(openapi, convertOptions) as OpenAPIV3.Document || ''
     let output = {data: oaObj} as OpenAPIResult
 
-    // Generate elements OpenAPI
-    // Generate elements for OpenAPI document
+    // Generate OpenAPI elements
     if (generateSet) {
-      const options = {generateSet: generateSet} as OpenAPIGenerateOptions
+      const generateOpts = await parseString(generateSet) as OpenAPIGenerateSet
+      const options = {generateSet: generateOpts} as OpenAPIGenerateOptions
       output = await openapiGenerate(oaObj, options) as OpenAPIResult;
       oaObj = output.data as OpenAPIV3.Document || {data: oaObj};
     }
@@ -67,9 +67,10 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
       oaObj = output.data as OpenAPIV3.Document || {data: oaObj};
     }
 
-    // Change case OpenAPI document
+    // Change case OpenAPI
     if (casingSet) {
-      const options = {casingSetSet: casingSet} as OpenAPICasingOptions
+      const caseOpts = await parseString(casingSet) as OpenAPICasingSet
+      const options = {generateSet: caseOpts} as OpenAPICasingOptions
       const casedRes = await openapiChangeCase(oaObj, options);
       output.data = casedRes.data;
     }

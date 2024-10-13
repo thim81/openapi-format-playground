@@ -25,6 +25,8 @@ import ButtonUpload from "@/components/ButtonUpload";
 import MetricsBar, {ComponentMetrics} from "@/components/MetricsBar";
 import InstructionsModal from "@/components/InstructionsModal";
 import RawConfigModal from "@/components/RawConfigModal";
+import ButtonUrl from "@/components/ButtonUrl";
+import GenerateFormModal from "@/components/GenerateFormModal";
 
 const defaultCompMetrics = {
   schemas: [],
@@ -58,6 +60,8 @@ export interface openapiFormatConfig {
   keepComments?: boolean;
   filterSet?: string;
   sortSet?: string;
+  generateSet?: string;
+  casingSet?: string;
   format?: string;
 }
 
@@ -67,6 +71,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [filterUnused, setFilterUnused] = useState<boolean>(false);
   const [filterPrevent, setFilterPrevent] = useState<boolean>(false);
   const [filterSet, setFilterSet] = useState<string>('');
+  const [generateSet, setGenerateSet] = useState<string>('');
+  const [casingSet, setCasingSet] = useState<string>('');
   const [defaultSortSet, setDefaultSortSet] = useState<string>('');
   const [sortSet, setSortSet] = useState<string>(defaultSortSet);
   const [isFilterOptionsCollapsed, setFilterOptionsCollapsed] = useState<boolean>(false);
@@ -74,6 +80,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [outputLanguage, setOutputLanguage] = useState<'json' | 'yaml'>('yaml');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDiffModalOpen, setDiffModalOpen] = useState(false);
+  const [isGenerateModalOpen, setGenerateModalOpen] = useState(false);
   const [isFormModalOpen, setFormModalOpen] = useState(false);
   const [isInstructionsModalOpen, setInstructionsModalOpen] = useState(false);
   const [isRawConfigModalOpen, setRawConfigModalOpen] = useState(false);
@@ -95,12 +102,16 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const dInput = useDebounce(input, 1000);
   const dFilterSet = useDebounce(filterSet, 1000);
   const dSortSet = useDebounce(sortSet, 1000);
+  const dGenerateSet = useDebounce(generateSet, 1000);
+  const dCasingSet = useDebounce(casingSet, 1000);
 
   const config = {
     sort,
     keepComments,
     filterSet,
     sortSet,
+    casingSet,
+    generateSet,
     isFilterOptionsCollapsed,
     isSortOptionsCollapsed,
     outputLanguage,
@@ -135,6 +146,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               keepComments: keepComments,
               filterSet: dFilterSet,
               sortSet: dSortSet,
+              generateSet: dGenerateSet,
+              casingSet: dCasingSet,
               format: outputLanguage
             }
           }),
@@ -166,7 +179,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       setOutput('');
     }
     setLoading(false);
-  }, [dInput, sort, keepComments, dFilterSet, dSortSet, outputLanguage, pathSort, setOutput]);
+  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dGenerateSet, dCasingSet, outputLanguage, pathSort, setOutput]);
 
   // Decode Share URL
   useEffect(() => {
@@ -182,6 +195,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setSort(result.config.sort ?? true);
           setKeepComments(result.config.keepComments ?? false);
           setFilterSet(result.config.filterSet ?? '');
+          setGenerateSet(result.config.generateSet ?? '');
+          setCasingSet(result.config.casingSet ?? '');
           setSortSet(result.config.sortSet ?? '');
 
           setOutputLanguage(result.config.outputLanguage ?? 'yaml');
@@ -258,6 +273,11 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setDiffModalOpen(true);
   };
 
+  const openGenerateModal = () => {
+    setGenerateModalOpen(true);
+  };
+
+
   const openFormModal = () => {
     setFormModalOpen(true);
   };
@@ -287,6 +307,11 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setFilterSet(filterFormOptionsString);
     setSelectedOptions(_selectedOptions);
     setFormModalOpen(false);
+  };
+
+  const handleGenerateSubmit = async (selectedOptions: any) => {
+    setGenerateSet(selectedOptions);
+    setGenerateModalOpen(false);
   };
 
   const handleDefaultFieldSortingChange = async () => {
@@ -343,6 +368,16 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           <div className="w-1/5 flex flex-col h-full overflow-auto mb-2">
             <div className="flex items-center mb-2">
               <h2 className="text-xl font-bold">Configuration</h2>
+              <div className="ml-4">
+                <select
+                  value={outputLanguage}
+                  onChange={(e) => setOutputLanguage(e.target.value as 'json' | 'yaml')}
+                  className="p-2 border rounded"
+                >
+                  <option value="json">JSON</option>
+                  <option value="yaml">YAML</option>
+                </select>
+              </div>
               {/*<button*/}
               {/*  className="ml-2 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"*/}
               {/*  onClick={(e) => {*/}
@@ -353,17 +388,17 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               {/*  Configure*/}
               {/*</button>*/}
             </div>
-            <div className="mb-4">
-              <label className="block mb-1 font-medium text-gray-700">Output format</label>
-              <select
-                value={outputLanguage}
-                onChange={(e) => setOutputLanguage(e.target.value as 'json' | 'yaml')}
-                className="p-2 border rounded w-full"
-              >
-                <option value="json">JSON</option>
-                <option value="yaml">YAML</option>
-              </select>
-            </div>
+            {/*<div className="mb-4">*/}
+            {/*  <label className="block mb-1 font-medium text-gray-700">Output format</label>*/}
+              {/*<select*/}
+              {/*  value={outputLanguage}*/}
+              {/*  onChange={(e) => setOutputLanguage(e.target.value as 'json' | 'yaml')}*/}
+              {/*  className="p-2 border rounded w-full"*/}
+              {/*>*/}
+              {/*  <option value="json">JSON</option>*/}
+              {/*  <option value="yaml">YAML</option>*/}
+              {/*</select>*/}
+            {/*</div>*/}
             {outputLanguage === 'yaml' && (
               <>
                 <div className="mb-4">
@@ -400,12 +435,24 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               )}
             </div>
             {sort && (
-              <div className="mb-4">
-                <label className="block mb-1 font-medium text-gray-700">Sort Paths By</label>
+              // <div className="mb-4">
+              //   <label className="block mb-1 font-medium text-gray-700">Sort Paths By</label>
+              //   <select
+              //     value={pathSort}
+              //     onChange={(e) => handlePathSortChange(e.target.value as 'original' | 'path' | 'tags', sortSet)}
+              //     className="p-2 border rounded w-full"
+              //   >
+              //     <option value="original">Original order</option>
+              //     <option value="path">Path</option>
+              //     <option value="tags">Tag name</option>
+              //   </select>
+              // </div>
+              <div className="flex items-center mb-4">
+                <label className="block mb-1 font-medium text-gray-700 mr-4">Sort Paths By</label>
                 <select
                   value={pathSort}
                   onChange={(e) => handlePathSortChange(e.target.value as 'original' | 'path' | 'tags', sortSet)}
-                  className="p-2 border rounded w-full"
+                  className="p-1 border rounded"
                 >
                   <option value="original">Original order</option>
                   <option value="path">Path</option>
@@ -413,6 +460,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 </select>
               </div>
             )}
+        {/*</div>*/}
             <div className="mb-4">
               <h3
                 className="text-lg font-semibold mb-2 cursor-pointer flex items-center"
@@ -460,6 +508,15 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                   className="ml-2"
                 />
               </label>
+            </div>
+            <div className="mb-4">
+              <h3
+                className="text-lg font-semibold mb-2 cursor-pointer flex items-center"
+              >OpenAPI generator</h3>
+                <button onClick={openGenerateModal}
+                        className="ml-2 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none">
+                  Configure OperationId
+                </button>
             </div>
             {!defaultFieldSorting && (
               <div className="flex-1">
@@ -536,6 +593,13 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     onRequestClose={() => setFormModalOpen(false)}
     onSubmit={handleFormSubmit}
     filterOptions={filterFormOptions}
+  />
+
+  <GenerateFormModal
+    isOpen={isGenerateModalOpen}
+    onRequestClose={() => setGenerateModalOpen(false)}
+    onSubmit={handleGenerateSubmit}
+    openapi={input}
   />
 
   <DiffEditorModal
