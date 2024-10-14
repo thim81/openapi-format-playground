@@ -50,6 +50,8 @@ interface PlaygroundProps {
 export interface PlaygroundConfig extends openapiFormatConfig {
   isFilterOptionsCollapsed?: boolean;
   isSortOptionsCollapsed?: boolean;
+  toggleGenerate?: boolean;
+  toggleCasing?: boolean;
   defaultFieldSorting?: boolean;
   pathSort?: 'original' | 'path' | 'tags';
   outputLanguage?: 'json' | 'yaml';
@@ -72,7 +74,9 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [filterPrevent, setFilterPrevent] = useState<boolean>(false);
   const [filterSet, setFilterSet] = useState<string>('');
   const [generateSet, setGenerateSet] = useState<string>('');
+  const [toggleGenerate, seTtoggleGenerate] = useState<boolean>(false);
   const [casingSet, setCasingSet] = useState<string>('');
+  const [toggleCasing, setToggleCasing] = useState<boolean>(false);
   const [defaultSortSet, setDefaultSortSet] = useState<string>('');
   const [sortSet, setSortSet] = useState<string>(defaultSortSet);
   const [isFilterOptionsCollapsed, setFilterOptionsCollapsed] = useState<boolean>(false);
@@ -115,6 +119,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     generateSet,
     isFilterOptionsCollapsed,
     isSortOptionsCollapsed,
+    toggleGenerate,
+    toggleCasing,
     outputLanguage,
     pathSort
   } || {} as PlaygroundConfig;
@@ -133,6 +139,17 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   // Handle format conversion
   useEffect(() => {
+
+    const config = {
+      sort,
+      keepComments: keepComments,
+      filterSet: dFilterSet,
+      sortSet: dSortSet,
+      ...(dGenerateSet && toggleGenerate && { generateSet: dGenerateSet }),
+      ...(dCasingSet && toggleCasing && { casingSet: dCasingSet }),
+      format: outputLanguage,
+    };
+
     const handleFormat = async () => {
       try {
         const response = await fetch('/api/format', {
@@ -142,15 +159,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           },
           body: JSON.stringify({
             openapi: dInput,
-            config: {
-              sort,
-              keepComments: keepComments,
-              filterSet: dFilterSet,
-              sortSet: dSortSet,
-              generateSet: dGenerateSet,
-              casingSet: dCasingSet,
-              format: outputLanguage
-            }
+            config
           }),
         });
 
@@ -180,7 +189,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       setOutput('');
     }
     setLoading(false);
-  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dGenerateSet, dCasingSet, outputLanguage, pathSort, setOutput]);
+  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dGenerateSet, dCasingSet, outputLanguage, pathSort, toggleGenerate, toggleCasing,setOutput]);
 
   // Decode Share URL
   useEffect(() => {
@@ -199,6 +208,9 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setGenerateSet(result.config.generateSet ?? '');
           setCasingSet(result.config.casingSet ?? '');
           setSortSet(result.config.sortSet ?? '');
+
+          setToggleCasing(result.config.toggleCasing ?? false);
+          seTtoggleGenerate(result.config.toggleGenerate ?? false);
 
           setOutputLanguage(result.config.outputLanguage ?? 'yaml');
           setFilterUnused(result?.config?.filterSet?.includes('unusedComponents') ?? false);
@@ -447,24 +459,12 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               )}
             </div>
             {sort && (
-              // <div className="mb-4">
-              //   <label className="block mb-1 font-medium text-gray-700">Sort Paths By</label>
-              //   <select
-              //     value={pathSort}
-              //     onChange={(e) => handlePathSortChange(e.target.value as 'original' | 'path' | 'tags', sortSet)}
-              //     className="p-2 border rounded w-full"
-              //   >
-              //     <option value="original">Original order</option>
-              //     <option value="path">Path</option>
-              //     <option value="tags">Tag name</option>
-              //   </select>
-              // </div>
               <div className="flex items-center mb-4">
                 <label className="block mb-1 font-medium text-gray-700 mr-4">Sort Paths By</label>
                 <select
                   value={pathSort}
                   onChange={(e) => handlePathSortChange(e.target.value as 'original' | 'path' | 'tags', sortSet)}
-                  className="p-1 border rounded"
+                  className="p-0 border rounded"
                 >
                   <option value="original">Original order</option>
                   <option value="path">Path</option>
@@ -472,7 +472,6 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 </select>
               </div>
             )}
-            {/*</div>*/}
             <div className="mb-4">
               <h3
                 className="text-lg font-semibold mb-2 cursor-pointer flex items-center"
@@ -522,25 +521,41 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               </label>
             </div>
             <div className="mb-4">
-              <h3
-                className="text-lg font-semibold mb-2 cursor-pointer flex items-center"
-              >OpenAPI generator</h3>
-              OperationId
-              <button onClick={openGenerateModal}
-                      className="ml-2 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none">
-                Configure
-              </button>
+              <h3 className="text-lg font-semibold mb-2 cursor-pointer flex items-center">Extra options</h3>
+              <div className="flex items-center mb-2">
+                <span>Generate OperationId</span>
+                <input
+                  type="checkbox"
+                  id="generateOperationId"
+                  className="ml-2 mr-2"
+                  checked={toggleGenerate}
+                  onChange={() => seTtoggleGenerate(!toggleGenerate)}
+                />
+                <button
+                  onClick={openGenerateModal}
+                  className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
+                >
+                  Configure
+                </button>
+              </div>
+              <div className="flex items-center">
+                <span>Format casing</span>
+                <input
+                  type="checkbox"
+                  id="formatCasing"
+                  className="ml-2 mr-2"
+                  checked={toggleCasing}
+                  onChange={() => setToggleCasing(!toggleCasing)}
+                />
+                <button
+                  onClick={openCasingModal}
+                  className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
+                >
+                  Configure
+                </button>
+              </div>
             </div>
-            <div className="mb-4">
-              <h3
-                className="text-lg font-semibold mb-2 cursor-pointer flex items-center"
-              >OpenAPI Casing</h3>
-              Casing
-              <button onClick={openCasingModal}
-                      className="ml-2 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none">
-                Configure
-              </button>
-            </div>
+
             {!defaultFieldSorting && (
               <div className="flex-1">
                 <h3
