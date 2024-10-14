@@ -21,6 +21,7 @@ export const generateShareUrl = async (origin: string, openapi?: string, config?
 
     if (config.sortSet !== undefined) configOps.sortSet = await stringify(config.sortSet);
     if (config.filterSet !== undefined) configOps.filterSet = await stringify(config.filterSet);
+    if (config.generateSet !== undefined) configOps.generateSet = await stringify(config.generateSet);
     // if (options.casingSet !== undefined) config.casingSet = await stringify(options.casingSet);
     if (config.sort !== undefined) configOps.sort = config.sort;
     // if (options.rename !== undefined) config.rename = options.rename;

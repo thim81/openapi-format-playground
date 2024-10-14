@@ -1,11 +1,11 @@
 import React, {useEffect, useState} from "react";
 import SimpleModal from "./SimpleModal";
-import {openapiGenerate, OpenAPIGenerateOptions, OpenAPIResult, parseString} from "openapi-format";
+import {openapiGenerate, OpenAPIGenerateSet, OpenAPIResult, parseString} from "openapi-format";
 import {OpenAPIV3} from "openapi-types";
 
 interface GenerateFormModalProps {
   openapi: string;
-  generateOptions: OpenAPIGenerateOptions | any
+  generateOptions: string;
   isOpen: boolean;
   onRequestClose: () => void;
   onSubmit: (config: { operationIdTemplate: string; overwriteExisting: boolean }) => void;
@@ -26,9 +26,26 @@ const placeholderOptions = [
 ];
 
 const GenerateFormModal: React.FC<GenerateFormModalProps> = ({isOpen, onRequestClose, onSubmit, openapi, generateOptions}) => {
-  const [operationIdTemplate, setOperationIdTemplate] = useState<string>(generateOptions.generateOptions ?? '');
-  const [overwriteExisting, setOverwriteExisting] = useState<boolean>(generateOptions.overwriteExisting ?? false);
+  const [operationIdTemplate, setOperationIdTemplate] = useState<string>('');
+  const [overwriteExisting, setOverwriteExisting] = useState<boolean>(false);
   const [preview, setPreview] = useState<string[]>([]);
+
+  // Parse generateOptions and set the initial state
+  useEffect(() => {
+    const parseGenerateOptions = async () => {
+      try {
+        const generateSet = await parseString(generateOptions) as OpenAPIGenerateSet;
+        setOperationIdTemplate(generateSet.operationIdTemplate ?? '<method>_<pathPart2>');
+        setOverwriteExisting(generateSet.overwriteExisting ?? false);
+      } catch (error) {
+        console.error('Error parsing generateOptions:', error);
+      }
+    };
+
+    if (generateOptions) {
+      parseGenerateOptions();
+    }
+  }, [generateOptions]);
 
   const handleTemplateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setOperationIdTemplate(e.target.value);
@@ -80,7 +97,6 @@ const GenerateFormModal: React.FC<GenerateFormModalProps> = ({isOpen, onRequestC
 
     return [];
   };
-
 
   // Update preview whenever the template changes
   useEffect(() => {

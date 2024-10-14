@@ -13,7 +13,7 @@ import defaultSort from '../defaults/defaultSort.json'
 import {
   analyzeOpenApi,
   AnalyzeOpenApiResult,
-  OpenAPIFilterSet, OpenAPIGenerateSet,
+  OpenAPIFilterSet,
   OpenAPISortSet,
   parseString,
   stringify
@@ -59,7 +59,7 @@ export interface openapiFormatConfig {
   keepComments?: boolean;
   filterSet?: string;
   sortSet?: string;
-  generateSet?: OpenAPIGenerateSet;
+  generateSet?: string;
   casingSet?: string;
   format?: string;
 }
@@ -70,7 +70,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [filterUnused, setFilterUnused] = useState<boolean>(false);
   const [filterPrevent, setFilterPrevent] = useState<boolean>(false);
   const [filterSet, setFilterSet] = useState<string>('');
-  const [generateSet, setGenerateSet] = useState<OpenAPIGenerateSet>({});
+  const [generateSet, setGenerateSet] = useState<string>('');
   const [casingSet, setCasingSet] = useState<string>('');
   const [defaultSortSet, setDefaultSortSet] = useState<string>('');
   const [sortSet, setSortSet] = useState<string>(defaultSortSet);
@@ -121,7 +121,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setLoading(true);
     setErrorMessage(null);
     let convertOptions = {keepComments: keepComments || false};
-    const oaObj = await parseString(newValue,convertOptions) as OpenAPIV3.Document;
+    const oaObj = await parseString(newValue, convertOptions) as OpenAPIV3.Document;
     const oaElements = analyzeOpenApi(oaObj);
     setTotalPaths(oaElements.operations?.length || 0);
     setTotalTags(oaElements.tags?.length || 0);
@@ -194,7 +194,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setSort(result.config.sort ?? true);
           setKeepComments(result.config.keepComments ?? false);
           setFilterSet(result.config.filterSet ?? '');
-          setGenerateSet(result.config.generateSet ?? {});
+          setGenerateSet(result.config.generateSet ?? '');
           setCasingSet(result.config.casingSet ?? '');
           setSortSet(result.config.sortSet ?? '');
 
@@ -276,7 +276,6 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setGenerateModalOpen(true);
   };
 
-
   const openFormModal = () => {
     setFormModalOpen(true);
   };
@@ -310,7 +309,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   const handleGenerateSubmit = async (selectedOptions: any) => {
     console.log('selectedOptions', selectedOptions)
-    setGenerateSet(selectedOptions);
+    const _selectedOptions = await stringify(selectedOptions)
+    setGenerateSet(_selectedOptions);
     setGenerateModalOpen(false);
   };
 
@@ -390,14 +390,14 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             </div>
             {/*<div className="mb-4">*/}
             {/*  <label className="block mb-1 font-medium text-gray-700">Output format</label>*/}
-              {/*<select*/}
-              {/*  value={outputLanguage}*/}
-              {/*  onChange={(e) => setOutputLanguage(e.target.value as 'json' | 'yaml')}*/}
-              {/*  className="p-2 border rounded w-full"*/}
-              {/*>*/}
-              {/*  <option value="json">JSON</option>*/}
-              {/*  <option value="yaml">YAML</option>*/}
-              {/*</select>*/}
+            {/*<select*/}
+            {/*  value={outputLanguage}*/}
+            {/*  onChange={(e) => setOutputLanguage(e.target.value as 'json' | 'yaml')}*/}
+            {/*  className="p-2 border rounded w-full"*/}
+            {/*>*/}
+            {/*  <option value="json">JSON</option>*/}
+            {/*  <option value="yaml">YAML</option>*/}
+            {/*</select>*/}
             {/*</div>*/}
             {outputLanguage === 'yaml' && (
               <>
@@ -460,7 +460,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 </select>
               </div>
             )}
-        {/*</div>*/}
+            {/*</div>*/}
             <div className="mb-4">
               <h3
                 className="text-lg font-semibold mb-2 cursor-pointer flex items-center"
@@ -513,10 +513,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               <h3
                 className="text-lg font-semibold mb-2 cursor-pointer flex items-center"
               >OpenAPI generator</h3>
-                <button onClick={openGenerateModal}
-                        className="ml-2 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none">
-                  Configure OperationId
-                </button>
+              <button onClick={openGenerateModal}
+                      className="ml-2 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none">
+                Configure OperationId
+              </button>
             </div>
             {!defaultFieldSorting && (
               <div className="flex-1">
@@ -551,88 +551,87 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           <div className="flex-1 flex flex-col">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-xl font-bold">OpenAPI Output</h2>
-            {loading && <LoadingSpinner/>}
-            <div className="space-x-2">
-              <button onClick={openDiffModal}
-                      className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-4 rounded border border-green-500">
-                Show Diff
-              </button>
-              <button onClick={openInstructionsModal}
-                      className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded">
-                CLI instructions
-              </button>
-              <ButtonShare openapi={input} config={config}/>
-              <ButtonDownload content={output} filename="openapi-formatted" format={outputLanguage}/>
+              {loading && <LoadingSpinner/>}
+              <div className="space-x-2">
+                <button onClick={openDiffModal}
+                        className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-4 rounded border border-green-500">
+                  Show Diff
+                </button>
+                <button onClick={openInstructionsModal}
+                        className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded">
+                  CLI instructions
+                </button>
+                <ButtonShare openapi={input} config={config}/>
+                <ButtonDownload content={output} filename="openapi-formatted" format={outputLanguage}/>
+              </div>
             </div>
+            <MonacoEditorWrapper value={output} onChange={setOutput}/>
           </div>
-          <MonacoEditorWrapper value={output} onChange={setOutput}/>
         </div>
       </div>
+
+      <MetricsBar
+        totalPaths={totalPaths}
+        totalTags={totalTags}
+        totalComponents={totalComponents}
+        totalUnusedComponents={totalUnusedComponents}
+        components={components}
+        unusedComponents={unusedComponents}
+      />
+
+      {
+        Object.keys(filterFormOptions).length > 0 && (
+          <button onClick={openFormModal}
+                  className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded-full shadow-lg">
+            Open Filter Form
+          </button>
+        )
+      }
+
+      <FilterFormModal
+        isOpen={isFormModalOpen}
+        onRequestClose={() => setFormModalOpen(false)}
+        onSubmit={handleFormSubmit}
+        filterOptions={filterFormOptions}
+      />
+
+      <GenerateFormModal
+        isOpen={isGenerateModalOpen}
+        onRequestClose={() => setGenerateModalOpen(false)}
+        onSubmit={handleGenerateSubmit}
+        openapi={input}
+        generateOptions={generateSet}
+      />
+
+      <DiffEditorModal
+        isOpen={isDiffModalOpen}
+        onRequestClose={() => setDiffModalOpen(false)}
+        original={input}
+        modified={output}
+        language={outputLanguage}
+      />
+
+      <InstructionsModal
+        isOpen={isInstructionsModalOpen}
+        onRequestClose={() => setInstructionsModalOpen(false)}
+        sort={sort}
+        keepComments={keepComments}
+        sortSet={sortSet}
+        filterSet={filterSet}
+        format={outputLanguage}
+      />
+
+      <RawConfigModal
+        isOpen={isRawConfigModalOpen}
+        onRequestClose={() => setRawConfigModalOpen(false)}
+        sort={sort}
+        keepComments={keepComments}
+        sortSet={sortSet}
+        filterSet={filterSet}
+        format={outputLanguage}
+      />
     </div>
-
-  <MetricsBar
-    totalPaths={totalPaths}
-    totalTags={totalTags}
-    totalComponents={totalComponents}
-    totalUnusedComponents={totalUnusedComponents}
-    components={components}
-    unusedComponents={unusedComponents}
-  />
-
-  {
-    Object.keys(filterFormOptions).length > 0 && (
-      <button onClick={openFormModal}
-              className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded-full shadow-lg">
-        Open Filter Form
-      </button>
-    )
-  }
-
-  <FilterFormModal
-    isOpen={isFormModalOpen}
-    onRequestClose={() => setFormModalOpen(false)}
-    onSubmit={handleFormSubmit}
-    filterOptions={filterFormOptions}
-  />
-
-  <GenerateFormModal
-    isOpen={isGenerateModalOpen}
-    onRequestClose={() => setGenerateModalOpen(false)}
-    onSubmit={handleGenerateSubmit}
-    openapi={input}
-    generateOptions={generateSet}
-  />
-
-  <DiffEditorModal
-    isOpen={isDiffModalOpen}
-    onRequestClose={() => setDiffModalOpen(false)}
-    original={input}
-    modified={output}
-    language={outputLanguage}
-  />
-
-  <InstructionsModal
-    isOpen={isInstructionsModalOpen}
-    onRequestClose={() => setInstructionsModalOpen(false)}
-    sort={sort}
-    keepComments={keepComments}
-    sortSet={sortSet}
-    filterSet={filterSet}
-    format={outputLanguage}
-  />
-
-  <RawConfigModal
-    isOpen={isRawConfigModalOpen}
-    onRequestClose={() => setRawConfigModalOpen(false)}
-    sort={sort}
-    keepComments={keepComments}
-    sortSet={sortSet}
-    filterSet={filterSet}
-    format={outputLanguage}
-  />
-</div>
-)
-  ;
+  );
 };
 
 export default Playground;
