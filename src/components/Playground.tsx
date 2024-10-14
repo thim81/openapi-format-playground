@@ -13,7 +13,7 @@ import defaultSort from '../defaults/defaultSort.json'
 import {
   analyzeOpenApi,
   AnalyzeOpenApiResult,
-  OpenAPIFilterSet,
+  OpenAPIFilterSet, OpenAPIGenerateSet,
   OpenAPISortSet,
   parseString,
   stringify
@@ -59,7 +59,7 @@ export interface openapiFormatConfig {
   keepComments?: boolean;
   filterSet?: string;
   sortSet?: string;
-  generateSet?: string;
+  generateSet?: OpenAPIGenerateSet;
   casingSet?: string;
   format?: string;
 }
@@ -70,7 +70,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [filterUnused, setFilterUnused] = useState<boolean>(false);
   const [filterPrevent, setFilterPrevent] = useState<boolean>(false);
   const [filterSet, setFilterSet] = useState<string>('');
-  const [generateSet, setGenerateSet] = useState<string>('');
+  const [generateSet, setGenerateSet] = useState<OpenAPIGenerateSet>({});
   const [casingSet, setCasingSet] = useState<string>('');
   const [defaultSortSet, setDefaultSortSet] = useState<string>('');
   const [sortSet, setSortSet] = useState<string>(defaultSortSet);
@@ -194,7 +194,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setSort(result.config.sort ?? true);
           setKeepComments(result.config.keepComments ?? false);
           setFilterSet(result.config.filterSet ?? '');
-          setGenerateSet(result.config.generateSet ?? '');
+          setGenerateSet(result.config.generateSet ?? {});
           setCasingSet(result.config.casingSet ?? '');
           setSortSet(result.config.sortSet ?? '');
 
@@ -309,6 +309,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   };
 
   const handleGenerateSubmit = async (selectedOptions: any) => {
+    console.log('selectedOptions', selectedOptions)
     setGenerateSet(selectedOptions);
     setGenerateModalOpen(false);
   };
@@ -599,6 +600,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     onRequestClose={() => setGenerateModalOpen(false)}
     onSubmit={handleGenerateSubmit}
     openapi={input}
+    generateOptions={generateSet}
   />
 
   <DiffEditorModal

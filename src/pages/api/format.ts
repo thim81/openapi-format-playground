@@ -38,7 +38,7 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
     let output = {data: oaObj} as OpenAPIResult
 
     // Generate OpenAPI elements
-    if (generateSet) {
+    if (generateSet.length > 0) {
       const generateOpts = await parseString(generateSet) as OpenAPIGenerateSet
       const options = {generateSet: generateOpts} as OpenAPIGenerateOptions
       output = await openapiGenerate(oaObj, options) as OpenAPIResult;
@@ -46,7 +46,7 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
     }
 
     // Filter OpenAPI
-    if (filterSet) {
+    if (filterSet.length > 0) {
       const filterOpts = await parseString(filterSet) as OpenAPIFilterSet
       const defaultOpts = defaultFilterJson as OpenAPIFilterSet
       const options = {filterSet: filterOpts, defaultFilter: defaultOpts} as OpenAPIFilterOptions
@@ -68,7 +68,7 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
     }
 
     // Change case OpenAPI
-    if (casingSet) {
+    if (casingSet.length > 0) {
       const caseOpts = await parseString(casingSet) as OpenAPICasingSet
       const options = {generateSet: caseOpts} as OpenAPICasingOptions
       const casedRes = await openapiChangeCase(oaObj, options);

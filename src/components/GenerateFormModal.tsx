@@ -1,10 +1,11 @@
 import React, {useEffect, useState} from "react";
 import SimpleModal from "./SimpleModal";
-import {openapiGenerate, OpenAPIResult, parseString} from "openapi-format";
+import {openapiGenerate, OpenAPIGenerateOptions, OpenAPIResult, parseString} from "openapi-format";
 import {OpenAPIV3} from "openapi-types";
 
 interface GenerateFormModalProps {
   openapi: string;
+  generateOptions: OpenAPIGenerateOptions | any
   isOpen: boolean;
   onRequestClose: () => void;
   onSubmit: (config: { operationIdTemplate: string; overwriteExisting: boolean }) => void;
@@ -24,9 +25,9 @@ const placeholderOptions = [
   '<pathPartn>',
 ];
 
-const GenerateFormModal: React.FC<GenerateFormModalProps> = ({isOpen, onRequestClose, onSubmit, openapi}) => {
-  const [operationIdTemplate, setOperationIdTemplate] = useState<string>('<method>_<pathPart2>');
-  const [overwriteExisting, setOverwriteExisting] = useState<boolean>(false);
+const GenerateFormModal: React.FC<GenerateFormModalProps> = ({isOpen, onRequestClose, onSubmit, openapi, generateOptions}) => {
+  const [operationIdTemplate, setOperationIdTemplate] = useState<string>(generateOptions.generateOptions ?? '');
+  const [overwriteExisting, setOverwriteExisting] = useState<boolean>(generateOptions.overwriteExisting ?? false);
   const [preview, setPreview] = useState<string[]>([]);
 
   const handleTemplateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
