@@ -25,7 +25,6 @@ import ButtonUpload from "@/components/ButtonUpload";
 import MetricsBar, {ComponentMetrics} from "@/components/MetricsBar";
 import InstructionsModal from "@/components/InstructionsModal";
 import RawConfigModal from "@/components/RawConfigModal";
-import ButtonUrl from "@/components/ButtonUrl";
 import GenerateFormModal from "@/components/GenerateFormModal";
 
 const defaultCompMetrics = {
