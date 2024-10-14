@@ -26,6 +26,7 @@ import MetricsBar, {ComponentMetrics} from "@/components/MetricsBar";
 import InstructionsModal from "@/components/InstructionsModal";
 import RawConfigModal from "@/components/RawConfigModal";
 import GenerateFormModal from "@/components/GenerateFormModal";
+import CasingFormModal from "@/components/CasingFormModal";
 
 const defaultCompMetrics = {
   schemas: [],
@@ -80,6 +81,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDiffModalOpen, setDiffModalOpen] = useState(false);
   const [isGenerateModalOpen, setGenerateModalOpen] = useState(false);
+  const [isCasingModalOpen, setCasingModalOpen] = useState(false);
   const [isFormModalOpen, setFormModalOpen] = useState(false);
   const [isInstructionsModalOpen, setInstructionsModalOpen] = useState(false);
   const [isRawConfigModalOpen, setRawConfigModalOpen] = useState(false);
@@ -276,6 +278,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setGenerateModalOpen(true);
   };
 
+  const openCasingModal = () => {
+    setCasingModalOpen(true);
+  };
+
   const openFormModal = () => {
     setFormModalOpen(true);
   };
@@ -308,10 +314,16 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   };
 
   const handleGenerateSubmit = async (selectedOptions: any) => {
-    console.log('selectedOptions', selectedOptions)
     const _selectedOptions = await stringify(selectedOptions)
     setGenerateSet(_selectedOptions);
     setGenerateModalOpen(false);
+  };
+
+  const handleCasingSubmit = async (selectedOptions: any) => {
+    console.log('handleCasingSubmit', selectedOptions)
+    const _selectedOptions = await stringify(selectedOptions)
+    setCasingSet(_selectedOptions);
+    setCasingModalOpen(false);
   };
 
   const handleDefaultFieldSortingChange = async () => {
@@ -513,9 +525,20 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               <h3
                 className="text-lg font-semibold mb-2 cursor-pointer flex items-center"
               >OpenAPI generator</h3>
+              OperationId
               <button onClick={openGenerateModal}
                       className="ml-2 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none">
-                Configure OperationId
+                Configure
+              </button>
+            </div>
+            <div className="mb-4">
+              <h3
+                className="text-lg font-semibold mb-2 cursor-pointer flex items-center"
+              >OpenAPI Casing</h3>
+              Casing
+              <button onClick={openCasingModal}
+                      className="ml-2 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none">
+                Configure
               </button>
             </div>
             {!defaultFieldSorting && (
@@ -601,6 +624,13 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         onSubmit={handleGenerateSubmit}
         openapi={input}
         generateOptions={generateSet}
+      />
+
+      <CasingFormModal
+        isOpen={isCasingModalOpen}
+        onRequestClose={() => setCasingModalOpen(false)}
+        onSubmit={handleCasingSubmit}
+        casingOptions={casingSet}
       />
 
       <DiffEditorModal

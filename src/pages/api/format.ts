@@ -70,7 +70,7 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
     // Change case OpenAPI
     if (casingSet.length > 0) {
       const caseOpts = await parseString(casingSet) as OpenAPICasingSet
-      const options = {generateSet: caseOpts} as OpenAPICasingOptions
+      const options = {casingSet: caseOpts} as OpenAPICasingOptions
       const casedRes = await openapiChangeCase(oaObj, options);
       output.data = casedRes.data;
     }

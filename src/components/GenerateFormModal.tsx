@@ -165,17 +165,17 @@ const GenerateFormModal: React.FC<GenerateFormModalProps> = ({isOpen, onRequestC
           </div>
         </div>
 
-
         <div>
-          <label className="block font-medium mb-2">Overwrite Existing</label>
+          <label htmlFor="overwrite-existing" className="block font-medium mb-2">Overwrite Existing</label>
           <div className="flex items-center">
             <input
+              id="overwrite-existing"
               type="checkbox"
               checked={overwriteExisting}
               onChange={(e) => setOverwriteExisting(e.target.checked)}
               className="mr-2"
             />
-            <span>Overwrite existing operationIds</span>
+            <label htmlFor="overwrite-existing" className="cursor-pointer">Overwrite existing operationIds</label>
           </div>
         </div>
 
