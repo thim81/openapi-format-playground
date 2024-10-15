@@ -27,6 +27,7 @@ import InstructionsModal from "@/components/InstructionsModal";
 import RawConfigModal from "@/components/RawConfigModal";
 import GenerateFormModal from "@/components/GenerateFormModal";
 import CasingFormModal from "@/components/CasingFormModal";
+import SortOptionsModal from "@/components/SortOptionsModal";
 
 const defaultCompMetrics = {
   schemas: [],
@@ -49,7 +50,6 @@ interface PlaygroundProps {
 
 export interface PlaygroundConfig extends openapiFormatConfig {
   isFilterOptionsCollapsed?: boolean;
-  isSortOptionsCollapsed?: boolean;
   toggleGenerate?: boolean;
   toggleCasing?: boolean;
   defaultFieldSorting?: boolean;
@@ -80,12 +80,12 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [defaultSortSet, setDefaultSortSet] = useState<string>('');
   const [sortSet, setSortSet] = useState<string>(defaultSortSet);
   const [isFilterOptionsCollapsed, setFilterOptionsCollapsed] = useState<boolean>(false);
-  const [isSortOptionsCollapsed, setSortOptionsCollapsed] = useState<boolean>(true);
   const [outputLanguage, setOutputLanguage] = useState<'json' | 'yaml'>('yaml');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDiffModalOpen, setDiffModalOpen] = useState(false);
   const [isGenerateModalOpen, setGenerateModalOpen] = useState(false);
   const [isCasingModalOpen, setCasingModalOpen] = useState(false);
+  const [isSortModalOpen, setSortModalOpen] = useState(false);
   const [isFormModalOpen, setFormModalOpen] = useState(false);
   const [isInstructionsModalOpen, setInstructionsModalOpen] = useState(false);
   const [isRawConfigModalOpen, setRawConfigModalOpen] = useState(false);
@@ -118,7 +118,6 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     casingSet,
     generateSet,
     isFilterOptionsCollapsed,
-    isSortOptionsCollapsed,
     toggleGenerate,
     toggleCasing,
     outputLanguage,
@@ -216,7 +215,6 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setFilterUnused(result?.config?.filterSet?.includes('unusedComponents') ?? false);
 
           setFilterOptionsCollapsed(result.config.isFilterOptionsCollapsed ?? false);
-          setSortOptionsCollapsed(result.config.isSortOptionsCollapsed ?? true);
 
           setPathSort(result.config.pathSort ?? 'original');
           setDefaultFieldSorting(result.config.defaultFieldSorting ? false : true);
@@ -294,6 +292,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setCasingModalOpen(true);
   };
 
+  const openSortModal = () => {
+    setSortModalOpen(true);
+  };
+
   const openFormModal = () => {
     setFormModalOpen(true);
   };
@@ -332,10 +334,14 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   };
 
   const handleCasingSubmit = async (selectedOptions: any) => {
-    console.log('handleCasingSubmit', selectedOptions)
     const _selectedOptions = await stringify(selectedOptions)
     setCasingSet(_selectedOptions);
     setCasingModalOpen(false);
+  };
+
+  const handleSortSubmit = async (sortOptions: any) => {
+    setSortSet(sortOptions);
+    setSortModalOpen(false);
   };
 
   const handleDefaultFieldSortingChange = async () => {
@@ -412,17 +418,6 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               {/*  Configure*/}
               {/*</button>*/}
             </div>
-            {/*<div className="mb-4">*/}
-            {/*  <label className="block mb-1 font-medium text-gray-700">Output format</label>*/}
-            {/*<select*/}
-            {/*  value={outputLanguage}*/}
-            {/*  onChange={(e) => setOutputLanguage(e.target.value as 'json' | 'yaml')}*/}
-            {/*  className="p-2 border rounded w-full"*/}
-            {/*>*/}
-            {/*  <option value="json">JSON</option>*/}
-            {/*  <option value="yaml">YAML</option>*/}
-            {/*</select>*/}
-            {/*</div>*/}
             {outputLanguage === 'yaml' && (
               <>
                 <div className="mb-4">
@@ -437,7 +432,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 </div>
               </>
             )}
-            <div className="mb-4">
+            <div className="mb-2">
               <h3 className="text-lg font-semibold mb-2">Sort options</h3>
               <label className="flex items-center font-medium text-gray-700">
                 Sort OpenAPI
@@ -448,14 +443,24 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                   className="ml-2"/>
               </label>
               {sort && (
-                <label className="flex items-center font-medium text-gray-700">
-                  Default OpenAPI field sorting
-                  <input
-                    type="checkbox"
-                    checked={defaultFieldSorting}
-                    onChange={handleDefaultFieldSortingChange}
-                    className="ml-2"/>
-                </label>
+                <div className="flex items-center mt-2">
+                  <label className="flex items-center font-medium text-gray-700">
+                    Custom OpenAPI field sorting
+                    <input
+                      type="checkbox"
+                      checked={!defaultFieldSorting}
+                      onChange={handleDefaultFieldSortingChange}
+                      className="ml-2"
+                    />
+                  </label>
+
+                  <button
+                    onClick={openSortModal}
+                    className="ml-4 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
+                  >
+                    Configure
+                  </button>
+                </div>
               )}
             </div>
             {sort && (
@@ -498,7 +503,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               </h3>
               {!isFilterOptionsCollapsed && (
                 <div>
-                  <MonacoEditorWrapper value={filterSet} onChange={setFilterSet} height='40vh'/>
+                  <MonacoEditorWrapper value={filterSet} onChange={setFilterSet} height='36vh'/>
                 </div>
               )}
               <label className="flex items-center font-medium text-gray-700">
@@ -555,29 +560,6 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 </button>
               </div>
             </div>
-
-            {!defaultFieldSorting && (
-              <div className="flex-1">
-                <h3
-                  className="text-lg font-semibold mb-2 cursor-pointer"
-                  onClick={() => setSortOptionsCollapsed(!isSortOptionsCollapsed)}
-                >
-                  Custom field sorting {isSortOptionsCollapsed ? '▲' : '▼'}
-                  <ButtonDownload
-                    content={sortSet}
-                    filename="oaf-sort"
-                    format={outputLanguage}
-                    label="Download sort"
-                    className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
-                  />
-                </h3>
-                {!isSortOptionsCollapsed && (
-                  <div>
-                    <MonacoEditorWrapper value={sortSet} onChange={setSortSet} language="json" height='40vh'/>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
           <div className="flex-1 flex flex-col">
             <div className="flex items-center justify-between mb-2">
@@ -646,6 +628,14 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         onRequestClose={() => setCasingModalOpen(false)}
         onSubmit={handleCasingSubmit}
         casingOptions={casingSet}
+      />
+
+      <SortOptionsModal
+        isOpen={isSortModalOpen}
+        onRequestClose={() => setSortModalOpen(false)}
+        sortSet={sortSet}
+        onSubmit={handleSortSubmit}
+        outputLanguage={outputLanguage}
       />
 
       <DiffEditorModal
