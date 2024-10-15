@@ -28,6 +28,7 @@ import RawConfigModal from "@/components/RawConfigModal";
 import GenerateFormModal from "@/components/GenerateFormModal";
 import CasingFormModal from "@/components/CasingFormModal";
 import SortOptionsModal from "@/components/SortOptionsModal";
+import ButtonUrlModal from "@/components/ButtonUrlModal";
 
 const defaultCompMetrics = {
   schemas: [],
@@ -565,9 +566,12 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             </div>
           </div>
           <div className="flex-1 flex flex-col">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex justify-between items-center mb-2">
               <h2 className="text-xl font-bold">OpenAPI Input</h2>
-              <ButtonUpload onFileLoad={handleFileLoad}/>
+              <div className="flex space-x-2">
+                <ButtonUrlModal onUrlLoad={handleFileLoad}/>
+                <ButtonUpload onFileLoad={handleFileLoad}/>
+              </div>
             </div>
             <MonacoEditorWrapper value={input} onChange={handleInputChange}/>
           </div>
