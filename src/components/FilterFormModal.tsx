@@ -16,7 +16,11 @@ type SelectedOptions = {
 };
 
 const FilterFormModal: React.FC<FilterFormModalProps> = ({isOpen, onRequestClose, onSubmit, filterOptions}) => {
-  const dynamicHeight = Object.keys(filterOptions).length > 20 ? `90%` : Object.keys(filterOptions).length > 10 ? `72%` : '50%';
+  const totalItems = Object.values(filterOptions).reduce((acc, array) => acc + (array?.length ?? 0), 0);
+
+  const dynamicHeight = totalItems > 50 ? '98%' : totalItems > 20 ? '74%' : '50%';
+  console.log(Object.keys(filterOptions).length)
+  console.log((filterOptions))
 
   const [selectedOptions, setSelectedOptions] = useState<SelectedOptions>({});
 
@@ -88,7 +92,7 @@ const FilterFormModal: React.FC<FilterFormModalProps> = ({isOpen, onRequestClose
   };
 
   return (
-    <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="60%" height={dynamicHeight}>
+    <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="70%" height={dynamicHeight}>
       <h2 className="text-xl font-bold mb-4">Filter Options</h2>
       <form onSubmit={handleSubmit} className="px-4">
         {Object.keys(filterOptions).map((category) => {
