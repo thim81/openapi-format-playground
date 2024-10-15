@@ -9,10 +9,11 @@ interface SortOptionsModalProps {
   onRequestClose: () => void;
   onSubmit: (sortingSet: OpenAPISortSet) => void;
   sortSet: any;
+  defaultSort: any; // Adding a prop for default sorting options
   outputLanguage: 'json' | 'yaml';
 }
 
-const SortOptionsModal: React.FC<SortOptionsModalProps> = ({isOpen, onRequestClose, onSubmit, sortSet, outputLanguage,}) => {
+const SortOptionsModal: React.FC<SortOptionsModalProps> = ({isOpen, onRequestClose, onSubmit, sortSet, outputLanguage,defaultSort}) => {
   const [localSortSet, setLocalSortSet] = useState(sortSet);
 
   useEffect(() => {
@@ -20,6 +21,11 @@ const SortOptionsModal: React.FC<SortOptionsModalProps> = ({isOpen, onRequestClo
       setLocalSortSet(sortSet);
     }
   }, [sortSet]);
+
+  // Handle Reset: Reset localSortSet to defaultSort
+  const handleReset = () => {
+    setLocalSortSet(defaultSort);
+  };
 
   const handleSubmit = () => {
     onSubmit(localSortSet);  // Submit the updated sorting set
@@ -38,8 +44,14 @@ const SortOptionsModal: React.FC<SortOptionsModalProps> = ({isOpen, onRequestClo
           filename="oaf-sort"
           format={outputLanguage}
           label="Download sort"
-          className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
+          className="ml-2 bg-green-500 text-white text-xs p-1 rounded hover:bg-green-700 focus:outline-none"
         />
+        <button
+          onClick={handleReset}
+          className="ml-2 bg-yellow-500 text-white text-xs p-1 rounded hover:bg-yellow-600 focus:outline-none"
+        >
+          Reset
+        </button>
       </div>
 
       <div>

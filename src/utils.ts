@@ -28,7 +28,6 @@ export const generateShareUrl = async (origin: string, openapi?: string, config?
     // if (options.convertTo !== undefined) config.convertTo = options.convertTo
 
     if (config.isFilterOptionsCollapsed !== undefined) configOps.isFilterOptionsCollapsed = config.isFilterOptionsCollapsed;
-    if (config.isSortOptionsCollapsed !== undefined) configOps.isSortOptionsCollapsed = config.isSortOptionsCollapsed;
     if (config.outputLanguage !== undefined) configOps.outputLanguage = config.outputLanguage;
 
     if (config.pathSort !== undefined) configOps.pathSort = config.pathSort;

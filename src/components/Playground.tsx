@@ -78,6 +78,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [casingSet, setCasingSet] = useState<string>('');
   const [toggleCasing, setToggleCasing] = useState<boolean>(false);
   const [defaultSortSet, setDefaultSortSet] = useState<string>('');
+  const [customSortSet, setCustomSortSet] = useState<string>(defaultSortSet);
   const [sortSet, setSortSet] = useState<string>(defaultSortSet);
   const [isFilterOptionsCollapsed, setFilterOptionsCollapsed] = useState<boolean>(false);
   const [outputLanguage, setOutputLanguage] = useState<'json' | 'yaml'>('yaml');
@@ -144,8 +145,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       keepComments: keepComments,
       filterSet: dFilterSet,
       sortSet: dSortSet,
-      ...(dGenerateSet && toggleGenerate && { generateSet: dGenerateSet }),
-      ...(dCasingSet && toggleCasing && { casingSet: dCasingSet }),
+      ...(dGenerateSet && toggleGenerate && {generateSet: dGenerateSet}),
+      ...(dCasingSet && toggleCasing && {casingSet: dCasingSet}),
       format: outputLanguage,
     };
 
@@ -188,7 +189,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       setOutput('');
     }
     setLoading(false);
-  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dGenerateSet, dCasingSet, outputLanguage, pathSort, toggleGenerate, toggleCasing,setOutput]);
+  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dGenerateSet, dCasingSet, outputLanguage, pathSort, toggleGenerate, toggleCasing, setOutput, defaultFieldSorting]);
 
   // Decode Share URL
   useEffect(() => {
@@ -207,6 +208,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setGenerateSet(result.config.generateSet ?? '');
           setCasingSet(result.config.casingSet ?? '');
           setSortSet(result.config.sortSet ?? '');
+          setCustomSortSet(result.config.sortSet ?? defaultSortSet);
 
           setToggleCasing(result.config.toggleCasing ?? false);
           seTtoggleGenerate(result.config.toggleGenerate ?? false);
@@ -217,7 +219,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setFilterOptionsCollapsed(result.config.isFilterOptionsCollapsed ?? false);
 
           setPathSort(result.config.pathSort ?? 'original');
-          setDefaultFieldSorting(result.config.defaultFieldSorting ? false : true);
+          setDefaultFieldSorting(result.config?.defaultFieldSorting ? true : false);
         }
         setLoading(false);
       }
@@ -340,6 +342,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   };
 
   const handleSortSubmit = async (sortOptions: any) => {
+    setCustomSortSet(sortOptions);
     setSortSet(sortOptions);
     setSortModalOpen(false);
   };
@@ -347,10 +350,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const handleDefaultFieldSortingChange = async () => {
     setDefaultFieldSorting(!defaultFieldSorting);
     if (defaultFieldSorting) {
-      let newSortSet = defaultSortSet;
-      if (sortSet.trim() !== '') {
-        newSortSet = defaultSortSet
-      }
+      let newSortSet = customSortSet;
+      // if (sortSet.trim() !== '') {
+      //   newSortSet = defaultSortSet
+      // }
       setSortSet(newSortSet);
       await handlePathSortChange(pathSort, newSortSet)
     } else {
@@ -633,9 +636,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       <SortOptionsModal
         isOpen={isSortModalOpen}
         onRequestClose={() => setSortModalOpen(false)}
-        sortSet={sortSet}
+        sortSet={customSortSet}
         onSubmit={handleSortSubmit}
         outputLanguage={outputLanguage}
+        defaultSort={defaultSortSet}
       />
 
       <DiffEditorModal
