@@ -43,13 +43,20 @@ const ButtonUpload: React.FC<FileUploadProps> = ({onFileLoad}) => {
     event.target.value = '';
   };
 
+  // Function to trigger the file input click
+  const triggerFileInput = () => {
+    document.getElementById('file-upload')?.click();
+  };
+
   return (
     <div>
-      <label
-        htmlFor="file-upload"
-        className="cursor-pointer bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded">
+      <button
+        type="button"
+        onClick={triggerFileInput}
+        className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded"
+      >
         Upload File
-      </label>
+      </button>
       <input
         id="file-upload"
         type="file"

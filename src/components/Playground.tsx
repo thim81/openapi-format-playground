@@ -25,6 +25,10 @@ import ButtonUpload from "@/components/ButtonUpload";
 import MetricsBar, {ComponentMetrics} from "@/components/MetricsBar";
 import InstructionsModal from "@/components/InstructionsModal";
 import RawConfigModal from "@/components/RawConfigModal";
+import GenerateFormModal from "@/components/GenerateFormModal";
+import CasingFormModal from "@/components/CasingFormModal";
+import SortOptionsModal from "@/components/SortOptionsModal";
+import ButtonUrlModal from "@/components/ButtonUrlModal";
 
 const defaultCompMetrics = {
   schemas: [],
@@ -47,7 +51,8 @@ interface PlaygroundProps {
 
 export interface PlaygroundConfig extends openapiFormatConfig {
   isFilterOptionsCollapsed?: boolean;
-  isSortOptionsCollapsed?: boolean;
+  toggleGenerate?: boolean;
+  toggleCasing?: boolean;
   defaultFieldSorting?: boolean;
   pathSort?: 'original' | 'path' | 'tags';
   outputLanguage?: 'json' | 'yaml';
@@ -58,6 +63,8 @@ export interface openapiFormatConfig {
   keepComments?: boolean;
   filterSet?: string;
   sortSet?: string;
+  generateSet?: string;
+  casingSet?: string;
   format?: string;
 }
 
@@ -67,13 +74,20 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [filterUnused, setFilterUnused] = useState<boolean>(false);
   const [filterPrevent, setFilterPrevent] = useState<boolean>(false);
   const [filterSet, setFilterSet] = useState<string>('');
+  const [generateSet, setGenerateSet] = useState<string>('');
+  const [toggleGenerate, seTtoggleGenerate] = useState<boolean>(false);
+  const [casingSet, setCasingSet] = useState<string>('');
+  const [toggleCasing, setToggleCasing] = useState<boolean>(false);
   const [defaultSortSet, setDefaultSortSet] = useState<string>('');
+  const [customSortSet, setCustomSortSet] = useState<string>(defaultSortSet);
   const [sortSet, setSortSet] = useState<string>(defaultSortSet);
   const [isFilterOptionsCollapsed, setFilterOptionsCollapsed] = useState<boolean>(false);
-  const [isSortOptionsCollapsed, setSortOptionsCollapsed] = useState<boolean>(true);
   const [outputLanguage, setOutputLanguage] = useState<'json' | 'yaml'>('yaml');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDiffModalOpen, setDiffModalOpen] = useState(false);
+  const [isGenerateModalOpen, setGenerateModalOpen] = useState(false);
+  const [isCasingModalOpen, setCasingModalOpen] = useState(false);
+  const [isSortModalOpen, setSortModalOpen] = useState(false);
   const [isFormModalOpen, setFormModalOpen] = useState(false);
   const [isInstructionsModalOpen, setInstructionsModalOpen] = useState(false);
   const [isRawConfigModalOpen, setRawConfigModalOpen] = useState(false);
@@ -95,23 +109,29 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const dInput = useDebounce(input, 1000);
   const dFilterSet = useDebounce(filterSet, 1000);
   const dSortSet = useDebounce(sortSet, 1000);
+  const dGenerateSet = useDebounce(generateSet, 1000);
+  const dCasingSet = useDebounce(casingSet, 1000);
 
   const config = {
     sort,
     keepComments,
     filterSet,
     sortSet,
+    casingSet,
+    generateSet,
     isFilterOptionsCollapsed,
-    isSortOptionsCollapsed,
+    toggleGenerate,
+    toggleCasing,
     outputLanguage,
-    pathSort
+    pathSort,
+    defaultFieldSorting
   } || {} as PlaygroundConfig;
 
   const handleInputChange = useCallback(async (newValue: string) => {
     setLoading(true);
     setErrorMessage(null);
     let convertOptions = {keepComments: keepComments || false};
-    const oaObj = await parseString(newValue,convertOptions) as OpenAPIV3.Document;
+    const oaObj = await parseString(newValue, convertOptions) as OpenAPIV3.Document;
     const oaElements = analyzeOpenApi(oaObj);
     setTotalPaths(oaElements.operations?.length || 0);
     setTotalTags(oaElements.tags?.length || 0);
@@ -121,6 +141,17 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   // Handle format conversion
   useEffect(() => {
+
+    const config = {
+      sort,
+      keepComments: keepComments,
+      filterSet: dFilterSet,
+      sortSet: dSortSet,
+      ...(dGenerateSet && toggleGenerate && {generateSet: dGenerateSet}),
+      ...(dCasingSet && toggleCasing && {casingSet: dCasingSet}),
+      format: outputLanguage,
+    };
+
     const handleFormat = async () => {
       try {
         const response = await fetch('/api/format', {
@@ -130,13 +161,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           },
           body: JSON.stringify({
             openapi: dInput,
-            config: {
-              sort,
-              keepComments: keepComments,
-              filterSet: dFilterSet,
-              sortSet: dSortSet,
-              format: outputLanguage
-            }
+            config
           }),
         });
 
@@ -166,7 +191,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       setOutput('');
     }
     setLoading(false);
-  }, [dInput, sort, keepComments, dFilterSet, dSortSet, outputLanguage, pathSort, setOutput]);
+  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dGenerateSet, dCasingSet, outputLanguage, pathSort, toggleGenerate, toggleCasing, setOutput, defaultFieldSorting]);
 
   // Decode Share URL
   useEffect(() => {
@@ -182,16 +207,21 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setSort(result.config.sort ?? true);
           setKeepComments(result.config.keepComments ?? false);
           setFilterSet(result.config.filterSet ?? '');
+          setGenerateSet(result.config.generateSet ?? '');
+          setCasingSet(result.config.casingSet ?? '');
           setSortSet(result.config.sortSet ?? '');
+          setCustomSortSet(result.config.sortSet ?? defaultSortSet);
+
+          setToggleCasing(result.config.toggleCasing ?? false);
+          seTtoggleGenerate(result.config.toggleGenerate ?? false);
 
           setOutputLanguage(result.config.outputLanguage ?? 'yaml');
           setFilterUnused(result?.config?.filterSet?.includes('unusedComponents') ?? false);
 
           setFilterOptionsCollapsed(result.config.isFilterOptionsCollapsed ?? false);
-          setSortOptionsCollapsed(result.config.isSortOptionsCollapsed ?? true);
 
           setPathSort(result.config.pathSort ?? 'original');
-          setDefaultFieldSorting(result.config.defaultFieldSorting ? false : true);
+          setDefaultFieldSorting(result.config.defaultFieldSorting ?? true);
         }
         setLoading(false);
       }
@@ -258,6 +288,18 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setDiffModalOpen(true);
   };
 
+  const openGenerateModal = () => {
+    setGenerateModalOpen(true);
+  };
+
+  const openCasingModal = () => {
+    setCasingModalOpen(true);
+  };
+
+  const openSortModal = () => {
+    setSortModalOpen(true);
+  };
+
   const openFormModal = () => {
     setFormModalOpen(true);
   };
@@ -289,13 +331,31 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setFormModalOpen(false);
   };
 
+  const handleGenerateSubmit = async (selectedOptions: any) => {
+    const _selectedOptions = await stringify(selectedOptions)
+    setGenerateSet(_selectedOptions);
+    setGenerateModalOpen(false);
+  };
+
+  const handleCasingSubmit = async (selectedOptions: any) => {
+    const _selectedOptions = await stringify(selectedOptions)
+    setCasingSet(_selectedOptions);
+    setCasingModalOpen(false);
+  };
+
+  const handleSortSubmit = async (sortOptions: any) => {
+    setCustomSortSet(sortOptions);
+    setSortSet(sortOptions);
+    setSortModalOpen(false);
+  };
+
   const handleDefaultFieldSortingChange = async () => {
     setDefaultFieldSorting(!defaultFieldSorting);
     if (defaultFieldSorting) {
-      let newSortSet = defaultSortSet;
-      if (sortSet.trim() !== '') {
-        newSortSet = defaultSortSet
-      }
+      let newSortSet = customSortSet;
+      // if (sortSet.trim() !== '') {
+      //   newSortSet = defaultSortSet
+      // }
       setSortSet(newSortSet);
       await handlePathSortChange(pathSort, newSortSet)
     } else {
@@ -343,6 +403,16 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           <div className="w-1/5 flex flex-col h-full overflow-auto mb-2">
             <div className="flex items-center mb-2">
               <h2 className="text-xl font-bold">Configuration</h2>
+              <div className="ml-4">
+                <select
+                  value={outputLanguage}
+                  onChange={(e) => setOutputLanguage(e.target.value as 'json' | 'yaml')}
+                  className="p-2 border rounded"
+                >
+                  <option value="json">JSON</option>
+                  <option value="yaml">YAML</option>
+                </select>
+              </div>
               {/*<button*/}
               {/*  className="ml-2 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"*/}
               {/*  onClick={(e) => {*/}
@@ -352,17 +422,6 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               {/*>*/}
               {/*  Configure*/}
               {/*</button>*/}
-            </div>
-            <div className="mb-4">
-              <label className="block mb-1 font-medium text-gray-700">Output format</label>
-              <select
-                value={outputLanguage}
-                onChange={(e) => setOutputLanguage(e.target.value as 'json' | 'yaml')}
-                className="p-2 border rounded w-full"
-              >
-                <option value="json">JSON</option>
-                <option value="yaml">YAML</option>
-              </select>
             </div>
             {outputLanguage === 'yaml' && (
               <>
@@ -378,8 +437,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 </div>
               </>
             )}
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold mb-2">Sort Options</h3>
+            <div className="mb-2">
+              <h3 className="text-lg font-semibold mb-2">Sort options</h3>
               <label className="flex items-center font-medium text-gray-700">
                 Sort OpenAPI
                 <input
@@ -389,23 +448,33 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                   className="ml-2"/>
               </label>
               {sort && (
-                <label className="flex items-center font-medium text-gray-700">
-                  Default OpenAPI field sorting
-                  <input
-                    type="checkbox"
-                    checked={defaultFieldSorting}
-                    onChange={handleDefaultFieldSortingChange}
-                    className="ml-2"/>
-                </label>
+                <div className="flex items-center mt-2">
+                  <label className="flex items-center font-medium text-gray-700">
+                    Custom OpenAPI field sorting
+                    <input
+                      type="checkbox"
+                      checked={!defaultFieldSorting}
+                      onChange={handleDefaultFieldSortingChange}
+                      className="ml-2"
+                    />
+                  </label>
+
+                  <button
+                    onClick={openSortModal}
+                    className="ml-4 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
+                  >
+                    Configure
+                  </button>
+                </div>
               )}
             </div>
             {sort && (
-              <div className="mb-4">
-                <label className="block mb-1 font-medium text-gray-700">Sort Paths By</label>
+              <div className="flex items-center mb-4">
+                <label className="block mb-1 font-medium text-gray-700 mr-4">Sort Paths By</label>
                 <select
                   value={pathSort}
                   onChange={(e) => handlePathSortChange(e.target.value as 'original' | 'path' | 'tags', sortSet)}
-                  className="p-2 border rounded w-full"
+                  className="p-0 border rounded"
                 >
                   <option value="original">Original order</option>
                   <option value="path">Path</option>
@@ -439,7 +508,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               </h3>
               {!isFilterOptionsCollapsed && (
                 <div>
-                  <MonacoEditorWrapper value={filterSet} onChange={setFilterSet} height='40vh'/>
+                  <MonacoEditorWrapper value={filterSet} onChange={setFilterSet} height='36vh'/>
                 </div>
               )}
               <label className="flex items-center font-medium text-gray-700">
@@ -461,113 +530,156 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 />
               </label>
             </div>
-            {!defaultFieldSorting && (
-              <div className="flex-1">
-                <h3
-                  className="text-lg font-semibold mb-2 cursor-pointer"
-                  onClick={() => setSortOptionsCollapsed(!isSortOptionsCollapsed)}
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold mb-2 cursor-pointer flex items-center">Extra options</h3>
+              <div className="flex items-center mb-2">
+                <span>Generate OperationId</span>
+                <input
+                  type="checkbox"
+                  id="generateOperationId"
+                  className="ml-2 mr-2"
+                  checked={toggleGenerate}
+                  onChange={() => seTtoggleGenerate(!toggleGenerate)}
+                />
+                <button
+                  onClick={openGenerateModal}
+                  className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
                 >
-                  Custom field sorting {isSortOptionsCollapsed ? '▲' : '▼'}
-                  <ButtonDownload
-                    content={sortSet}
-                    filename="oaf-sort"
-                    format={outputLanguage}
-                    label="Download sort"
-                    className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
-                  />
-                </h3>
-                {!isSortOptionsCollapsed && (
-                  <div>
-                    <MonacoEditorWrapper value={sortSet} onChange={setSortSet} language="json" height='40vh'/>
-                  </div>
-                )}
+                  Configure
+                </button>
               </div>
-            )}
+              <div className="flex items-center">
+                <span>Format casing</span>
+                <input
+                  type="checkbox"
+                  id="formatCasing"
+                  className="ml-2 mr-2"
+                  checked={toggleCasing}
+                  onChange={() => setToggleCasing(!toggleCasing)}
+                />
+                <button
+                  onClick={openCasingModal}
+                  className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
+                >
+                  Configure
+                </button>
+              </div>
+            </div>
           </div>
           <div className="flex-1 flex flex-col">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex justify-between items-center mb-2">
               <h2 className="text-xl font-bold">OpenAPI Input</h2>
-              <ButtonUpload onFileLoad={handleFileLoad}/>
+              <div className="flex space-x-2">
+                <ButtonUrlModal onUrlLoad={handleFileLoad}/>
+                <ButtonUpload onFileLoad={handleFileLoad}/>
+              </div>
             </div>
             <MonacoEditorWrapper value={input} onChange={handleInputChange}/>
           </div>
           <div className="flex-1 flex flex-col">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-xl font-bold">OpenAPI Output</h2>
-            {loading && <LoadingSpinner/>}
-            <div className="space-x-2">
-              <button onClick={openDiffModal}
-                      className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-4 rounded border border-green-500">
-                Show Diff
-              </button>
-              <button onClick={openInstructionsModal}
-                      className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded">
-                CLI instructions
-              </button>
-              <ButtonShare openapi={input} config={config}/>
-              <ButtonDownload content={output} filename="openapi-formatted" format={outputLanguage}/>
+              {loading && <LoadingSpinner/>}
+              <div className="space-x-2">
+                <button onClick={openDiffModal}
+                        className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-4 rounded border border-green-500">
+                  Show Diff
+                </button>
+                <button onClick={openInstructionsModal}
+                        className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded">
+                  CLI instructions
+                </button>
+                <ButtonShare openapi={input} config={config}/>
+                <ButtonDownload content={output} filename="openapi-formatted" format={outputLanguage}/>
+              </div>
             </div>
+            <MonacoEditorWrapper value={output} onChange={setOutput}/>
           </div>
-          <MonacoEditorWrapper value={output} onChange={setOutput}/>
         </div>
       </div>
+
+      <MetricsBar
+        totalPaths={totalPaths}
+        totalTags={totalTags}
+        totalComponents={totalComponents}
+        totalUnusedComponents={totalUnusedComponents}
+        components={components}
+        unusedComponents={unusedComponents}
+      />
+
+      {
+        Object.keys(filterFormOptions).length > 0 && (
+          <button onClick={openFormModal}
+                  className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded-full shadow-lg">
+            Open Filter Form
+          </button>
+        )
+      }
+
+      <FilterFormModal
+        isOpen={isFormModalOpen}
+        onRequestClose={() => setFormModalOpen(false)}
+        onSubmit={handleFormSubmit}
+        filterOptions={filterFormOptions}
+      />
+
+      <GenerateFormModal
+        isOpen={isGenerateModalOpen}
+        onRequestClose={() => setGenerateModalOpen(false)}
+        onSubmit={handleGenerateSubmit}
+        openapi={input}
+        generateOptions={generateSet}
+      />
+
+      <CasingFormModal
+        isOpen={isCasingModalOpen}
+        onRequestClose={() => setCasingModalOpen(false)}
+        onSubmit={handleCasingSubmit}
+        casingOptions={casingSet}
+      />
+
+      <SortOptionsModal
+        isOpen={isSortModalOpen}
+        onRequestClose={() => setSortModalOpen(false)}
+        sortSet={customSortSet}
+        onSubmit={handleSortSubmit}
+        outputLanguage={outputLanguage}
+        defaultSort={defaultSortSet}
+      />
+
+      <DiffEditorModal
+        isOpen={isDiffModalOpen}
+        onRequestClose={() => setDiffModalOpen(false)}
+        original={input}
+        modified={output}
+        language={outputLanguage}
+      />
+
+      <InstructionsModal
+        isOpen={isInstructionsModalOpen}
+        onRequestClose={() => setInstructionsModalOpen(false)}
+        sort={sort}
+        keepComments={keepComments}
+        sortSet={sortSet}
+        filterSet={filterSet}
+        casingSet={casingSet}
+        generateSet={generateSet}
+        toggleCasing={toggleCasing}
+        toggleGenerate={toggleGenerate}
+        format={outputLanguage}
+      />
+
+      <RawConfigModal
+        isOpen={isRawConfigModalOpen}
+        onRequestClose={() => setRawConfigModalOpen(false)}
+        sort={sort}
+        keepComments={keepComments}
+        sortSet={sortSet}
+        filterSet={filterSet}
+        format={outputLanguage}
+      />
     </div>
-
-  <MetricsBar
-    totalPaths={totalPaths}
-    totalTags={totalTags}
-    totalComponents={totalComponents}
-    totalUnusedComponents={totalUnusedComponents}
-    components={components}
-    unusedComponents={unusedComponents}
-  />
-
-  {
-    Object.keys(filterFormOptions).length > 0 && (
-      <button onClick={openFormModal}
-              className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded-full shadow-lg">
-        Open Filter Form
-      </button>
-    )
-  }
-
-  <FilterFormModal
-    isOpen={isFormModalOpen}
-    onRequestClose={() => setFormModalOpen(false)}
-    onSubmit={handleFormSubmit}
-    filterOptions={filterFormOptions}
-  />
-
-  <DiffEditorModal
-    isOpen={isDiffModalOpen}
-    onRequestClose={() => setDiffModalOpen(false)}
-    original={input}
-    modified={output}
-    language={outputLanguage}
-  />
-
-  <InstructionsModal
-    isOpen={isInstructionsModalOpen}
-    onRequestClose={() => setInstructionsModalOpen(false)}
-    sort={sort}
-    keepComments={keepComments}
-    sortSet={sortSet}
-    filterSet={filterSet}
-    format={outputLanguage}
-  />
-
-  <RawConfigModal
-    isOpen={isRawConfigModalOpen}
-    onRequestClose={() => setRawConfigModalOpen(false)}
-    sort={sort}
-    keepComments={keepComments}
-    sortSet={sortSet}
-    filterSet={filterSet}
-    format={outputLanguage}
-  />
-</div>
-)
-  ;
+  );
 };
 
 export default Playground;

@@ -1,5 +1,15 @@
 ## unreleased
 
+## [0.1.19] - 2024-10-15
+
+- Added settings to manage casing
+- Added settings to generate operationIds
+- Added to manage custom sort settings in modal
+- Added option to import OpenAPI from URL
+- General UI improvements
+- Updated instructions
+- Updated openapi-format to version 1.24.2
+
 ## [0.1.18] - 2024-09-16
 
 - Updated openapi-format to version 1.23.2
