@@ -5,7 +5,7 @@ import SimpleModal from './SimpleModal';
 import MonacoEditorWrapper from "@/components/MonacoEditorWrapper";
 import ButtonDownload from "@/components/ButtonDownload";
 import Link from "next/link";
-import {stringify} from "openapi-format";
+import {parseString, stringify} from "openapi-format";
 
 interface InstructionsModalProps {
   isOpen: boolean;
@@ -13,8 +13,12 @@ interface InstructionsModalProps {
   format: 'json' | 'yaml';
   sortSet: string;
   filterSet: string;
+  generateSet?: string;
+  casingSet?: string;
   sort: boolean;
   keepComments: boolean;
+  toggleGenerate?: boolean;
+  toggleCasing?: boolean;
 }
 
 const InstructionsModal: React.FC<InstructionsModalProps> = (
@@ -24,8 +28,12 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
     format,
     sortSet,
     filterSet,
+    casingSet,
+    generateSet,
     sort,
-    keepComments
+    keepComments,
+    toggleGenerate,
+    toggleCasing,
   }
 ) => {
   const [activeTab, setActiveTab] = useState('npx');
@@ -51,13 +59,36 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
   }, [format]);
 
   useEffect(() => {
+
     const generateConfigFileContent = async () => {
+      let sortOps = sortSet
+      let filterOps = filterSet
+      let generateOps = generateSet
+      let casingOps = casingSet
+
+      if(typeof filterSet === 'string') {
+        filterOps = await parseString(filterSet) as any
+      }
+      if(typeof sortSet === 'string') {
+        sortOps = await parseString(sortSet) as any
+      }
+      if(typeof generateSet === 'string') {
+        generateOps = await parseString(generateSet) as any
+      }
+      if(typeof casingSet === 'string') {
+        casingOps = await parseString(casingSet) as any
+      }
+
       let configInput: { [key: string]: any } = {
         output: `openapi-formatted.${fileExt}`,
         sort: sort ? true : false,
         keepComments: keepComments,
-        filterSet: filterSet.length ? filterFileName : undefined,
-        sortSet: sortSet.length ? sortFileName : undefined,
+        // filterFile: filterFileName ? filterFileName : undefined,
+        // sortFile: sortFileName ? sortFileName : undefined,
+        ...(filterSet?.length && {filterSet: filterOps}),
+        ...(sortSet?.length && {sortSet: sortOps}),
+        ...(generateSet?.length && toggleGenerate && {generateSet: generateOps}),
+        ...(casingSet?.length && toggleCasing && {casingSet: casingOps}),
       };
 
       if (!keepComments || format === 'json') {
@@ -76,7 +107,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
     };
 
     generateConfigFileContent();
-  }, [sort, keepComments, filterSet, sortSet, format, fileExt, filterFileName, sortFileName]);
+  }, [sort, keepComments, filterSet, sortSet, generateSet, casingSet, format, fileExt, filterFileName, sortFileName]);
 
   return (
     <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="80%" height={dynamicHeight}>
@@ -195,7 +226,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
               />
             </li>
             <pre className="bg-gray-100 p-2 rounded mb-2">
-            <MonacoEditorWrapper value={configFileContent} height="11vh"/>
+            <MonacoEditorWrapper value={configFileContent} height="28vh"/>
             </pre>
             <li>To format your OpenAPI file using the config file, run the following command:</li>
             <pre className="bg-gray-100 p-2 rounded mb-2">
@@ -203,16 +234,14 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
                 {`npx openapi-format openapi.${fileExt} --configFile oaf-config.${fileExt}`}
               </code>
             </pre>
-            <li>Review the options and ensure that the OpenAPI input & output, match your local or remote file.
-              The sort and filter options can be downloaded as files below.
-            </li>
+            <li>Review the options and ensure that the OpenAPI input & output, match your local or remote file.</li>
           </ol>
         </div>
       )}
-      {(filterSet.length > 0) || (sortContent.length > 0 && sort) && (
+      {(filterSet.length > 0) || (sortContent.length > 0 && sort) && activeTab !== 'configFile' && (
         <h2 className="text-xl font-bold mb-4">OpenAPI-format CLI options to download</h2>
       )}
-      {(sortContent.length > 0 && sort) && (
+      {(sortContent.length > 0 && sort && activeTab !== 'configFile') && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold">Sort Options:</h3>
@@ -229,7 +258,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
           </pre>
         </div>
       )}
-      {filterSet.length > 0 && (
+      {filterSet.length > 0  && activeTab !== 'configFile' && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold">Filter Options:</h3>

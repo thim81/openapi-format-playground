@@ -123,7 +123,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     toggleGenerate,
     toggleCasing,
     outputLanguage,
-    pathSort
+    pathSort,
+    defaultFieldSorting
   } || {} as PlaygroundConfig;
 
   const handleInputChange = useCallback(async (newValue: string) => {
@@ -220,7 +221,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setFilterOptionsCollapsed(result.config.isFilterOptionsCollapsed ?? false);
 
           setPathSort(result.config.pathSort ?? 'original');
-          setDefaultFieldSorting(result.config?.defaultFieldSorting ? true : false);
+          setDefaultFieldSorting(result.config.defaultFieldSorting ?? true);
         }
         setLoading(false);
       }
@@ -661,6 +662,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         keepComments={keepComments}
         sortSet={sortSet}
         filterSet={filterSet}
+        casingSet={casingSet}
+        generateSet={generateSet}
+        toggleCasing={toggleCasing}
+        toggleGenerate={toggleGenerate}
         format={outputLanguage}
       />
 
