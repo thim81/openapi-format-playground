@@ -72,10 +72,10 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
       if(typeof sortSet === 'string') {
         sortOps = await parseString(sortSet) as any
       }
-      if(typeof generateSet === 'string') {
+      if(typeof generateSet === 'string' && generateSet.length) {
         generateOps = await parseString(generateSet) as any
       }
-      if(typeof casingSet === 'string') {
+      if(typeof casingSet === 'string' && casingSet?.length ) {
         casingOps = await parseString(casingSet) as any
       }
 
@@ -107,7 +107,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
     };
 
     generateConfigFileContent();
-  }, [sort, keepComments, filterSet, sortSet, generateSet, casingSet, format, fileExt, filterFileName, sortFileName]);
+  }, [sort, keepComments, filterSet, sortSet, generateSet, casingSet, format, fileExt, filterFileName, sortFileName, toggleGenerate, toggleCasing]);
 
   return (
     <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="80%" height={dynamicHeight}>
