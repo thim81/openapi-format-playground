@@ -13,10 +13,15 @@ interface MonacoEditorProps {
   onChange?: (value: string) => void;
   language?: string;
   height?: string;
+  trimNewline?: boolean;
 }
 
-const MonacoEditorWrapper: React.FC<MonacoEditorProps> = ({value, onChange, language, height}) => {
-  return <MonacoEditorComponent value={value} onChange={onChange} language={language} height={height}/>;
+const MonacoEditorWrapper: React.FC<MonacoEditorProps> = ({value, onChange, language, height, trimNewline = false}) => {
+  let trimmedValue = value
+  if(value && trimNewline) {
+    trimmedValue = value.replace(/\n+$/, '');
+  }
+  return <MonacoEditorComponent value={trimmedValue} onChange={onChange} language={language} height={height}/>;
 };
 
 export default MonacoEditorWrapper;
