@@ -43,40 +43,62 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
   const sortContent = sort ? sortSet : ''
 
   const sortFileName = `oaf-sort.${fileExt}`;
-  const sortFileOption = sortContent.length ? ` --sortFile ${sortFileName}` : '';
-  const sortFileDocker = sortContent.length ? ` --sortFile /workspace/${sortFileName}` : '';
+  const sortFileOption = sortContent?.length ? ` --sortFile ${sortFileName}` : '';
+  const sortFileDocker = sortContent?.length ? ` --sortFile /workspace/${sortFileName}` : '';
   const filterFileName = `oaf-filter.${fileExt}`;
-  const filterFileOption = filterSet.length ? ` --filterFile ${filterFileName}` : '';
-  const filterFileDocker = filterSet.length ? ` --filterFile /workspace/${filterFileName}` : '';
+  const filterFileOption = filterSet?.length ? ` --filterFile ${filterFileName}` : '';
+  const filterFileDocker = filterSet?.length ? ` --filterFile /workspace/${filterFileName}` : '';
+  const generateFileName = `oaf-generate.${fileExt}`;
+  const generateFileOption = generateSet?.length && toggleGenerate ? ` --generateFile ${generateFileName}` : '';
+  const generateFileDocker = generateSet?.length && toggleGenerate ? ` --generateFile /workspace/${generateFileName}` : '';
+  const casingFileName = `oaf-casing.${fileExt}`;
+  const casingFileOption = casingSet?.length && toggleCasing ? ` --generateFile ${casingFileName}` : '';
+  const casingFileDocker = casingSet?.length && toggleCasing ? ` --generateFile /workspace/${casingFileName}` : '';
+
   const sortOption = !sort ? ` --no-sort` : '';
   const keepCommentsOption = keepComments && format === 'yaml' ? ` --keepComments` : '';
   const configFileName = `oaf-config`;
 
-  const dynamicHeight = sortContent.length && filterSet.length ? `90%` : sortContent.length || filterSet.length ? `72%` : '50%';
+  const activeSetsCount = [sortContent ?? '', filterSet ?? '', casingSet ?? '', generateSet ?? ''].filter(set => set.length > 0).length;
+  // const dynamicHeight = activeSetsCount > 2 ? '98%' : activeSetsCount === 2 ? '80%' : '60%';
+  // Set dynamic height based on active tab
+  const getDynamicHeight = () => {
+    switch (activeTab) {
+      case 'npx':
+      case 'npm':
+      case 'docker':
+        return activeSetsCount > 2 ? '98%' : activeSetsCount === 2 ? '82%' : '40%';
+      case 'configFile':
+        return '70%';
+      default:
+        return '60%';
+    }
+  };
+
+  const dynamicHeight = getDynamicHeight();
 
   useEffect(() => {
     setFileExt(format === 'json' ? 'json' : 'yaml');
   }, [format]);
 
   useEffect(() => {
-
     const generateConfigFileContent = async () => {
-      let sortOps = sortSet
-      let filterOps = filterSet
-      let generateOps = generateSet
-      let casingOps = casingSet
+      let sortOps = sortSet;
+      let filterOps = filterSet;
+      let generateOps = generateSet;
+      let casingOps = casingSet;
 
-      if(typeof filterSet === 'string') {
-        filterOps = await parseString(filterSet) as any
+      if (typeof filterSet === 'string') {
+        filterOps = await parseString(filterSet) as any;
       }
-      if(typeof sortSet === 'string') {
-        sortOps = await parseString(sortSet) as any
+      if (typeof sortSet === 'string') {
+        sortOps = await parseString(sortSet) as any;
       }
-      if(typeof generateSet === 'string' && generateSet.length) {
-        generateOps = await parseString(generateSet) as any
+      if (typeof generateSet === 'string' && generateSet.length) {
+        generateOps = await parseString(generateSet) as any;
       }
-      if(typeof casingSet === 'string' && casingSet?.length ) {
-        casingOps = await parseString(casingSet) as any
+      if (typeof casingSet === 'string' && casingSet?.length) {
+        casingOps = await parseString(casingSet) as any;
       }
 
       let configInput: { [key: string]: any } = {
@@ -107,7 +129,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
     };
 
     generateConfigFileContent();
-  }, [sort, keepComments, filterSet, sortSet, generateSet, casingSet, format, fileExt, filterFileName, sortFileName, toggleGenerate, toggleCasing]);
+  }, [sort, keepComments, filterSet, sortSet, generateSet, casingSet, format, toggleGenerate, toggleCasing]);
 
   return (
     <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="80%" height={dynamicHeight}>
@@ -151,15 +173,16 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
           </button>
         </nav>
       </div>
+
       {activeTab === 'npx' && (
         <div className="mb-4">
           <h3 className="font-semibold mb-2">Using openapi-format with NPX</h3>
           <ol className="list-decimal list-inside ml-4">
             <li>Open your terminal or command prompt.</li>
             <li>To format your OpenAPI file, run the following command:</li>
-            <pre className="bg-gray-100 p-2 rounded mb-2">
+            <pre className="bg-gray-100 p-2 rounded mb-2 break-words whitespace-pre-wrap">
               <code>
-                {`npx openapi-format openapi.${fileExt} -o openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileOption}${filterFileOption}`}
+                {`npx openapi-format openapi.${fileExt} -o openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileOption}${filterFileOption}${generateFileOption}${casingFileOption}`}
               </code>
             </pre>
             <li>Review the command and ensure that the OpenAPI input & output, match your local or remote file.
@@ -168,6 +191,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
           </ol>
         </div>
       )}
+
       {activeTab === 'npm' && (
         <div className="mb-4">
           <h3 className="font-semibold mb-2">Using openapi-format with NPM</h3>
@@ -179,9 +203,9 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
               </code>
             </pre>
             <li>Run the following command to format your OpenAPI file:</li>
-            <pre className="bg-gray-100 p-2 rounded mb-2">
+            <pre className="bg-gray-100 p-2 rounded mb-2 break-words whitespace-pre-wrap">
               <code>
-                {`openapi-format openapi.${fileExt} -o openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileOption}${filterFileOption}`}
+                {`openapi-format openapi.${fileExt} -o openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileOption}${filterFileOption}${generateFileOption}${casingFileOption}`}
               </code>
             </pre>
             <li>Review the command and ensure that the OpenAPI input & output, match your local or remote file.
@@ -190,6 +214,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
           </ol>
         </div>
       )}
+
       {activeTab === 'docker' && (
         <div className="mb-4">
           <h3 className="font-semibold mb-2">Using openapi-format with Docker</h3>
@@ -203,7 +228,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
             <li>Run the Docker container with the appropriate options:</li>
             <pre className="bg-gray-100 p-2 rounded mb-2 break-words whitespace-pre-wrap">
               <code>
-                {`docker run --rm -v $(pwd):/workspace ghcr.io/thim81/openapi-format /workspace/openapi.${fileExt} -o /workspace/openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileDocker}${filterFileDocker}`}
+                {`docker run --rm -v $(pwd):/workspace ghcr.io/thim81/openapi-format /workspace/openapi.${fileExt} -o /workspace/openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileDocker}${filterFileDocker}${generateFileDocker}${casingFileDocker}`}
               </code>
             </pre>
             <li>Review the command and ensure that the OpenAPI input & output, match your local or remote file.
@@ -226,10 +251,10 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
               />
             </li>
             <pre className="bg-gray-100 p-2 rounded mb-2">
-            <MonacoEditorWrapper value={configFileContent} height="28vh"/>
+            <MonacoEditorWrapper value={configFileContent} height="28vh" trimNewline={true}/>
             </pre>
             <li>To format your OpenAPI file using the config file, run the following command:</li>
-            <pre className="bg-gray-100 p-2 rounded mb-2">
+            <pre className="bg-gray-100 p-2 rounded mb-2 break-words whitespace-pre-wrap">
               <code>
                 {`npx openapi-format openapi.${fileExt} --configFile oaf-config.${fileExt}`}
               </code>
@@ -254,7 +279,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
             />
           </div>
           <pre className="bg-gray-100 p-2 rounded mb-2">
-          <MonacoEditorWrapper value={sortSet} height="20vh"/>
+          <MonacoEditorWrapper value={sortSet} height="20vh" trimNewline={true}/>
           </pre>
         </div>
       )}
@@ -271,7 +296,41 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
             />
           </div>
           <pre className="bg-gray-100 p-2 rounded mb-2">
-          <MonacoEditorWrapper value={filterSet} height="20vh"/>
+          <MonacoEditorWrapper value={filterSet} height="20vh" trimNewline={true}/>
+          </pre>
+        </div>
+      )}
+      {generateSet && generateSet?.length > 0 && toggleGenerate && activeTab !== 'configFile' && (
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold">Generate Options:</h3>
+            <ButtonDownload
+              content={generateSet}
+              filename="oaf-generate"
+              format={format}
+              label="Download generate"
+              className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
+            />
+          </div>
+          <pre className="bg-gray-100 p-2 rounded mb-2">
+          <MonacoEditorWrapper value={generateSet} height="6vh" trimNewline={true}/>
+          </pre>
+        </div>
+      )}
+      {casingSet && casingSet?.length > 0 && toggleCasing && activeTab !== 'configFile' && (
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold">Casing Options:</h3>
+            <ButtonDownload
+              content={casingSet}
+              filename="oaf-casing"
+              format={format}
+              label="Download casing"
+              className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
+            />
+          </div>
+          <pre className="bg-gray-100 p-2 rounded mb-2">
+          <MonacoEditorWrapper value={casingSet} height="20vh" trimNewline={true}/>
           </pre>
         </div>
       )}
