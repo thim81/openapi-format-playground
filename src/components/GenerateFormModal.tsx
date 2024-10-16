@@ -87,7 +87,7 @@ const GenerateFormModal: React.FC<GenerateFormModalProps> = ({isOpen, onRequestC
         });
 
         // Stop if we already have 3 items
-        if (previewItems.length >= 3) {
+        if (previewItems.length >= 2) {
           break;
         }
       }
@@ -120,7 +120,7 @@ const GenerateFormModal: React.FC<GenerateFormModalProps> = ({isOpen, onRequestC
   };
 
   return (
-    <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="60%" height="60%">
+    <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="60%" height="56%">
       <h2 className="text-xl font-bold mb-4">Generate OperationId Configuration</h2>
       <form onSubmit={handleSubmit} className="px-4 space-y-4">
         <div>
