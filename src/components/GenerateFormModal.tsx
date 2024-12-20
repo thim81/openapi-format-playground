@@ -139,7 +139,7 @@ const GenerateFormModal: React.FC<GenerateFormModalProps> = ({isOpen, onRequestC
                   key={placeholder}
                   type="button"
                   onClick={() => handlePlaceholderClick(placeholder)}
-                  className="bg-gray-200 p-2 rounded text-sm hover:bg-gray-300"
+                  className="bg-gray-200 dark:bg-green-900 p-2 rounded text-sm hover:bg-gray-300 dark:hover:bg-green-700"
                 >
                   {placeholder}
                 </button>
