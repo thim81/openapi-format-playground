@@ -19,8 +19,8 @@ const FilterFormModal: React.FC<FilterFormModalProps> = ({isOpen, onRequestClose
   const totalItems = Object.values(filterOptions).reduce((acc, array) => acc + (array?.length ?? 0), 0);
 
   const dynamicHeight = totalItems > 50 ? '98%' : totalItems > 20 ? '74%' : '50%';
-  console.log(Object.keys(filterOptions).length)
-  console.log((filterOptions))
+  // console.log(Object.keys(filterOptions).length)
+  // console.log((filterOptions))
 
   const [selectedOptions, setSelectedOptions] = useState<SelectedOptions>({});
 
@@ -130,7 +130,7 @@ const FilterFormModal: React.FC<FilterFormModalProps> = ({isOpen, onRequestClose
           );
         })}
         <div className="flex justify-end space-x-2">
-          <button type="button" onClick={onRequestClose} className="bg-gray-300 p-2 rounded">Cancel</button>
+          <button type="button" onClick={onRequestClose} className="bg-gray-300 dark:bg-gray-500 p-2 rounded">Cancel</button>
           <button type="submit" className="bg-blue-500 text-white p-2 rounded">Submit</button>
         </div>
       </form>

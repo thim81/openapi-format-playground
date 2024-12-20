@@ -90,9 +90,9 @@ const MetricsBar: React.FC<MetricsBarProps> = ({
 
   return (
     <div
-      className={`fixed bottom-0 left-0 right-0 bg-gray-100 border-t border-gray-300 transition-all duration-300 ease-in-out ${expandableHeight > 0 ? 'h-82 overflow-y-auto' : 'h-10'}`}
+      className={`fixed bottom-0 left-0 right-0 bg-gray-100  dark:bg-gray-900 border-t border-gray-300 dark:border-gray-500 transition-all duration-300 ease-in-out ${expandableHeight > 0 ? 'h-82 overflow-y-auto' : 'h-10'}`}
     >
-      <div className="flex items-center justify-between px-4 py-2 bg-gray-200 hover:bg-gray-300 cursor-pointer" onClick={toggleMetricsBar}>
+      <div className="flex items-center justify-between px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 cursor-pointer" onClick={toggleMetricsBar}>
         <div className="flex space-x-4">
           <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">Paths: {totalPaths}</span>
           <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">Tags: {totalTags}</span>

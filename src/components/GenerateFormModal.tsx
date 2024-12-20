@@ -153,7 +153,7 @@ const GenerateFormModal: React.FC<GenerateFormModalProps> = ({isOpen, onRequestC
           <div className="bg-gray-100 p-4 rounded space-y-2">
             {preview.length > 0 ? (
               preview.map((previewItem, index) => (
-                <div key={index} className="p-2 bg-white rounded shadow">
+                <div key={index} className="p-2 bg-white dark:bg-gray-950 rounded shadow">
                   {previewItem}
                 </div>
               ))
@@ -180,7 +180,7 @@ const GenerateFormModal: React.FC<GenerateFormModalProps> = ({isOpen, onRequestC
         </div>
 
         <div className="flex justify-end space-x-2 mt-4">
-          <button type="button" onClick={onRequestClose} className="bg-gray-300 p-2 rounded">Cancel</button>
+          <button type="button" onClick={onRequestClose} className="bg-gray-300 dark:bg-gray-500 p-2 rounded">Cancel</button>
           <button type="submit" className="bg-blue-500 text-white p-2 rounded">Submit</button>
         </div>
       </form>
