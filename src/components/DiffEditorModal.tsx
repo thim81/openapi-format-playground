@@ -13,23 +13,24 @@ interface DiffEditorModalProps {
 }
 
 const DiffEditorModal: React.FC<DiffEditorModalProps> = ({ isOpen, onRequestClose, original, modified, language }) => {
-  const [theme, setTheme] = useState<'vs-light' | 'vs-dark'>(
-    window.matchMedia('(prefers-color-scheme: dark)').matches ? 'vs-dark' : 'vs-light'
-  );
+  const [theme, setTheme] = useState<'vs-light' | 'vs-dark'>('vs-light');
 
   useEffect(() => {
-    // Listen for changes in system theme
-    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
-      setTheme(e.matches ? 'vs-dark' : 'vs-light');
-    };
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      setTheme(mediaQuery.matches ? 'vs-dark' : 'vs-light');
 
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
+      const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+        setTheme(e.matches ? 'vs-dark' : 'vs-light');
+      };
 
-    // Cleanup listener on unmount
-    return () => {
-      mediaQuery.removeEventListener('change', handleSystemThemeChange);
-    };
+      mediaQuery.addEventListener('change', handleSystemThemeChange);
+
+      // Cleanup listener on unmount
+      return () => {
+        mediaQuery.removeEventListener('change', handleSystemThemeChange);
+      };
+    }
   }, []);
 
   const handleDiffEditorDidMount: DiffOnMount = (editor, monaco) => {
@@ -56,7 +57,7 @@ const DiffEditorModal: React.FC<DiffEditorModalProps> = ({ isOpen, onRequestClos
         language={language || 'yaml'}
         height="86vh"
         options={editorOptions}
-        theme={theme} // Ensure the theme prop is passed correctly
+        theme={theme}
         onMount={handleDiffEditorDidMount}
       />
     </SimpleModal>
