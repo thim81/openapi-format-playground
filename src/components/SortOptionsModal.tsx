@@ -66,7 +66,7 @@ const SortOptionsModal: React.FC<SortOptionsModalProps> = ({isOpen, onRequestClo
       <div className="flex justify-end space-x-2 mt-4">
         <button
           onClick={onRequestClose}
-          className="bg-gray-300 p-2 rounded hover:bg-gray-400 focus:outline-none"
+          className="bg-gray-300 dark:bg-gray-500 p-2 rounded hover:bg-gray-400 focus:outline-none"
         >
           Cancel
         </button>

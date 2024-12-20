@@ -55,7 +55,7 @@ const ButtonUrlModal: React.FC<UrlUploadProps> = ({onUrlLoad}) => {
       {/* Button to open the modal */}
       <button
         onClick={openModal}
-        className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded"
+        className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-2 rounded"
       >
         Import URL
       </button>

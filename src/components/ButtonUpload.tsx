@@ -53,7 +53,7 @@ const ButtonUpload: React.FC<FileUploadProps> = ({onFileLoad}) => {
       <button
         type="button"
         onClick={triggerFileInput}
-        className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded"
+        className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-2 rounded"
       >
         Upload File
       </button>

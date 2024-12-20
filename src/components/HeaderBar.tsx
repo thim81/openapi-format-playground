@@ -11,7 +11,7 @@ interface HeaderBarProps {
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({onAction1, onAction2}) => {
   return (
-    <div className="bg-white py-2 px-4 flex justify-between items-center border-b-4" style={{borderBottomColor: '#509f60'}}>
+    <div className="bg-white dark:bg-gray-800 py-2 px-4 flex justify-between items-center border-b-4" style={{borderBottomColor: '#509f60'}}>
       <Link href="/" passHref>
         <div className="flex items-center space-x-4">
           <Image src={openapiFormatIcon} alt="OpenAPI Format" width={32} height={32}/>

@@ -402,12 +402,12 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         <div className="flex space-x-4 flex-grow">
           <div className="w-1/5 flex flex-col h-full overflow-auto mb-2">
             <div className="flex items-center mb-2">
-              <h2 className="text-xl font-bold">Configuration</h2>
+              <h2 className="text-heading text-xl font-bold">Configuration</h2>
               <div className="ml-4">
                 <select
                   value={outputLanguage}
                   onChange={(e) => setOutputLanguage(e.target.value as 'json' | 'yaml')}
-                  className="p-2 border rounded"
+                  className="p-1 border rounded"
                 >
                   <option value="json">JSON</option>
                   <option value="yaml">YAML</option>
@@ -568,7 +568,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           </div>
           <div className="flex-1 flex flex-col">
             <div className="flex justify-between items-center mb-2">
-              <h2 className="text-xl font-bold">OpenAPI Input</h2>
+              <h2 className="text-heading text-xl font-bold">OpenAPI Input</h2>
               <div className="flex space-x-2">
                 <ButtonUrlModal onUrlLoad={handleFileLoad}/>
                 <ButtonUpload onFileLoad={handleFileLoad}/>
@@ -578,15 +578,15 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           </div>
           <div className="flex-1 flex flex-col">
             <div className="flex justify-between items-center mb-2">
-              <h2 className="text-xl font-bold">OpenAPI Output</h2>
+              <h2 className="text-heading text-xl font-bold">OpenAPI Output</h2>
               {loading && <LoadingSpinner/>}
               <div className="space-x-2">
                 <button onClick={openDiffModal}
-                        className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-4 rounded border border-green-500">
+                        className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-2 rounded border border-green-500">
                   Show Diff
                 </button>
                 <button onClick={openInstructionsModal}
-                        className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded">
+                        className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-2 rounded">
                   CLI instructions
                 </button>
                 <ButtonShare openapi={input} config={config}/>
