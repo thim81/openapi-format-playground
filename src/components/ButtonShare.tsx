@@ -26,7 +26,7 @@ const ButtonShare: React.FC<ButtonShareProps> = ({openapi, config }) => {
   };
 
   return (
-    <button onClick={handleShare} className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded">
+    <button onClick={handleShare} className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-2 rounded">
       Share
     </button>
   );

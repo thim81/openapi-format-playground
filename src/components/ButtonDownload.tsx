@@ -26,7 +26,7 @@ const ButtonDownload: React.FC<ButtonDownloadProps> = ({ content, filename, form
       saveAs(blob, `${filename}.${format}`);
     }
   };
-  const classes = className || "bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded"
+  const classes = className || "bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-2 rounded"
 
   return (
     <button onClick={(e) => {

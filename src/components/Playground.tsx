@@ -407,7 +407,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 <select
                   value={outputLanguage}
                   onChange={(e) => setOutputLanguage(e.target.value as 'json' | 'yaml')}
-                  className="p-2 border rounded"
+                  className="p-1 border rounded"
                 >
                   <option value="json">JSON</option>
                   <option value="yaml">YAML</option>
@@ -582,11 +582,11 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               {loading && <LoadingSpinner/>}
               <div className="space-x-2">
                 <button onClick={openDiffModal}
-                        className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-4 rounded border border-green-500">
+                        className="bg-white hover:bg-gray-200 text-green-500 font-medium text-sm py-1 px-2 rounded border border-green-500">
                   Show Diff
                 </button>
                 <button onClick={openInstructionsModal}
-                        className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-4 rounded">
+                        className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-2 rounded">
                   CLI instructions
                 </button>
                 <ButtonShare openapi={input} config={config}/>
