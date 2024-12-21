@@ -77,7 +77,7 @@ const ButtonUrlModal: React.FC<UrlUploadProps> = ({onUrlLoad}) => {
             placeholder="Enter OpenAPI file URL"
             value={url}
             onChange={handleUrlChange}
-            className="p-2 border rounded w-full"
+            className="p-2 border rounded w-full bg-white text-black dark:bg-gray-800 dark:text-white"
           />
           <button
             onClick={handleSubmit}
