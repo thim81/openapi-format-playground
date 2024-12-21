@@ -129,7 +129,7 @@ const GenerateFormModal: React.FC<GenerateFormModalProps> = ({isOpen, onRequestC
             type="text"
             value={operationIdTemplate}
             onChange={handleTemplateChange}
-            className="p-2 border rounded w-full"
+            className="p-2 border rounded w-full bg-white text-black dark:bg-gray-800 dark:text-white"
           />
           <div className="mt-2">
             <label className="block font-medium mb-1">Placeholders</label>
@@ -150,15 +150,15 @@ const GenerateFormModal: React.FC<GenerateFormModalProps> = ({isOpen, onRequestC
 
         <div className="mt-4">
           <label className="block font-medium mb-2">Preview</label>
-          <div className="bg-gray-100 p-4 rounded space-y-2">
+          <div className="bg-gray-100 dark:bg-gray-600 p-4 rounded space-y-2">
             {preview.length > 0 ? (
               preview.map((previewItem, index) => (
-                <div key={index} className="p-2 bg-white dark:bg-gray-950 rounded shadow">
+                <div key={index} className="p-2 bg-white dark:bg-gray-800 rounded shadow">
                   {previewItem}
                 </div>
               ))
             ) : (
-              <div className="p-2 bg-white rounded shadow">
+              <div className="p-2 bg-white dark:bg-gray-800 rounded shadow">
                 No preview available
               </div>
             )}

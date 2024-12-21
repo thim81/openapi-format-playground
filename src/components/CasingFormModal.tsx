@@ -66,7 +66,7 @@ const CasingFormModal: React.FC<CasingFormModalProps> = ({isOpen, onRequestClose
           <select
             value={casingSet.operationId || ''}
             onChange={(e) => handleCasingChange('operationId', e.target.value)}
-            className="p-2 border rounded"
+            className="p-2 border rounded bg-white text-black dark:bg-gray-800 dark:text-white"
           >
             <option value="">None</option>
             {casingSelect.map((option) => (
@@ -80,7 +80,7 @@ const CasingFormModal: React.FC<CasingFormModalProps> = ({isOpen, onRequestClose
           <select
             value={casingSet.properties || ''}
             onChange={(e) => handleCasingChange('properties', e.target.value)}
-            className="p-2 border rounded"
+            className="p-2 border rounded bg-white text-black dark:bg-gray-800 dark:text-white"
           >
             <option value="">None</option>
             {casingSelect.map((option) => (
@@ -94,7 +94,7 @@ const CasingFormModal: React.FC<CasingFormModalProps> = ({isOpen, onRequestClose
           <select
             value={casingSet.parametersQuery || ''}
             onChange={(e) => handleCasingChange('parametersQuery', e.target.value)}
-            className="p-2 border rounded"
+            className="p-2 border rounded bg-white text-black dark:bg-gray-800 dark:text-white"
           >
             <option value="">None</option>
             {casingSelect.map((option) => (
@@ -108,7 +108,7 @@ const CasingFormModal: React.FC<CasingFormModalProps> = ({isOpen, onRequestClose
           <select
             value={casingSet.parametersHeader || ''}
             onChange={(e) => handleCasingChange('parametersHeader', e.target.value)}
-            className="p-2 border rounded"
+            className="p-2 border rounded bg-white text-black dark:bg-gray-800 dark:text-white"
           >
             <option value="">None</option>
             {casingSelect.map((option) => (
@@ -122,7 +122,7 @@ const CasingFormModal: React.FC<CasingFormModalProps> = ({isOpen, onRequestClose
           <select
             value={casingSet.parametersPath || ''}
             onChange={(e) => handleCasingChange('parametersPath', e.target.value)}
-            className="p-2 border rounded"
+            className="p-2 border rounded bg-white text-black dark:bg-gray-800 dark:text-white"
           >
             <option value="">None</option>
             {casingSelect.map((option) => (
@@ -136,7 +136,7 @@ const CasingFormModal: React.FC<CasingFormModalProps> = ({isOpen, onRequestClose
           <select
             value={casingSet.componentsExamples || ''}
             onChange={(e) => handleCasingChange('componentsExamples', e.target.value)}
-            className="p-2 border rounded"
+            className="p-2 border rounded bg-white text-black dark:bg-gray-800 dark:text-white"
           >
             <option value="">None</option>
             {casingSelect.map((option) => (
@@ -150,7 +150,7 @@ const CasingFormModal: React.FC<CasingFormModalProps> = ({isOpen, onRequestClose
           <select
             value={casingSet.componentsSchemas || ''}
             onChange={(e) => handleCasingChange('componentsSchemas', e.target.value)}
-            className="p-2 border rounded"
+            className="p-2 border rounded bg-white text-black dark:bg-gray-800 dark:text-white"
           >
             <option value="">None</option>
             {casingSelect.map((option) => (
@@ -164,7 +164,7 @@ const CasingFormModal: React.FC<CasingFormModalProps> = ({isOpen, onRequestClose
           <select
             value={casingSet.componentsHeaders || ''}
             onChange={(e) => handleCasingChange('componentsHeaders', e.target.value)}
-            className="p-2 border rounded"
+            className="p-2 border rounded bg-white text-black dark:bg-gray-800 dark:text-white"
           >
             <option value="">None</option>
             {casingSelect.map((option) => (
@@ -178,7 +178,7 @@ const CasingFormModal: React.FC<CasingFormModalProps> = ({isOpen, onRequestClose
           <select
             value={casingSet.componentsResponses || ''}
             onChange={(e) => handleCasingChange('componentsResponses', e.target.value)}
-            className="p-2 border rounded"
+            className="p-2 border rounded bg-white text-black dark:bg-gray-800 dark:text-white"
           >
             <option value="">None</option>
             {casingSelect.map((option) => (
@@ -192,7 +192,7 @@ const CasingFormModal: React.FC<CasingFormModalProps> = ({isOpen, onRequestClose
           <select
             value={casingSet.componentsRequestBodies || ''}
             onChange={(e) => handleCasingChange('componentsRequestBodies', e.target.value)}
-            className="p-2 border rounded"
+            className="p-2 border rounded bg-white text-black dark:bg-gray-800 dark:text-white"
           >
             <option value="">None</option>
             {casingSelect.map((option) => (
@@ -206,7 +206,7 @@ const CasingFormModal: React.FC<CasingFormModalProps> = ({isOpen, onRequestClose
           <select
             value={casingSet.componentsSecuritySchemes || ''}
             onChange={(e) => handleCasingChange('componentsSecuritySchemes', e.target.value)}
-            className="p-2 border rounded"
+            className="p-2 border rounded bg-white text-black dark:bg-gray-800 dark:text-white"
           >
             <option value="">None</option>
             {casingSelect.map((option) => (
@@ -220,7 +220,7 @@ const CasingFormModal: React.FC<CasingFormModalProps> = ({isOpen, onRequestClose
           <select
             value={casingSet.componentsParametersQuery || ''}
             onChange={(e) => handleCasingChange('componentsParametersQuery', e.target.value)}
-            className="p-2 border rounded"
+            className="p-2 border rounded bg-white text-black dark:bg-gray-800 dark:text-white"
           >
             <option value="">None</option>
             {casingSelect.map((option) => (
@@ -234,7 +234,7 @@ const CasingFormModal: React.FC<CasingFormModalProps> = ({isOpen, onRequestClose
           <select
             value={casingSet.componentsParametersHeader || ''}
             onChange={(e) => handleCasingChange('componentsParametersHeader', e.target.value)}
-            className="p-2 border rounded"
+            className="p-2 border rounded bg-white text-black dark:bg-gray-800 dark:text-white"
           >
             <option value="">None</option>
             {casingSelect.map((option) => (
@@ -248,7 +248,7 @@ const CasingFormModal: React.FC<CasingFormModalProps> = ({isOpen, onRequestClose
           <select
             value={casingSet.componentsParametersPath || ''}
             onChange={(e) => handleCasingChange('componentsParametersPath', e.target.value)}
-            className="p-2 border rounded"
+            className="p-2 border rounded bg-white text-black dark:bg-gray-800 dark:text-white"
           >
             <option value="">None</option>
             {casingSelect.map((option) => (

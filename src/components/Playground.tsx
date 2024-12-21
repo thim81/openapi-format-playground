@@ -407,7 +407,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 <select
                   value={outputLanguage}
                   onChange={(e) => setOutputLanguage(e.target.value as 'json' | 'yaml')}
-                  className="p-1 border rounded"
+                  className="p-1 border rounded bg-white text-black dark:bg-gray-800 dark:text-white"
                 >
                   <option value="json">JSON</option>
                   <option value="yaml">YAML</option>
@@ -474,7 +474,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 <select
                   value={pathSort}
                   onChange={(e) => handlePathSortChange(e.target.value as 'original' | 'path' | 'tags', sortSet)}
-                  className="p-0 border rounded"
+                  className="p-0 border rounded bg-white text-black dark:bg-gray-800 dark:text-white"
                 >
                   <option value="original">Original order</option>
                   <option value="path">Path</option>
