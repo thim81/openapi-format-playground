@@ -15,7 +15,7 @@ interface ActionsModalProps {
   onRequestClose: () => void;
   onSubmit: (overlaySet: any) => void;
   format: 'json' | 'yaml'
-  overlaySet: any; // The OpenAPI Overlay document
+  overlaySet: string; // The OpenAPI Overlay document
   openapi: string; // The base OpenAPI document for preview
 }
 
@@ -28,11 +28,10 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
   // Initialize actions from overlaySet when modal opens
   useEffect(() => {
     const initialize = async () => {
-      const actions = await convertOverlaySetToActions(overlaySet, format);
+      const OverlayOpts =  await parseString(overlaySet) as Record<string, unknown>;
+      const actions = await convertOverlaySetToActions(OverlayOpts, format);
       setActions(actions);
-
-      const overlayCode = await stringify(overlaySet, { format });
-      setOverlaySetCode(overlayCode);
+      setOverlaySetCode(overlaySet);
 
       const previews = await computePreviewValues(actions, openapi);
       setPreviewValues(previews);
@@ -45,7 +44,8 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
   const toggleMode = async () => {
     if (currentMode === "UI") {
       // Convert actions to overlaySet and update overlaySetCode
-      const updatedOverlaySet = await convertActionsToOverlaySet(actions, overlaySet);
+      const OverlayOpts =  await parseString(overlaySet) as Record<string, unknown>;
+      const updatedOverlaySet = await convertActionsToOverlaySet(actions, OverlayOpts);
       const updatedCode = await stringify(updatedOverlaySet, { format });
       setOverlaySetCode(updatedCode);
     } else {
@@ -142,7 +142,8 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const updatedOverlaySet = await convertActionsToOverlaySet(actions, overlaySet);
+    const OverlayOpts =  await parseString(overlaySet) as Record<string, unknown>;
+    const updatedOverlaySet = await convertActionsToOverlaySet(actions, OverlayOpts);
     onSubmit(updatedOverlaySet);
     onRequestClose();
   };

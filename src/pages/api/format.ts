@@ -4,7 +4,7 @@ import {
   openapiFilter,
   OpenAPIFilterOptions,
   OpenAPIFilterSet,
-  openapiGenerate, OpenAPIGenerateOptions, OpenAPIGenerateSet,
+  openapiGenerate, OpenAPIGenerateOptions, OpenAPIGenerateSet, openapiOverlay, OpenAPIOverlayOptions,
   OpenAPIResult,
   openapiSort,
   OpenAPISortOptions,
@@ -24,7 +24,7 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
   }
 
   const {openapi, config} = req.body;
-  const {sort, keepComments, filterSet, sortSet, generateSet, casingSet, format} = config || {};
+  const {sort, keepComments, filterSet, sortSet, generateSet, casingSet, overlaySet, format} = config || {};
 
   if (!openapi) {
     res.status(422).json({message: 'Missing openapi'});
@@ -73,6 +73,14 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
       const options = {casingSet: caseOpts} as OpenAPICasingOptions
       const casedRes = await openapiChangeCase(oaObj, options);
       output.data = casedRes.data;
+    }
+
+    // Apply OpenAPI Overlay
+    if (overlaySet?.length > 0) {
+      const OverlayOpts =  await parseString(overlaySet) as Record<string, unknown>;
+      const options = {overlaySet: OverlayOpts} as OpenAPIOverlayOptions
+      const OverlayRes = await openapiOverlay(oaObj, options);
+      output.data = OverlayRes.data;
     }
 
     // Convert output to JSON/YAML format

@@ -64,6 +64,7 @@ export interface openapiFormatConfig {
   keepComments?: boolean;
   filterSet?: string;
   sortSet?: string;
+  overlaySet?: string;
   generateSet?: string;
   casingSet?: string;
   format?: string;
@@ -112,6 +113,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const dInput = useDebounce(input, 1000);
   const dFilterSet = useDebounce(filterSet, 1000);
   const dSortSet = useDebounce(sortSet, 1000);
+  const dOverlaySet = useDebounce(overlaySet, 1000);
   const dGenerateSet = useDebounce(generateSet, 1000);
   const dCasingSet = useDebounce(casingSet, 1000);
 
@@ -121,6 +123,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     filterSet,
     sortSet,
     casingSet,
+    overlaySet,
     generateSet,
     isFilterOptionsCollapsed,
     toggleGenerate,
@@ -150,6 +153,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       keepComments: keepComments,
       filterSet: dFilterSet,
       sortSet: dSortSet,
+      overlaySet: dOverlaySet,
       ...(dGenerateSet && toggleGenerate && {generateSet: dGenerateSet}),
       ...(dCasingSet && toggleCasing && {casingSet: dCasingSet}),
       format: outputLanguage,
@@ -194,7 +198,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       setOutput('');
     }
     setLoading(false);
-  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dGenerateSet, dCasingSet, outputLanguage, pathSort, toggleGenerate, toggleCasing, setOutput, defaultFieldSorting]);
+  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dGenerateSet, dCasingSet, dOverlaySet, outputLanguage, pathSort, toggleGenerate, toggleCasing, setOutput, defaultFieldSorting]);
 
   // Decode Share URL
   useEffect(() => {
@@ -207,12 +211,14 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           await handleInputChange(result.openapi);
         }
         if (result?.config) {
+          // console.log('decodeUrl config',result?.config);
           setSort(result.config.sort ?? true);
           setKeepComments(result.config.keepComments ?? false);
           setFilterSet(result.config.filterSet ?? '');
           setGenerateSet(result.config.generateSet ?? '');
           setCasingSet(result.config.casingSet ?? '');
           setSortSet(result.config.sortSet ?? '');
+          setOverlaySet(result.config.overlaySet ?? '');
           setCustomSortSet(result.config.sortSet ?? defaultSortSet);
 
           setToggleCasing(result.config.toggleCasing ?? false);
@@ -357,8 +363,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   };
 
   const handleOverlaySubmit = async (overlayOptions: any) => {
-    setOverlaySet(overlayOptions);
-    console.log('overlayOptions', overlayOptions);
+    const oaOverlay = await stringify(overlayOptions, {format: outputLanguage});
+    setOverlaySet(oaOverlay);
     setSortModalOpen(false);
   };
 
@@ -584,7 +590,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               <h2 className="text-heading text-xl font-bold">OpenAPI Input</h2>
               <div className="flex space-x-2">
                 <button onClick={openOverlayModal}
-                        className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-2 rounded">
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-medium text-sm py-1 px-2 rounded">
                   OpenAPI Overlay
                 </button>
                 <ButtonUrlModal onUrlLoad={handleFileLoad}/>
