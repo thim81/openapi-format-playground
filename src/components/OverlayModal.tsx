@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import SimpleModal from "./SimpleModal";
 import MonacoEditorWrapper from "./MonacoEditorWrapper";
 
-import {resolveJsonPathValue, parseString} from "openapi-format";
+import {resolveJsonPathValue, parseString, stringify} from "openapi-format";
 
 interface Action {
   target: string;
@@ -22,23 +22,46 @@ interface ActionsModalProps {
 
 const ActionsModal: React.FC<ActionsModalProps> = ({ isOpen, onRequestClose, onSubmit, overlaySet, openapi, format }) => {
   const [actions, setActions] = useState<Action[]>([]);
-  const [previewValue, setPreviewValue] = useState<string>("");
+  const [previewValues, setPreviewValues] = useState<string[]>([]);
 
   // Initialize actions from overlaySet when modal opens
   useEffect(() => {
-    setActions(overlaySet?.actions || []);
-  }, [overlaySet]);
+    const initializeActionsAndPreviews = async () => {
+      const initialActions = overlaySet?.actions || [];
+      const initialPreviews = await Promise.all(
+        initialActions.map(async (action: Action) => {
+          try {
+            const openapiObj = await parseString(openapi);
+            const resolvedValues = resolveJsonPathValue(openapiObj, action.target || "");
+            return resolvedValues.length > 0
+              ? await stringify(resolvedValues[0])
+              : "No matching value found.";
+          } catch {
+            return "Invalid target or JSONPath.";
+          }
+        })
+      );
+
+      setActions(initialActions);
+      setPreviewValues(initialPreviews);
+    };
+
+    initializeActionsAndPreviews();
+  }, [overlaySet, openapi]);
 
   const handleAddAction = () => {
     setActions([...actions, { target: "", type: "update", format }]);
+    setPreviewValues([...previewValues, ""]);
   };
 
   const handleRemoveAction = (index: number) => {
     setActions(actions.filter((_, i) => i !== index));
+    setPreviewValues(previewValues.filter((_, i) => i !== index));
   };
 
   const handleActionChange = async (index: number, field: keyof Action, value: string) => {
     const updatedActions = [...actions];
+    const updatedPreviews = [...previewValues];
 
     if (field === "type") {
       // Ensure value is one of "update" | "remove" | "add"
@@ -54,16 +77,17 @@ const ActionsModal: React.FC<ActionsModalProps> = ({ isOpen, onRequestClose, onS
         const openapiObj = await parseString(openapi); // Parse OpenAPI string into a JSON object
         const resolvedValues = resolveJsonPathValue(openapiObj, value); // Resolve the JSONPath
         if (resolvedValues.length > 0) {
-          setPreviewValue(JSON.stringify(resolvedValues[0], null, 2)); // Use the first matching value for preview
+          updatedPreviews[index] = await stringify(resolvedValues[0]); // Use the first matching value for preview
         } else {
-          setPreviewValue("No matching value found.");
+          updatedPreviews[index] = "No matching value found.";
         }
       } catch (e) {
-        setPreviewValue("Invalid target or JSONPath.");
+        updatedPreviews[index] = "Invalid target or JSONPath.";
       }
     }
 
     setActions(updatedActions);
+    setPreviewValues(updatedPreviews);
   };
 
   const handleValueChange = (index: number, value: string) => {
@@ -118,51 +142,57 @@ const ActionsModal: React.FC<ActionsModalProps> = ({ isOpen, onRequestClose, onS
                     Remove
                   </button>
                 </div>
-                <div className="mb-2">
-                  <label className="block text-sm font-medium mb-1">Target (JSONPath)</label>
-                  <input
-                    type="text"
-                    value={action.target}
-                    onChange={(e) => handleActionChange(index, "target", e.target.value)}
-                    className="w-full p-2 border rounded"
-                    placeholder="$.paths['/example']"
-                  />
-                </div>
-                <div className="mb-2">
-                  <label className="block text-sm font-medium mb-1">Action Type</label>
-                  <select
-                    value={action.type}
-                    onChange={(e) => handleActionChange(index, "type", e.target.value)}
-                    className="w-full p-2 border rounded"
-                  >
-                    <option value="update">Update</option>
-                    <option value="remove">Remove</option>
-                    <option value="add">Add</option>
-                  </select>
-                </div>
-                {(action.type === "update" || action.type === "add") && (
-                  <div className="mb-2">
-                    <label className="block text-sm font-medium mb-1">
-                      {action.type === "update" ? "Update Value" : "Add Value"}
-                    </label>
-                    <MonacoEditorWrapper
-                      value={action.value || ""}
-                      onChange={(value) => handleValueChange(index, value)}
-                      height="10vh"
-                      language={action.format}
-                    />
+                <div className="flex space-x-4">
+                  {/* Action Inputs */}
+                  <div className="flex-1">
+                    <div className="mb-2">
+                      <label className="block text-sm font-medium mb-1">Target (JSONPath)</label>
+                      <input
+                        type="text"
+                        value={action.target}
+                        onChange={(e) => handleActionChange(index, "target", e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="$.paths['/example']"
+                      />
+                    </div>
+                    <div className="mb-2">
+                      <label className="block text-sm font-medium mb-1">Action Type</label>
+                      <select
+                        value={action.type}
+                        onChange={(e) => handleActionChange(index, "type", e.target.value)}
+                        className="w-full p-2 border rounded"
+                      >
+                        <option value="update">Update</option>
+                        <option value="remove">Remove</option>
+                        <option value="add">Add</option>
+                      </select>
+                    </div>
+                    {(action.type === "update" || action.type === "add") && (
+                      <div className="mb-2">
+                        <label className="block text-sm font-medium mb-1">
+                          {action.type === "update" ? "Update Value" : "Add Value"}
+                        </label>
+                        <MonacoEditorWrapper
+                          value={action.value || ""}
+                          onChange={(value) => handleValueChange(index, value)}
+                          height="10vh"
+                          language={action.format}
+                        />
+                      </div>
+                    )}
                   </div>
-                )}
+
+                  {/* Target Preview */}
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium mb-1">Target Preview</label>
+                    <pre className="p-2 bg-gray-100 border rounded h-full overflow-auto">
+                      {previewValues[index]}
+                    </pre>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
-        </div>
-
-        <div className="mt-4">
-          <h3 className="text-lg font-semibold mb-2">Target Preview</h3>
-          <pre className="p-2 bg-gray-100 border rounded max-h-40 overflow-auto">
-            {previewValue}
-          </pre>
         </div>
 
         <div className="mt-4 flex justify-end space-x-2">
