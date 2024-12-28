@@ -29,6 +29,7 @@ import GenerateFormModal from "@/components/GenerateFormModal";
 import CasingFormModal from "@/components/CasingFormModal";
 import SortOptionsModal from "@/components/SortOptionsModal";
 import ButtonUrlModal from "@/components/ButtonUrlModal";
+import OverlayModal from "@/components/OverlayModal";
 
 const defaultCompMetrics = {
   schemas: [],
@@ -81,6 +82,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [defaultSortSet, setDefaultSortSet] = useState<string>('');
   const [customSortSet, setCustomSortSet] = useState<string>(defaultSortSet);
   const [sortSet, setSortSet] = useState<string>(defaultSortSet);
+  const [overlaySet, setOverlaySet] = useState<string>('');
   const [isFilterOptionsCollapsed, setFilterOptionsCollapsed] = useState<boolean>(false);
   const [outputLanguage, setOutputLanguage] = useState<'json' | 'yaml'>('yaml');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -89,6 +91,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [isCasingModalOpen, setCasingModalOpen] = useState(false);
   const [isSortModalOpen, setSortModalOpen] = useState(false);
   const [isFormModalOpen, setFormModalOpen] = useState(false);
+  const [isOverlayModalOpen, setOverlayModalOpen] = useState(false);
   const [isInstructionsModalOpen, setInstructionsModalOpen] = useState(false);
   const [isRawConfigModalOpen, setRawConfigModalOpen] = useState(false);
   const [filterFormOptions, setFilterFormOptions] = useState<AnalyzeOpenApiResult>({});
@@ -304,6 +307,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setFormModalOpen(true);
   };
 
+  const openOverlayModal = () => {
+    setOverlayModalOpen(true);
+  };
+
   const openInstructionsModal = () => {
     setInstructionsModalOpen(true);
   };
@@ -346,6 +353,12 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const handleSortSubmit = async (sortOptions: any) => {
     setCustomSortSet(sortOptions);
     setSortSet(sortOptions);
+    setSortModalOpen(false);
+  };
+
+  const handleOverlaySubmit = async (overlayOptions: any) => {
+    setOverlaySet(overlayOptions);
+    console.log('overlayOptions', overlayOptions);
     setSortModalOpen(false);
   };
 
@@ -570,6 +583,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-heading text-xl font-bold">OpenAPI Input</h2>
               <div className="flex space-x-2">
+                <button onClick={openOverlayModal}
+                        className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-2 rounded">
+                  OpenAPI Overlay
+                </button>
                 <ButtonUrlModal onUrlLoad={handleFileLoad}/>
                 <ButtonUpload onFileLoad={handleFileLoad}/>
               </div>
@@ -645,6 +662,15 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         onSubmit={handleSortSubmit}
         outputLanguage={outputLanguage}
         defaultSort={defaultSortSet}
+      />
+
+      <OverlayModal
+        isOpen={isOverlayModalOpen}
+        onRequestClose={() => setOverlayModalOpen(false)}
+        overlaySet={overlaySet}
+        openapi={input}
+        onSubmit={handleOverlaySubmit}
+        format={outputLanguage}
       />
 
       <DiffEditorModal
