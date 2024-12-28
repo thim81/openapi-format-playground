@@ -59,7 +59,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
         setPreviewValues(previews);
       } catch (error) {
         console.error("Error parsing overlaySet:", error);
-        alert("Invalid overlay code. Please fix the code or switch back to UI mode.");
+        alert("Invalid overlay code. Please fix the overlay config or switch back to UI mode.");
       }
     }
 
@@ -113,6 +113,32 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     setActions(updatedActions);
   };
 
+  const handleMoveUp = (index: number) => {
+    if (index === 0) return; // Already at the top
+    const updatedActions = [...actions];
+    const updatedPreviews = [...previewValues];
+
+    // Swap with the previous item
+    [updatedActions[index - 1], updatedActions[index]] = [updatedActions[index], updatedActions[index - 1]];
+    [updatedPreviews[index - 1], updatedPreviews[index]] = [updatedPreviews[index], updatedPreviews[index - 1]];
+
+    setActions(updatedActions);
+    setPreviewValues(updatedPreviews);
+  };
+
+  const handleMoveDown = (index: number) => {
+    if (index === actions.length - 1) return; // Already at the bottom
+    const updatedActions = [...actions];
+    const updatedPreviews = [...previewValues];
+
+    // Swap with the next item
+    [updatedActions[index + 1], updatedActions[index]] = [updatedActions[index], updatedActions[index + 1]];
+    [updatedPreviews[index + 1], updatedPreviews[index]] = [updatedPreviews[index], updatedPreviews[index + 1]];
+
+    setActions(updatedActions);
+    setPreviewValues(updatedPreviews);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -156,13 +182,35 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                 <div key={index} className="border p-4 rounded bg-gray-50 shadow-sm">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-semibold">Action {index + 1}</h3>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveAction(index)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      Remove
-                    </button>
+                    <div className="flex space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => handleMoveUp(index)}
+                        disabled={index === 0}
+                        className={`px-2 py-1 rounded ${
+                          index === 0 ? "bg-gray-300 text-gray-500" : "bg-blue-500 text-white hover:bg-blue-600"
+                        }`}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveDown(index)}
+                        disabled={index === actions.length - 1}
+                        className={`px-2 py-1 rounded ${
+                          index === actions.length - 1 ? "bg-gray-300 text-gray-500" : "bg-blue-500 text-white hover:bg-blue-600"
+                        }`}
+                      >
+                        ↓
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAction(index)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
                   <div className="flex space-x-4">
                     <div className="flex-1">
@@ -205,9 +253,14 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
 
                     <div className="flex-1">
                       <label className="block text-sm font-medium mb-1">Target Preview</label>
-                      <pre className="p-2 bg-gray-100 border rounded h-full overflow-auto">
-                        {previewValues[index]}
-                      </pre>
+                      <pre
+                        className="p-2 bg-gray-100 border rounded overflow-auto"
+                        style={{
+                          maxHeight: "150px", // Maximum height for the preview
+                          whiteSpace: "pre-wrap", // Wrap text for readability
+                          wordBreak: "break-word", // Break long words
+                        }}
+                      >{previewValues[index]}</pre>
                     </div>
                   </div>
                 </div>
@@ -226,7 +279,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
         )}
 
         <div className="mt-4 flex justify-end space-x-2">
-          <button
+        <button
             type="button"
             onClick={onRequestClose}
             className="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600"
