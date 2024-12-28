@@ -31,7 +31,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({ isOpen, onRequestClose, onS
       const initialPreviews = await Promise.all(
         initialActions.map(async (action: Action) => {
           try {
-            const openapiObj = await parseString(openapi);
+            const openapiObj = await parseString(openapi) as Record<string, unknown>;
             const resolvedValues = resolveJsonPathValue(openapiObj, action.target || "");
             return resolvedValues.length > 0
               ? await stringify(resolvedValues[0])
@@ -74,10 +74,10 @@ const ActionsModal: React.FC<ActionsModalProps> = ({ isOpen, onRequestClose, onS
 
     if (field === "target") {
       try {
-        const openapiObj = await parseString(openapi); // Parse OpenAPI string into a JSON object
-        const resolvedValues = resolveJsonPathValue(openapiObj, value); // Resolve the JSONPath
+        const openapiObj = await parseString(openapi) as Record<string, unknown>;
+        const resolvedValues = resolveJsonPathValue(openapiObj, value); 
         if (resolvedValues.length > 0) {
-          updatedPreviews[index] = await stringify(resolvedValues[0]); // Use the first matching value for preview
+          updatedPreviews[index] = await stringify(resolvedValues[0]);
         } else {
           updatedPreviews[index] = "No matching value found.";
         }
