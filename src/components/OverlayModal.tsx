@@ -234,7 +234,6 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                         >
                           <option value="update">Update</option>
                           <option value="remove">Remove</option>
-                          <option value="add">Add</option>
                         </select>
                       </div>
                       {(action.type === "update" || action.type === "add") && (
