@@ -325,9 +325,11 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setRawConfigModalOpen(true);
   };
 
-  const handleFileLoad = async (content: string | null) => {
-    setLoading(true);
-    await handleInputChange(content || '');
+  const handleFileLoad = async (content: string | null, context: string) => {
+    if (context === 'playground') {
+      setLoading(true);
+      await handleInputChange(content || '');
+    }
   };
 
   const handleFormSubmit = async (selectedOptions: any) => {
@@ -593,8 +595,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                         className="bg-blue-500 hover:bg-blue-700 text-white font-medium text-sm py-1 px-2 rounded">
                   OpenAPI Overlay
                 </button>
-                <ButtonUrlModal onUrlLoad={handleFileLoad}/>
-                <ButtonUpload onFileLoad={handleFileLoad}/>
+                <ButtonUrlModal context="playground" onUrlLoad={handleFileLoad}/>
+                <ButtonUpload context="playground" onFileLoad={handleFileLoad}/>
               </div>
             </div>
             <MonacoEditorWrapper value={input} onChange={handleInputChange}/>
@@ -696,6 +698,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         filterSet={filterSet}
         casingSet={casingSet}
         generateSet={generateSet}
+        overlaySet={overlaySet}
         toggleCasing={toggleCasing}
         toggleGenerate={toggleGenerate}
         format={outputLanguage}

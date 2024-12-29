@@ -2,10 +2,13 @@ import React, {useState} from 'react';
 import SimpleModal from './SimpleModal';
 
 interface UrlUploadProps {
-  onUrlLoad: (content: string | null) => void;
+  context: 'playground' | 'overlay';
+  onUrlLoad: (content: string | null, context: string) => void;
+    isOpen: boolean;
+  onRequestClose: () => void;
 }
 
-const ButtonUrlModal: React.FC<UrlUploadProps> = ({onUrlLoad}) => {
+const ButtonUrlModal: React.FC<UrlUploadProps> = ({ context, onUrlLoad, isOpen, onRequestClose }) => {
   const [url, setUrl] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -18,7 +21,11 @@ const ButtonUrlModal: React.FC<UrlUploadProps> = ({onUrlLoad}) => {
 
   // Handle submission of the URL
   const handleSubmit = () => {
-    if (url) {
+  if (!url) {
+      setErrorMessage('Please enter a valid URL.');
+      return;
+    }
+
       fetch(url)
         .then((response) => {
           if (!response.ok) {
@@ -27,16 +34,14 @@ const ButtonUrlModal: React.FC<UrlUploadProps> = ({onUrlLoad}) => {
           return response.text();
         })
         .then((data) => {
-          onUrlLoad(data);
+          onUrlLoad(data, context);
           setIsModalOpen(false);
         })
         .catch((error) => {
           console.error('Error fetching OpenAPI file:', error);
           setErrorMessage(error.message); // Set error message
         });
-    } else {
-      setErrorMessage('Please enter a valid URL.');
-    }
+
   };
 
   // Function to open the modal

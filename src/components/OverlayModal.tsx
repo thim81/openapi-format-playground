@@ -3,6 +3,9 @@ import SimpleModal from "./SimpleModal";
 import MonacoEditorWrapper from "./MonacoEditorWrapper";
 
 import {resolveJsonPathValue, parseString, stringify} from "openapi-format";
+import ButtonDownload from "@/components/ButtonDownload";
+import ButtonUrlModal from "@/components/ButtonUrlModal";
+import ButtonUpload from "@/components/ButtonUpload";
 
 interface Action {
   target: string;
@@ -152,6 +155,14 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     setOverlaySetCode(newCode);
   };
 
+  const handleOverlayLoad = async (content: string | null, context: string) => {
+    if (context === 'overlay') {
+      if (content) {
+        handleCodeChange(content)
+      }
+    }
+  };
+
   return (
     <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="98%" height="98%">
       <form onSubmit={handleSubmit} className="flex flex-col h-full">
@@ -176,6 +187,13 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
               >
                 Add Action
               </button>
+              <ButtonDownload
+                content={overlaySet}
+                filename="oaf-overlay"
+                format={format}
+                label="Download Overlay"
+                className="ml-2 bg-green-500 text-white text-xs p-1 rounded hover:bg-green-700 focus:outline-none"
+              />
             </div>
 
             <div className="space-y-4 overflow-auto">
@@ -269,17 +287,36 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
           </div>
         ) : (
           <div className="flex-grow">
+            {/* Row of buttons */}
+            <div className="flex items-center gap-4 mb-4">
+              <ButtonDownload
+                content={overlaySet}
+                filename="oaf-overlay"
+                format={format}
+                label="Download Overlay"
+                className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-2 rounded"
+              />
+              <ButtonUrlModal
+                context="overlay"
+                onUrlLoad={handleOverlayLoad}
+              />
+              <ButtonUpload
+                context="overlay"
+                onFileLoad={handleOverlayLoad}
+              />
+            </div>
+
             <MonacoEditorWrapper
               value={overlaySetCode}
               onChange={handleCodeChange}
               language={format}
-              height="100%"
+              height="90%"
             />
           </div>
         )}
 
         <div className="mt-4 flex justify-end space-x-2">
-        <button
+          <button
             type="button"
             onClick={onRequestClose}
             className="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600"

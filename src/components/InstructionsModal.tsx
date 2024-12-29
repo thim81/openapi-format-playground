@@ -13,6 +13,7 @@ interface InstructionsModalProps {
   format: 'json' | 'yaml';
   sortSet: string;
   filterSet: string;
+  overlaySet?: string;
   generateSet?: string;
   casingSet?: string;
   sort: boolean;
@@ -30,6 +31,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
     filterSet,
     casingSet,
     generateSet,
+    overlaySet,
     sort,
     keepComments,
     toggleGenerate,
@@ -87,6 +89,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
       let filterOps = filterSet;
       let generateOps = generateSet;
       let casingOps = casingSet;
+      let overlayOps = overlaySet;
 
       if (typeof filterSet === 'string') {
         filterOps = await parseString(filterSet) as any;
@@ -100,6 +103,9 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
       if (typeof casingSet === 'string' && casingSet?.length) {
         casingOps = await parseString(casingSet) as any;
       }
+      if (typeof overlaySet === 'string' && overlaySet?.length) {
+        overlayOps = await parseString(overlaySet) as any;
+      }
 
       let configInput: { [key: string]: any } = {
         output: `openapi-formatted.${fileExt}`,
@@ -109,6 +115,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
         // sortFile: sortFileName ? sortFileName : undefined,
         ...(filterSet?.length && {filterSet: filterOps}),
         ...(sortSet?.length && {sortSet: sortOps}),
+        ...(overlaySet?.length && {overlaySet: overlayOps}),
         ...(generateSet?.length && toggleGenerate && {generateSet: generateOps}),
         ...(casingSet?.length && toggleCasing && {casingSet: casingOps}),
       };
@@ -129,7 +136,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
     };
 
     generateConfigFileContent();
-  }, [sort, keepComments, filterSet, sortSet, generateSet, casingSet, format, toggleGenerate, toggleCasing]);
+  }, [sort, keepComments, filterSet, sortSet, generateSet, casingSet, overlaySet, format, toggleGenerate, toggleCasing]);
 
   return (
     <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="80%" height={dynamicHeight}>
