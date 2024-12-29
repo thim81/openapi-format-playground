@@ -1,4 +1,6 @@
-import React, {useState, useEffect} from "react";
+// components/ActionsModal.tsx
+
+import React, { useState, useEffect } from "react";
 import SimpleModal from "./SimpleModal";
 import MonacoEditorWrapper from "./MonacoEditorWrapper";
 
@@ -30,6 +32,8 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
 
   // Initialize actions from overlaySet when modal opens
   useEffect(() => {
+    console.log('ActionsModal mounted or updated');
+    console.log(`isOpen: ${isOpen}`);
     const initialize = async () => {
       const OverlayOpts =  await parseString(overlaySet) as Record<string, unknown>;
       const actions = await convertOverlaySetToActions(OverlayOpts, format);
@@ -45,6 +49,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
 
   // Toggle between UI and Code modes
   const toggleMode = async () => {
+    console.log(`Toggling mode from ${currentMode}`);
     if (currentMode === "UI") {
       // Convert actions to overlaySet and update overlaySetCode
       const OverlayOpts =  await parseString(overlaySet) as Record<string, unknown>;
@@ -157,7 +162,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
 
   const handleOverlayLoad = async (content: string | null, context: string) => {
     if (context === 'overlay' && content) {
-      handleCodeChange(content)
+      handleCodeChange(content);
     }
   };
 
@@ -296,7 +301,10 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
               />
               <ButtonUrlModal
                 context="overlay"
-                onUrlLoad={handleOverlayLoad}
+                onUrlLoad={(content, context) => {
+                  console.log(`ButtonUrlModal onUrlLoad called with context: ${context}`);
+                  handleOverlayLoad(content, context);
+                }}
               />
               <ButtonUpload
                 context="overlay"
@@ -316,7 +324,10 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
         <div className="mt-4 flex justify-end space-x-2">
           <button
             type="button"
-            onClick={onRequestClose}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent event from bubbling up
+              onRequestClose();
+            }}
             className="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600"
           >
             Cancel
@@ -395,6 +406,5 @@ export const computePreviewValues = async (
     })
   );
 };
-
 
 export default ActionsModal;

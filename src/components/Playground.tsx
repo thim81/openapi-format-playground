@@ -314,6 +314,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   };
 
   const openOverlayModal = () => {
+    console.log('Open ActionsModal');
     setOverlayModalOpen(true);
   };
 
