@@ -156,10 +156,8 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
   };
 
   const handleOverlayLoad = async (content: string | null, context: string) => {
-    if (context === 'overlay') {
-      if (content) {
-        handleCodeChange(content)
-      }
+    if (context === 'overlay' && content) {
+      handleCodeChange(content)
     }
   };
 

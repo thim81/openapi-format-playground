@@ -4,11 +4,9 @@ import SimpleModal from './SimpleModal';
 interface UrlUploadProps {
   context: 'playground' | 'overlay';
   onUrlLoad: (content: string | null, context: string) => void;
-    isOpen: boolean;
-  onRequestClose: () => void;
 }
 
-const ButtonUrlModal: React.FC<UrlUploadProps> = ({ context, onUrlLoad, isOpen, onRequestClose }) => {
+const ButtonUrlModal: React.FC<UrlUploadProps> = ({ context, onUrlLoad }) => {
   const [url, setUrl] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -21,26 +19,26 @@ const ButtonUrlModal: React.FC<UrlUploadProps> = ({ context, onUrlLoad, isOpen, 
 
   // Handle submission of the URL
   const handleSubmit = () => {
-  if (!url) {
+    if (!url) {
       setErrorMessage('Please enter a valid URL.');
       return;
     }
 
-      fetch(url)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error('Failed to fetch the file. Please check the URL and try again.');
-          }
-          return response.text();
-        })
-        .then((data) => {
-          onUrlLoad(data, context);
-          setIsModalOpen(false);
-        })
-        .catch((error) => {
-          console.error('Error fetching OpenAPI file:', error);
-          setErrorMessage(error.message); // Set error message
-        });
+    fetch(url)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch the file. Please check the URL and try again.');
+        }
+        return response.text();
+      })
+      .then((data) => {
+        onUrlLoad(data, context);
+        setIsModalOpen(false);
+      })
+      .catch((error) => {
+        console.error('Error fetching OpenAPI file:', error);
+        setErrorMessage(error.message); // Set error message
+      });
 
   };
 

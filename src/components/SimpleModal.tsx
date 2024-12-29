@@ -14,8 +14,15 @@ const SimpleModal: React.FC<SimpleModalProps> = ({ isOpen, onRequestClose, child
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white dark:bg-gray-950 rounded p-4 relative" style={{ width, height }}>
+    <div
+      className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div
+        className="bg-white dark:bg-gray-950 rounded p-4 relative"
+        style={{ width, height }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <button onClick={onRequestClose} className="absolute top-2 right-2 text-black dark:text-white">
           X
           {/*<svg*/}
