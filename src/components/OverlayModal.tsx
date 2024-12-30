@@ -71,9 +71,24 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     setCurrentMode((prevMode) => (prevMode === "UI" ? "Code" : "UI"));
   };
 
-  const handleAddAction = () => {
-    setActions([...actions, { target: "", type: "update" }]);
-    setPreviewValues([...previewValues, ""]);
+  const handleAddAction = (index?: number) => {
+    if (index !== undefined) {
+      // Insert action at the specified index + 1
+      setActions([
+        ...actions.slice(0, index + 1),
+        { target: "", type: "update" },
+        ...actions.slice(index + 1),
+      ]);
+      setPreviewValues([
+        ...previewValues.slice(0, index + 1),
+        "",
+        ...previewValues.slice(index + 1),
+      ]);
+    } else {
+      // Default behavior: Add action at the end
+      setActions([...actions, { target: "", type: "update" }]);
+      setPreviewValues([...previewValues, ""]);
+    }
   };
 
   const handleRemoveAction = (index: number) => {
@@ -179,8 +194,8 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={handleAddAction}
-                  className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+                  onClick={() => handleAddAction()}
+                  className="bg-indigo-500 text-white px-2 py-1 font-medium text-sm rounded hover:bg-indigo-600"
                 >
                   Add Action
                 </button>
@@ -191,105 +206,125 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                   filename="oaf-overlay"
                   format={format}
                   label="Download Overlay"
-                  className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700 focus:outline-none"
+                  className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-2 rounded"
                 />
                 <button
                   type="button"
                   onClick={toggleMode}
-                  className="bg-gray-200 text-gray-800 px-2 py-1 rounded hover:bg-gray-300"
+                  className="bg-gray-200 text-gray-800 px-2 py-1 font-medium text-sm rounded hover:bg-gray-300"
                 >
                   Switch to {currentMode === "UI" ? "Code" : "UI"} Mode
                 </button>
               </div>
             </div>
 
-            <div className="space-y-4 overflow-auto">
-              {actions.map((action, index) => (
-                <div key={index} className="border p-4 rounded bg-gray-50 shadow-sm">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-semibold">Action {index + 1}</h3>
-                    <div className="flex space-x-2">
-                      <button
-                        type="button"
-                        onClick={() => handleMoveUp(index)}
-                        disabled={index === 0}
-                        className={`px-2 py-1 rounded ${
-                          index === 0 ? "bg-gray-300 text-gray-500" : "bg-blue-500 text-white hover:bg-blue-600"
-                        }`}
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleMoveDown(index)}
-                        disabled={index === actions.length - 1}
-                        className={`px-2 py-1 rounded ${
-                          index === actions.length - 1 ? "bg-gray-300 text-gray-500" : "bg-blue-500 text-white hover:bg-blue-600"
-                        }`}
-                      >
-                        ↓
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveAction(index)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex space-x-4">
-                    <div className="flex-1">
-                      <div className="mb-2">
-                        <label className="block text-sm font-medium mb-1">Target (JSONPath)</label>
-                        <input
-                          type="text"
-                          value={action.target}
-                          onChange={(e) => handleActionChange(index, "target", e.target.value)}
-                          className="w-full p-2 border rounded"
-                          placeholder="$.paths['/example']"
-                        />
-                      </div>
-                      <div className="mb-2">
-                        <label className="block text-sm font-medium mb-1">Action Type</label>
-                        <select
-                          value={action.type}
-                          onChange={(e) => handleActionChange(index, "type", e.target.value)}
-                          className="w-full p-2 border rounded"
+            <div className="space-y-2 overflow-auto">
+              {actions.length > 0 ? (
+                actions.map((action, index) => (
+                  <div key={index} className="border py-2 px-4 rounded bg-gray-50 dark:bg-gray-600 shadow-sm">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-semibold">Action {index + 1}</h3>
+                      <div className="flex space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => handleMoveUp(index)}
+                          disabled={index === 0}
+                          className={`px-2 py-1 rounded ${
+                            index === 0 ? "bg-gray-300 text-gray-500" : "bg-indigo-500 text-white hover:bg-indigo-600"
+                          }`}
                         >
-                          <option value="update">Update</option>
-                          <option value="remove">Remove</option>
-                        </select>
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMoveDown(index)}
+                          disabled={index === actions.length - 1}
+                          className={`px-2 py-1 rounded ${
+                            index === actions.length - 1 ? "bg-gray-300 text-gray-500" : "bg-indigo-500 text-white hover:bg-indigo-600"
+                          }`}
+                        >
+                          ↓
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAction(index)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          Remove
+                        </button>
                       </div>
-                      {(action.type === "update" || action.type === "add") && (
+                    </div>
+                    <div className="flex space-x-4">
+                      <div className="flex-1">
                         <div className="mb-2">
-                          <label className="block text-sm font-medium mb-1">
-                            {action.type === "update" ? "Update Value" : "Add Value"}
-                          </label>
-                          <MonacoEditorWrapper
-                            value={action.value || ""}
-                            onChange={(value) => handleValueChange(index, value)}
-                            height="10vh"
-                            language={format}
+                          <label className="block text-sm font-medium mb-1">Target (JSONPath)</label>
+                          <input
+                            type="text"
+                            value={action.target}
+                            onChange={(e) => handleActionChange(index, "target", e.target.value)}
+                            className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white"
+                            placeholder="$.paths['/example']"
                           />
                         </div>
-                      )}
-                    </div>
-
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium mb-1">Target Preview</label>
-                      <pre
-                        className="p-2 bg-gray-100 border rounded overflow-auto"
-                        style={{
-                          maxHeight: "150px", // Maximum height for the preview
-                          whiteSpace: "pre-wrap", // Wrap text for readability
-                          wordBreak: "break-word", // Break long words
-                        }}
-                      >{previewValues[index]}</pre>
+                        <div className="mb-2">
+                          <label className="block text-sm font-medium mb-1">Action Type</label>
+                          <select
+                            value={action.type}
+                            onChange={(e) => handleActionChange(index, "type", e.target.value)}
+                            className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white"
+                          >
+                            <option value="update">Update</option>
+                            <option value="remove">Remove</option>
+                          </select>
+                        </div>
+                        {(action.type === "update" || action.type === "add") && (
+                          <div className="mb-2">
+                            <label className="block text-sm font-medium mb-1">
+                              {action.type === "update" ? "Update Value" : "Add Value"}
+                            </label>
+                            <MonacoEditorWrapper
+                              value={action.value || ""}
+                              onChange={(value) => handleValueChange(index, value)}
+                              height="10vh"
+                              language={format}
+                            />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Target Preview</label>
+                          <pre
+                            className="p-2 bg-gray-100 border rounded overflow-auto text-xs dark:bg-gray-800 "
+                            style={{
+                              maxHeight: "150px", // Maximum height for the preview
+                              whiteSpace: "pre-wrap", // Wrap text for readability
+                              wordBreak: "break-word", // Break long words
+                            }}
+                          >{previewValues[index]}</pre>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleAddAction(index)}
+                          className="bg-indigo-500 text-white px-4 py-2 font-medium text-sm rounded hover:bg-indigo-600 self-end"
+                          >
+                          Add Action
+                        </button>
+                      </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="flex flex-col justify-center items-center pt-72">
+                  <h3 className="text-lg font-semibold mb-2">Get started with OpenAPI Overlay</h3>
+                  <button
+                    onClick={() => handleAddAction()}
+                    className="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600"
+                  >
+                    Add Your First Action
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         ) : (
@@ -320,7 +355,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                 <button
                   type="button"
                   onClick={toggleMode}
-                  className="bg-gray-200 text-gray-800 px-2 py-1 rounded hover:bg-gray-300"
+                  className="bg-gray-200 text-gray-800 px-2 py-1 font-medium text-sm rounded hover:bg-gray-300"
                 >
                   Switch to {currentMode === "Code" ? "UI" : "Code"} Mode
                 </button>
@@ -343,15 +378,15 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
               e.stopPropagation(); // Prevent event from bubbling up
               onRequestClose();
             }}
-            className="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600"
+            className="bg-gray-500 text-white p-2 rounded hover:bg-gray-600"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
+            className="bg-blue-500 text-white p-2 rounded"
           >
-            Save Overlay
+            Apply Overlay
           </button>
         </div>
       </form>

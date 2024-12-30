@@ -187,7 +187,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
           <ol className="list-decimal list-inside ml-4">
             <li>Open your terminal or command prompt.</li>
             <li>To format your OpenAPI file, run the following command:</li>
-            <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded mb-2 break-words whitespace-pre-wrap">
+            <pre className="bg-gray-100 dark:bg-gray-800 p-2 border rounded mb-2 break-words whitespace-pre-wrap">
               <code>
                 {`npx openapi-format openapi.${fileExt} -o openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileOption}${filterFileOption}${generateFileOption}${casingFileOption}`}
               </code>
@@ -204,13 +204,13 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
           <h3 className="font-semibold mb-2">Using openapi-format with NPM</h3>
           <ol className="list-decimal list-inside ml-4">
             <li>Install the package globally:</li>
-            <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded mb-2">
+            <pre className="bg-gray-100 dark:bg-gray-800 p-2 border rounded mb-2">
               <code>
                 npm install -g openapi-format
               </code>
             </pre>
             <li>Run the following command to format your OpenAPI file:</li>
-            <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded mb-2 break-words whitespace-pre-wrap">
+            <pre className="bg-gray-100 dark:bg-gray-800 p-2 border rounded mb-2 break-words whitespace-pre-wrap">
               <code>
                 {`openapi-format openapi.${fileExt} -o openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileOption}${filterFileOption}${generateFileOption}${casingFileOption}`}
               </code>
@@ -227,13 +227,13 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
           <h3 className="font-semibold mb-2">Using openapi-format with Docker</h3>
           <ol className="list-decimal list-inside ml-4">
             <li>Pull the Docker image:</li>
-            <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded mb-2 break-words whitespace-pre-wrap">
+            <pre className="bg-gray-100 dark:bg-gray-800 p-2 border rounded mb-2 break-words whitespace-pre-wrap">
               <code>
                 docker pull ghcr.io/thim81/openapi-format:latest
               </code>
             </pre>
             <li>Run the Docker container with the appropriate options:</li>
-            <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded mb-2 break-words whitespace-pre-wrap">
+            <pre className="bg-gray-100 dark:bg-gray-800 p-2 border rounded mb-2 break-words whitespace-pre-wrap">
               <code>
                 {`docker run --rm -v $(pwd):/workspace ghcr.io/thim81/openapi-format /workspace/openapi.${fileExt} -o /workspace/openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileDocker}${filterFileDocker}${generateFileDocker}${casingFileDocker}`}
               </code>
@@ -257,11 +257,11 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
                 className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
               />
             </li>
-            <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded mb-2">
+            <pre className="bg-gray-100 dark:bg-gray-800 p-2 border rounded mb-2">
             <MonacoEditorWrapper value={configFileContent} height="28vh" trimNewline={true}/>
             </pre>
             <li>To format your OpenAPI file using the config file, run the following command:</li>
-            <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded mb-2 break-words whitespace-pre-wrap">
+            <pre className="bg-gray-100 dark:bg-gray-800 p-2 border rounded mb-2 break-words whitespace-pre-wrap">
               <code>
                 {`npx openapi-format openapi.${fileExt} --configFile oaf-config.${fileExt}`}
               </code>
@@ -285,7 +285,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
               className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
             />
           </div>
-          <pre className="bg-gray-100 p-2 rounded mb-2">
+          <pre className="bg-gray-100 p-2 border rounded mb-2">
           <MonacoEditorWrapper value={sortSet} height="20vh" trimNewline={true}/>
           </pre>
         </div>
@@ -302,7 +302,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
               className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
             />
           </div>
-          <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded mb-2">
+          <pre className="bg-gray-100 dark:bg-gray-800 p-2 border rounded mb-2">
           <MonacoEditorWrapper value={filterSet} height="20vh" trimNewline={true}/>
           </pre>
         </div>
@@ -319,7 +319,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
               className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
             />
           </div>
-          <pre className="bg-gray-100 p-2 rounded mb-2">
+          <pre className="bg-gray-100 p-2 border rounded mb-2">
           <MonacoEditorWrapper value={generateSet} height="6vh" trimNewline={true}/>
           </pre>
         </div>
@@ -336,7 +336,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
               className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
             />
           </div>
-          <pre className="bg-gray-100 p-2 rounded mb-2">
+          <pre className="bg-gray-100 p-2 border rounded mb-2">
           <MonacoEditorWrapper value={casingSet} height="20vh" trimNewline={true}/>
           </pre>
         </div>

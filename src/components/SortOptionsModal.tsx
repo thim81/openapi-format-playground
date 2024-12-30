@@ -74,7 +74,7 @@ const SortOptionsModal: React.FC<SortOptionsModalProps> = ({isOpen, onRequestClo
           onClick={handleSubmit}
           className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 focus:outline-none"
         >
-          Submit
+          Apply Sorting
         </button>
       </div>
     </SimpleModal>

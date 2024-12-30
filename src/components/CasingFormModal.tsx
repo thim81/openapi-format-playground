@@ -264,7 +264,7 @@ const CasingFormModal: React.FC<CasingFormModalProps> = ({isOpen, onRequestClose
             Cancel
           </button>
           <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-            Submit
+            Apply Casing
           </button>
         </div>
       </form>
