@@ -14,9 +14,9 @@ const ButtonUrlModal: React.FC<UrlUploadProps> = ({ context, onUrlLoad, typeTxt=
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    console.log(`ButtonUrlModal isModalOpen: ${isModalOpen}`);
-  }, [isModalOpen]);
+  // useEffect(() => {
+  //   console.log(`ButtonUrlModal isModalOpen: ${isModalOpen}`);
+  // }, [isModalOpen]);
 
   // Handle URL input change
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,13 +50,13 @@ const ButtonUrlModal: React.FC<UrlUploadProps> = ({ context, onUrlLoad, typeTxt=
 
   // Function to open the modal
   const openModal = () => {
-    console.log('ButtonUrlModal opened');
+    // console.log('ButtonUrlModal opened');
     setIsModalOpen(true);
   };
 
   // Function to close the modal
   const closeModal = () => {
-    console.log('ButtonUrlModal closed');
+    // console.log('ButtonUrlModal closed');
     setIsModalOpen(false);
     setErrorMessage(null); // Clear error when closing the modal
   };

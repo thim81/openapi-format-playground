@@ -32,8 +32,8 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
 
   // Initialize actions from overlaySet when modal opens
   useEffect(() => {
-    console.log('ActionsModal mounted or updated');
-    console.log(`isOpen: ${isOpen}`);
+    // console.log('ActionsModal mounted or updated');
+    // console.log(`isOpen: ${isOpen}`);
     const initialize = async () => {
       const OverlayOpts =  await parseString(overlaySet) as Record<string, unknown>;
       const actions = await convertOverlaySetToActions(OverlayOpts, format);
@@ -49,7 +49,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
 
   // Toggle between UI and Code modes
   const toggleMode = async () => {
-    console.log(`Toggling mode from ${currentMode}`);
+    // console.log(`Toggling mode from ${currentMode}`);
     if (currentMode === "UI") {
       // Convert actions to overlaySet and update overlaySetCode
       const OverlayOpts =  await parseString(overlaySet) as Record<string, unknown>;
@@ -302,7 +302,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
               <ButtonUrlModal
                 context="overlay"
                 onUrlLoad={(content, context) => {
-                  console.log(`ButtonUrlModal onUrlLoad called with context: ${context}`);
+                  // console.log(`ButtonUrlModal onUrlLoad called with context: ${context}`);
                   handleOverlayLoad(content, context);
                 }}
               />

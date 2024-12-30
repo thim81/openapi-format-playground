@@ -14,7 +14,7 @@ interface SimpleModalProps {
 
 const SimpleModal: React.FC<SimpleModalProps> = ({ isOpen, onRequestClose, children, width = '98%', height = '98%', zIndex = 50 }) => {
   useEffect(() => {
-    console.log(`SimpleModal isOpen: ${isOpen}`);
+    // console.log(`SimpleModal isOpen: ${isOpen}`);
     if (isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -33,7 +33,7 @@ const SimpleModal: React.FC<SimpleModalProps> = ({ isOpen, onRequestClose, child
       className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center"
       style={{ zIndex }}
       onClick={() => {
-        console.log('Backdrop clicked');
+        // console.log('Backdrop clicked');
         onRequestClose();
       }}
     >
@@ -42,14 +42,14 @@ const SimpleModal: React.FC<SimpleModalProps> = ({ isOpen, onRequestClose, child
         style={{ width, height }}
         onClick={(e) => {
           e.stopPropagation();
-          console.log('Modal content clicked');
+          // console.log('Modal content clicked');
         }}
       >
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation(); // Prevent event from bubbling up
-            console.log('Close button clicked');
+            // console.log('Close button clicked');
             onRequestClose();
           }}
           className="absolute top-2 right-2 text-black dark:text-white"
