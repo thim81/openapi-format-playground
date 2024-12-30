@@ -54,6 +54,15 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
       oaObj = output.data as OpenAPIV3.Document || {data: oaObj};
     }
 
+    // Apply OpenAPI Overlay
+    if (overlaySet?.length > 0) {
+      const OverlayOpts =  await parseString(overlaySet) as Record<string, unknown>;
+      const options = {overlaySet: OverlayOpts} as OpenAPIOverlayOptions
+      const OverlayRes = await openapiOverlay(oaObj, options);
+      output.data = OverlayRes.data;
+      oaObj = output.data as OpenAPIV3.Document || {data: oaObj};
+    }
+
     // Sort OpenAPI
     if (sort) {
       let sortOpts = {}
@@ -73,14 +82,7 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
       const options = {casingSet: caseOpts} as OpenAPICasingOptions
       const casedRes = await openapiChangeCase(oaObj, options);
       output.data = casedRes.data;
-    }
-
-    // Apply OpenAPI Overlay
-    if (overlaySet?.length > 0) {
-      const OverlayOpts =  await parseString(overlaySet) as Record<string, unknown>;
-      const options = {overlaySet: OverlayOpts} as OpenAPIOverlayOptions
-      const OverlayRes = await openapiOverlay(oaObj, options);
-      output.data = OverlayRes.data;
+      // oaObj = output.data as OpenAPIV3.Document || {data: oaObj};
     }
 
     // Convert output to JSON/YAML format

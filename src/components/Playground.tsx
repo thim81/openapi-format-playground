@@ -54,6 +54,7 @@ export interface PlaygroundConfig extends openapiFormatConfig {
   isFilterOptionsCollapsed?: boolean;
   toggleGenerate?: boolean;
   toggleCasing?: boolean;
+  toggleOverlay?: boolean;
   defaultFieldSorting?: boolean;
   pathSort?: 'original' | 'path' | 'tags';
   outputLanguage?: 'json' | 'yaml';
@@ -77,9 +78,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [filterPrevent, setFilterPrevent] = useState<boolean>(false);
   const [filterSet, setFilterSet] = useState<string>('');
   const [generateSet, setGenerateSet] = useState<string>('');
-  const [toggleGenerate, seTtoggleGenerate] = useState<boolean>(false);
+  const [toggleGenerate, seToggleGenerate] = useState<boolean>(false);
   const [casingSet, setCasingSet] = useState<string>('');
   const [toggleCasing, setToggleCasing] = useState<boolean>(false);
+  const [toggleOverlay, setToggleOverlay] = useState<boolean>(false);
   const [defaultSortSet, setDefaultSortSet] = useState<string>('');
   const [customSortSet, setCustomSortSet] = useState<string>(defaultSortSet);
   const [sortSet, setSortSet] = useState<string>(defaultSortSet);
@@ -153,7 +155,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       keepComments: keepComments,
       filterSet: dFilterSet,
       sortSet: dSortSet,
-      overlaySet: dOverlaySet,
+      ...(dOverlaySet && toggleOverlay && {overlaySet: dOverlaySet}),
       ...(dGenerateSet && toggleGenerate && {generateSet: dGenerateSet}),
       ...(dCasingSet && toggleCasing && {casingSet: dCasingSet}),
       format: outputLanguage,
@@ -198,7 +200,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       setOutput('');
     }
     setLoading(false);
-  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dGenerateSet, dCasingSet, dOverlaySet, outputLanguage, pathSort, toggleGenerate, toggleCasing, setOutput, defaultFieldSorting]);
+  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dGenerateSet, dCasingSet, dOverlaySet, outputLanguage, pathSort, toggleGenerate, toggleCasing, toggleOverlay, setOutput, defaultFieldSorting]);
 
   // Decode Share URL
   useEffect(() => {
@@ -221,8 +223,9 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setOverlaySet(result.config.overlaySet ?? '');
           setCustomSortSet(result.config.sortSet ?? defaultSortSet);
 
+          setToggleOverlay(result.config.toggleOverlay ?? false);
           setToggleCasing(result.config.toggleCasing ?? false);
-          seTtoggleGenerate(result.config.toggleGenerate ?? false);
+          seToggleGenerate(result.config.toggleGenerate ?? false);
 
           setOutputLanguage(result.config.outputLanguage ?? 'yaml');
           setFilterUnused(result?.config?.filterSet?.includes('unusedComponents') ?? false);
@@ -368,6 +371,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     const oaOverlay = await stringify(overlayOptions, {format: outputLanguage});
     setOverlaySet(oaOverlay);
     setSortModalOpen(false);
+    setToggleOverlay(true);
   };
 
   const handleDefaultFieldSortingChange = async () => {
@@ -447,7 +451,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             {outputLanguage === 'yaml' && (
               <>
                 <div className="mb-4">
-                  <label className="flex items-center font-medium text-gray-700">
+                  <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
                     Keep comments
                     <input
                       type="checkbox"
@@ -460,7 +464,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             )}
             <div className="mb-2">
               <h3 className="text-lg font-semibold mb-2">Sort options</h3>
-              <label className="flex items-center font-medium text-gray-700">
+              <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
                 Sort OpenAPI
                 <input
                   type="checkbox"
@@ -470,19 +474,18 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               </label>
               {sort && (
                 <div className="flex items-center mt-2">
-                  <label className="flex items-center font-medium text-gray-700">
+                  <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
                     Custom OpenAPI field sorting
                     <input
                       type="checkbox"
                       checked={!defaultFieldSorting}
                       onChange={handleDefaultFieldSortingChange}
-                      className="ml-2"
+                      className="ml-2 mr-2"
                     />
                   </label>
-
                   <button
                     onClick={openSortModal}
-                    className="ml-4 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
+                    className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
                   >
                     Configure
                   </button>
@@ -491,7 +494,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             </div>
             {sort && (
               <div className="flex items-center mb-4">
-                <label className="block mb-1 font-medium text-gray-700 mr-4">Sort Paths By</label>
+                <label className="block mb-1 font-medium text-gray-700 dark:text-gray-400 mr-2">Sort Paths By</label>
                 <select
                   value={pathSort}
                   onChange={(e) => handlePathSortChange(e.target.value as 'original' | 'path' | 'tags', sortSet)}
@@ -503,7 +506,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 </select>
               </div>
             )}
-            <div className="mb-4">
+            <div className="mb-2">
               <h3
                 className="text-lg font-semibold mb-2 cursor-pointer flex items-center"
                 onClick={() => setFilterOptionsCollapsed(!isFilterOptionsCollapsed)}
@@ -532,7 +535,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                   <MonacoEditorWrapper value={filterSet} onChange={setFilterSet} height='36vh'/>
                 </div>
               )}
-              <label className="flex items-center font-medium text-gray-700">
+              <label className="flex items-center font-medium text-gray-700d dark:text-gray-400">
                 Filter Unused Components
                 <input
                   type="checkbox"
@@ -541,7 +544,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                   className="ml-2"
                 />
               </label>
-              <label className="flex items-center font-medium text-gray-700">
+              <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
                 Preserve Empty objects
                 <input
                   type="checkbox"
@@ -551,17 +554,40 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 />
               </label>
             </div>
-            <div className="mb-4">
+            <div className="mb-2">
+              <h3 className="text-lg font-semibold mb-2 cursor-pointer flex items-center">OpenAPI Overlay</h3>
+              <div className="flex items-center">
+                <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
+                  Apply Overlay
+                  <input
+                    type="checkbox"
+                    id="formatOverlay"
+                    checked={toggleOverlay}
+                    onChange={() => setToggleOverlay(!toggleOverlay)}
+                    className="ml-2 mr-2"
+                  />
+                </label>
+                <button
+                  onClick={openOverlayModal}
+                  className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
+                >
+                  Configure
+                </button>
+              </div>
+            </div>
+            <div className="mb-2">
               <h3 className="text-lg font-semibold mb-2 cursor-pointer flex items-center">Extra options</h3>
               <div className="flex items-center mb-2">
-                <span>Generate OperationId</span>
-                <input
-                  type="checkbox"
-                  id="generateOperationId"
-                  className="ml-2 mr-2"
-                  checked={toggleGenerate}
-                  onChange={() => seTtoggleGenerate(!toggleGenerate)}
-                />
+                <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
+                  Generate OperationId
+                  <input
+                    type="checkbox"
+                    id="generateOperationId"
+                    className="ml-2 mr-2"
+                    checked={toggleGenerate}
+                    onChange={() => seToggleGenerate(!toggleGenerate)}
+                  />
+                </label>
                 <button
                   onClick={openGenerateModal}
                   className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
@@ -570,14 +596,15 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 </button>
               </div>
               <div className="flex items-center">
-                <span>Format casing</span>
-                <input
-                  type="checkbox"
-                  id="formatCasing"
-                  className="ml-2 mr-2"
-                  checked={toggleCasing}
-                  onChange={() => setToggleCasing(!toggleCasing)}
-                />
+                <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">Format casing
+                  <input
+                    type="checkbox"
+                    id="formatCasing"
+                    className="ml-2 mr-2"
+                    checked={toggleCasing}
+                    onChange={() => setToggleCasing(!toggleCasing)}
+                  />
+                </label>
                 <button
                   onClick={openCasingModal}
                   className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"

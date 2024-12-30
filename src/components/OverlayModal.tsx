@@ -252,8 +252,8 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
               </div>
             </div>
 
-            <div className="border p-4 rounded bg-gray-50 dark:bg-gray-600 mb-2">
-              <h3 className="text-lg font-semibold mb-4">Info</h3>
+            <div className="border py-2 px-4 rounded bg-gray-50 dark:bg-gray-600 mb-2">
+              <h3 className="font-semibold mb-2">Info</h3>
               <div className="flex gap-4">
                 <div className="flex-1">
                   <label className="block text-sm font-medium mb-1">Title</label>
@@ -289,7 +289,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                           type="button"
                           onClick={() => handleMoveUp(index)}
                           disabled={index === 0}
-                          className={`px-2 py-1 rounded ${
+                          className={`h-6 w-6 flex justify-center items-center text-xs rounded ${
                             index === 0 ? "bg-gray-300 text-gray-500" : "bg-indigo-500 text-white hover:bg-indigo-600"
                           }`}
                         >
@@ -299,7 +299,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                           type="button"
                           onClick={() => handleMoveDown(index)}
                           disabled={index === actions.length - 1}
-                          className={`px-2 py-1 rounded ${
+                          className={`h-6 w-6 flex justify-center items-center text-xs rounded ${
                             index === actions.length - 1 ? "bg-gray-300 text-gray-500" : "bg-indigo-500 text-white hover:bg-indigo-600"
                           }`}
                         >
@@ -366,7 +366,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                         <button
                           type="button"
                           onClick={() => handleAddAction(index)}
-                          className="bg-indigo-500 text-white px-4 py-2 font-medium text-sm rounded hover:bg-indigo-600 self-end"
+                          className="bg-indigo-500 text-white px-2 py-1 font-medium text-sm rounded hover:bg-indigo-600 self-end"
                         >
                           Add Action
                         </button>
