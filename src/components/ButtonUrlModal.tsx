@@ -67,7 +67,7 @@ const ButtonUrlModal: React.FC<UrlUploadProps> = ({ context, onUrlLoad, typeTxt=
       <button
         type="button" // Explicitly set type
         onClick={(e) => {
-          e.stopPropagation(); // Prevent event from bubbling up
+          e.stopPropagation();
           openModal();
         }}
         className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-2 rounded"
@@ -89,7 +89,7 @@ const ButtonUrlModal: React.FC<UrlUploadProps> = ({ context, onUrlLoad, typeTxt=
         <div className="flex items-center space-x-4">
           <input
             type="text"
-            placeholder="Enter {{typeTxt}} file URL"
+            placeholder={`Enter ${typeTxt} file URL`}
             value={url}
             onChange={handleUrlChange}
             className="p-2 border rounded w-full bg-white text-black dark:bg-gray-800 dark:text-white"

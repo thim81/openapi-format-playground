@@ -156,7 +156,10 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     onRequestClose();
   };
 
-  const handleCodeChange = (newCode: string) => {
+  const handleCodeChange = async (newCode: string) => {
+    const parsedOverlaySet = await parseString(newCode);
+    const updatedActions = await convertOverlaySetToActions(parsedOverlaySet, format);
+    setActions(updatedActions);
     setOverlaySetCode(newCode);
   };
 
@@ -299,6 +302,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
               <div className="flex items-center gap-2">
                 <ButtonUrlModal
                   context="overlay"
+                  typeTxt="OpenAPI Overlay"
                   onUrlLoad={(content, context) => {
                     // console.log(`ButtonUrlModal onUrlLoad called with context: ${context}`);
                     handleOverlayLoad(content, context);
