@@ -29,17 +29,30 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
   const [previewValues, setPreviewValues] = useState<string[]>([]);
   const [currentMode, setCurrentMode] = useState<"UI" | "Code">("UI");
   const [overlaySetCode, setOverlaySetCode] = useState<string>("");
+  const [info, setInfo] = useState<{ title: string; version: string }>({
+    title: "",
+    version: "",
+  });
 
   // Initialize actions from overlaySet when modal opens
   useEffect(() => {
     const initialize = async () => {
-      const OverlayOpts =  await parseString(overlaySet) as Record<string, unknown>;
+      const OverlayOpts = (await parseString(overlaySet)) as Record<string, unknown>;
       const actions = await convertOverlaySetToActions(OverlayOpts, format);
       setActions(actions);
       setOverlaySetCode(overlaySet);
 
       const previews = await computePreviewValues(actions, openapi);
       setPreviewValues(previews);
+
+      // Initialize info object if present
+      if (OverlayOpts.info) {
+        const info = OverlayOpts.info as { title?: string; version?: string };
+        setInfo({
+          title: info.title || "",
+          version: info.version || "",
+        });
+      }
     };
 
     initialize();
@@ -49,19 +62,33 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
   const toggleMode = async () => {
     if (currentMode === "UI") {
       // Convert actions to overlaySet and update overlaySetCode
-      const OverlayOpts =  await parseString(overlaySet) as Record<string, unknown>;
-      const updatedOverlaySet = await convertActionsToOverlaySet(actions, OverlayOpts);
-      const updatedCode = await stringify(updatedOverlaySet, { format });
+      const OverlayOpts = await parseString(overlaySet) as Record<string, unknown>;
+      const updatedOverlaySet = await convertActionsToOverlaySet(actions, {
+        ...OverlayOpts,
+        info: {...info}, // Include the current info object
+      });
+      const updatedCode = await stringify(updatedOverlaySet, {format});
       setOverlaySetCode(updatedCode);
     } else {
       // Switch to UI Mode: Update actions from overlaySetCode
       try {
-        const parsedOverlaySet = await parseString(overlaySetCode);
+        const parsedOverlaySet = await parseString(overlaySetCode) as Record<string, unknown>;
         const updatedActions = await convertOverlaySetToActions(parsedOverlaySet, format);
         setActions(updatedActions);
 
         const previews = await computePreviewValues(updatedActions, openapi);
         setPreviewValues(previews);
+
+        // Update the info object
+        if (parsedOverlaySet?.info) {
+          const updatedInfo = parsedOverlaySet.info as { title?: string; version?: string };
+          setInfo({
+            title: updatedInfo.title || "",
+            version: updatedInfo.version || "",
+          });
+        } else {
+          setInfo({title: "", version: ""});
+        }
       } catch (error) {
         console.error("Error parsing overlaySet:", error);
         alert("Invalid overlay code. Please fix the overlay config or switch back to UI mode.");
@@ -159,11 +186,18 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     setPreviewValues(updatedPreviews);
   };
 
+  const handleInfoChange = (field: keyof typeof info, value: string) => {
+    setInfo({ ...info, [field]: value });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const OverlayOpts =  await parseString(overlaySet) as Record<string, unknown>;
-    const updatedOverlaySet = await convertActionsToOverlaySet(actions, OverlayOpts);
+    const updatedOverlaySet = await convertActionsToOverlaySet(actions, {
+      ...OverlayOpts,
+      info: { ...info }, // Include the updated info object
+    });
     onSubmit(updatedOverlaySet);
     onRequestClose();
   };
@@ -177,7 +211,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
 
   const handleOverlayLoad = async (content: string | null, context: string) => {
     if (context === 'overlay' && content) {
-      handleCodeChange(content);
+      await handleCodeChange(content);
     }
   };
 
@@ -215,6 +249,32 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                 >
                   Switch to {currentMode === "UI" ? "Code" : "UI"} Mode
                 </button>
+              </div>
+            </div>
+
+            <div className="border p-4 rounded bg-gray-50 dark:bg-gray-600 mb-2">
+              <h3 className="text-lg font-semibold mb-4">Info</h3>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium mb-1">Title</label>
+                  <input
+                    type="text"
+                    value={info.title}
+                    onChange={(e) => handleInfoChange("title", e.target.value)}
+                    className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white"
+                    placeholder="Enter title"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium mb-1">Version</label>
+                  <input
+                    type="text"
+                    value={info.version}
+                    onChange={(e) => handleInfoChange("version", e.target.value)}
+                    className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white"
+                    placeholder="Enter version"
+                  />
+                </div>
               </div>
             </div>
 
@@ -307,7 +367,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                           type="button"
                           onClick={() => handleAddAction(index)}
                           className="bg-indigo-500 text-white px-4 py-2 font-medium text-sm rounded hover:bg-indigo-600 self-end"
-                          >
+                        >
                           Add Action
                         </button>
                       </div>
@@ -329,7 +389,6 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
           </div>
         ) : (
           <div className="flex-grow">
-            {/* Row of buttons */}
             <div className="flex items-center justify-between gap-2 mb-4">
               <div className="flex items-center gap-2">
                 <ButtonUrlModal
@@ -415,24 +474,28 @@ export const convertActionsToOverlaySet = async (
   actions: Action[],
   baseOverlaySet: any
 ): Promise<any> => {
+  const actionsArray = await Promise.all(
+    actions.map(async (action) => {
+      const actionObject: any = {target: action.target};
+
+      if (action.type === "update") {
+        actionObject.update = await parseString(action.value || "{}");
+      } else if (action.type === "add") {
+        actionObject.add = await parseString(action.value || "{}");
+      } else if (action.type === "remove") {
+        actionObject.remove = true;
+      }
+
+      return actionObject;
+    })
+  );
+
+  // Construct the overlay set with properties in the desired order
   const overlaySet = {
-    overlay: "1.0.0",
+    overlay: baseOverlaySet.overlay || "1.0.0",
+    info: baseOverlaySet.info || {},
     ...baseOverlaySet,
-    actions: await Promise.all(
-      actions.map(async (action) => {
-        const actionObject: any = { target: action.target };
-
-        if (action.type === "update") {
-          actionObject.update = await parseString(action.value || "{}");
-        } else if (action.type === "add") {
-          actionObject.add = await parseString(action.value || "{}");
-        } else if (action.type === "remove") {
-          actionObject.remove = true;
-        }
-
-        return actionObject;
-      })
-    ),
+    actions: actionsArray,
   };
 
   return overlaySet;
