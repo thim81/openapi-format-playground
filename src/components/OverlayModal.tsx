@@ -171,32 +171,36 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
       <form onSubmit={handleSubmit} className="flex flex-col h-full">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Manage Overlay Actions</h2>
-          <button
-            type="button"
-            onClick={toggleMode}
-            className="bg-gray-200 text-gray-800 px-2 py-1 rounded hover:bg-gray-300"
-          >
-            Switch to {currentMode === "UI" ? "Code" : "UI"} Mode
-          </button>
         </div>
 
         {currentMode === "UI" ? (
           <div className="flex-grow">
-            <div className="mb-4">
-              <button
-                type="button"
-                onClick={handleAddAction}
-                className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-              >
-                Add Action
-              </button>
-              <ButtonDownload
-                content={overlaySet}
-                filename="oaf-overlay"
-                format={format}
-                label="Download Overlay"
-                className="ml-2 bg-green-500 text-white text-xs p-1 rounded hover:bg-green-700 focus:outline-none"
-              />
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleAddAction}
+                  className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+                >
+                  Add Action
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <ButtonDownload
+                  content={overlaySet}
+                  filename="oaf-overlay"
+                  format={format}
+                  label="Download Overlay"
+                  className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={toggleMode}
+                  className="bg-gray-200 text-gray-800 px-2 py-1 rounded hover:bg-gray-300"
+                >
+                  Switch to {currentMode === "UI" ? "Code" : "UI"} Mode
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4 overflow-auto">
@@ -291,25 +295,36 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
         ) : (
           <div className="flex-grow">
             {/* Row of buttons */}
-            <div className="flex items-center gap-4 mb-4">
-              <ButtonDownload
-                content={overlaySet}
-                filename="oaf-overlay"
-                format={format}
-                label="Download Overlay"
-                className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-2 rounded"
-              />
-              <ButtonUrlModal
-                context="overlay"
-                onUrlLoad={(content, context) => {
-                  // console.log(`ButtonUrlModal onUrlLoad called with context: ${context}`);
-                  handleOverlayLoad(content, context);
-                }}
-              />
-              <ButtonUpload
-                context="overlay"
-                onFileLoad={handleOverlayLoad}
-              />
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <div className="flex items-center gap-2">
+                <ButtonUrlModal
+                  context="overlay"
+                  onUrlLoad={(content, context) => {
+                    // console.log(`ButtonUrlModal onUrlLoad called with context: ${context}`);
+                    handleOverlayLoad(content, context);
+                  }}
+                />
+                <ButtonUpload
+                  context="overlay"
+                  onFileLoad={handleOverlayLoad}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <ButtonDownload
+                  content={overlaySet}
+                  filename="oaf-overlay"
+                  format={format}
+                  label="Download Overlay"
+                  className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-2 rounded"
+                />
+                <button
+                  type="button"
+                  onClick={toggleMode}
+                  className="bg-gray-200 text-gray-800 px-2 py-1 rounded hover:bg-gray-300"
+                >
+                  Switch to {currentMode === "Code" ? "UI" : "Code"} Mode
+                </button>
+              </div>
             </div>
 
             <MonacoEditorWrapper
@@ -322,7 +337,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
         )}
 
         <div className="mt-4 flex justify-end space-x-2">
-          <button
+        <button
             type="button"
             onClick={(e) => {
               e.stopPropagation(); // Prevent event from bubbling up

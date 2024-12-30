@@ -1,6 +1,6 @@
 // components/SimpleModal.tsx
 
-import React, { useEffect } from 'react';
+import React, {useEffect} from 'react';
 import ReactDOM from 'react-dom';
 
 interface SimpleModalProps {
@@ -12,7 +12,14 @@ interface SimpleModalProps {
   zIndex?: number;
 }
 
-const SimpleModal: React.FC<SimpleModalProps> = ({ isOpen, onRequestClose, children, width = '98%', height = '98%', zIndex = 50 }) => {
+const SimpleModal: React.FC<SimpleModalProps> = ({
+                                                   isOpen,
+                                                   onRequestClose,
+                                                   children,
+                                                   width = '98%',
+                                                   height = '98%',
+                                                   zIndex = 50
+                                                 }) => {
   useEffect(() => {
     // console.log(`SimpleModal isOpen: ${isOpen}`);
     if (isOpen) {
@@ -32,18 +39,12 @@ const SimpleModal: React.FC<SimpleModalProps> = ({ isOpen, onRequestClose, child
     <div
       className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center"
       style={{ zIndex }}
-      onClick={() => {
-        // console.log('Backdrop clicked');
-        onRequestClose();
-      }}
+      onClick={onRequestClose}
     >
       <div
-        className="bg-white dark:bg-gray-950 rounded p-4 relative"
+        className="bg-white dark:bg-gray-950 rounded py-4 px-4 relative"
         style={{ width, height }}
-        onClick={(e) => {
-          e.stopPropagation();
-          // console.log('Modal content clicked');
-        }}
+        onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
@@ -52,12 +53,12 @@ const SimpleModal: React.FC<SimpleModalProps> = ({ isOpen, onRequestClose, child
             // console.log('Close button clicked');
             onRequestClose();
           }}
-          className="absolute top-2 right-2 text-black dark:text-white"
+          className="absolute top-2 right-2 text-black dark:text-white focus:outline-none"
+          style={{ width: '24px', height: '24px' }}
         >
-          X
-          {/*<svg
+          <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-8 w-8 p-1.5"
+            className="h-5 w-5"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -68,7 +69,7 @@ const SimpleModal: React.FC<SimpleModalProps> = ({ isOpen, onRequestClose, child
               strokeWidth={2}
               d="M6 18L18 6M6 6l12 12"
             />
-          </svg>*/}
+          </svg>
         </button>
         <div className="h-full w-full overflow-auto">
           {children}
