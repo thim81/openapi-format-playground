@@ -756,6 +756,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         overlaySet={overlaySet}
         toggleCasing={toggleCasing}
         toggleGenerate={toggleGenerate}
+        toggleOverlay={toggleOverlay}
         format={outputLanguage}
       />
 

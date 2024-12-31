@@ -73,7 +73,7 @@ const ActionSection: React.FC<{ actions: UnusedAction[], totalAppliedActions:num
 
   return (
     <div className="mb-4">
-      <div className="cursor-pointer" className="mb-4">
+      <div className="cursor-pointer mb-4">
         <h4 className="text-md font-semibold flex items-center">
           Applied Overlay Actions
           <span

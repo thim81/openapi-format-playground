@@ -20,6 +20,7 @@ interface InstructionsModalProps {
   keepComments: boolean;
   toggleGenerate?: boolean;
   toggleCasing?: boolean;
+  toggleOverlay?: boolean;
 }
 
 const InstructionsModal: React.FC<InstructionsModalProps> = (
@@ -36,6 +37,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
     keepComments,
     toggleGenerate,
     toggleCasing,
+    toggleOverlay,
   }
 ) => {
   const [activeTab, setActiveTab] = useState('npx');
@@ -54,8 +56,11 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
   const generateFileOption = generateSet?.length && toggleGenerate ? ` --generateFile ${generateFileName}` : '';
   const generateFileDocker = generateSet?.length && toggleGenerate ? ` --generateFile /workspace/${generateFileName}` : '';
   const casingFileName = `oaf-casing.${fileExt}`;
-  const casingFileOption = casingSet?.length && toggleCasing ? ` --generateFile ${casingFileName}` : '';
-  const casingFileDocker = casingSet?.length && toggleCasing ? ` --generateFile /workspace/${casingFileName}` : '';
+  const casingFileOption = casingSet?.length && toggleCasing ? ` --casingFile ${casingFileName}` : '';
+  const casingFileDocker = casingSet?.length && toggleCasing ? ` --casingFile /workspace/${casingFileName}` : '';
+  const overlayFileName = `oaf-overlay.${fileExt}`;
+  const overlayFileOption = casingSet?.length && toggleOverlay ? ` --overlayFile ${overlayFileName}` : '';
+  const overlayFileDocker = casingSet?.length && toggleOverlay ? ` --overlayFile /workspace/${overlayFileName}` : '';
 
   const sortOption = !sort ? ` --no-sort` : '';
   const keepCommentsOption = keepComments && format === 'yaml' ? ` --keepComments` : '';
@@ -115,7 +120,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
         // sortFile: sortFileName ? sortFileName : undefined,
         ...(filterSet?.length && {filterSet: filterOps}),
         ...(sortSet?.length && {sortSet: sortOps}),
-        ...(overlaySet?.length && {overlaySet: overlayOps}),
+        ...(overlaySet?.length && toggleOverlay && {overlaySet: overlayOps}),
         ...(generateSet?.length && toggleGenerate && {generateSet: generateOps}),
         ...(casingSet?.length && toggleCasing && {casingSet: casingOps}),
       };
@@ -136,7 +141,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
     };
 
     generateConfigFileContent();
-  }, [sort, keepComments, filterSet, sortSet, generateSet, casingSet, overlaySet, format, toggleGenerate, toggleCasing]);
+  }, [sort, keepComments, filterSet, sortSet, generateSet, casingSet, overlaySet, format, toggleGenerate, toggleCasing, toggleOverlay]);
 
   return (
     <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="80%" height={dynamicHeight}>
@@ -189,7 +194,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
             <li>To format your OpenAPI file, run the following command:</li>
             <pre className="bg-gray-100 dark:bg-gray-800 p-2 border rounded mb-2 break-words whitespace-pre-wrap">
               <code>
-                {`npx openapi-format openapi.${fileExt} -o openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileOption}${filterFileOption}${generateFileOption}${casingFileOption}`}
+                {`npx openapi-format openapi.${fileExt} -o openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileOption}${filterFileOption}${generateFileOption}${casingFileOption}${overlayFileOption}`}
               </code>
             </pre>
             <li>Review the command and ensure that the OpenAPI input & output, match your local or remote file.
@@ -212,7 +217,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
             <li>Run the following command to format your OpenAPI file:</li>
             <pre className="bg-gray-100 dark:bg-gray-800 p-2 border rounded mb-2 break-words whitespace-pre-wrap">
               <code>
-                {`openapi-format openapi.${fileExt} -o openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileOption}${filterFileOption}${generateFileOption}${casingFileOption}`}
+                {`openapi-format openapi.${fileExt} -o openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileOption}${filterFileOption}${generateFileOption}${casingFileOption}${overlayFileOption}`}
               </code>
             </pre>
             <li>Review the command and ensure that the OpenAPI input & output, match your local or remote file.
@@ -235,7 +240,7 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
             <li>Run the Docker container with the appropriate options:</li>
             <pre className="bg-gray-100 dark:bg-gray-800 p-2 border rounded mb-2 break-words whitespace-pre-wrap">
               <code>
-                {`docker run --rm -v $(pwd):/workspace ghcr.io/thim81/openapi-format /workspace/openapi.${fileExt} -o /workspace/openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileDocker}${filterFileDocker}${generateFileDocker}${casingFileDocker}`}
+                {`docker run --rm -v $(pwd):/workspace ghcr.io/thim81/openapi-format /workspace/openapi.${fileExt} -o /workspace/openapi-formatted.${fileExt}${sortOption}${keepCommentsOption}${sortFileDocker}${filterFileDocker}${generateFileDocker}${casingFileDocker}${overlayFileDocker}`}
               </code>
             </pre>
             <li>Review the command and ensure that the OpenAPI input & output, match your local or remote file.
@@ -337,7 +342,24 @@ const InstructionsModal: React.FC<InstructionsModalProps> = (
             />
           </div>
           <pre className="bg-gray-100 p-2 border rounded mb-2">
-          <MonacoEditorWrapper value={casingSet} height="20vh" trimNewline={true}/>
+          <MonacoEditorWrapper value={casingSet} height="6vh" trimNewline={true}/>
+          </pre>
+        </div>
+      )}
+      {overlaySet && overlaySet?.length > 0 && toggleOverlay && activeTab !== 'configFile' && (
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold">OpenAPI Overlay Options:</h3>
+            <ButtonDownload
+              content={overlaySet}
+              filename="oaf-overlay"
+              format={format}
+              label="Download OpenAPI Overlay"
+              className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
+            />
+          </div>
+          <pre className="bg-gray-100 p-2 border rounded mb-2">
+          <MonacoEditorWrapper value={overlaySet} height="20vh" trimNewline={true}/>
           </pre>
         </div>
       )}
