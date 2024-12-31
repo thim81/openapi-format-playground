@@ -103,11 +103,15 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   const [components, setComponents] = useState<ComponentMetrics>(defaultCompMetrics);
   const [unusedComponents, setUnusedComponents] = useState<ComponentMetrics>(defaultCompMetrics);
+  const [unusedActions, setUnusedActions] = useState([]);
 
   const [totalComponents, setTotalComponents] = useState(0);
   const [totalUnusedComponents, setTotalUnusedComponents] = useState(0);
   const [totalTags, setTotalTags] = useState(0);
   const [totalPaths, setTotalPaths] = useState(0);
+  const [totalActions, setTotalActions] = useState(0);
+  const [totalAppliedActions, setTotalAppliedActions] = useState(0);
+  const [totalUnusedActions, setTotalUnusedActions] = useState(0);
 
   const [pathSort, setPathSort] = useState<'original' | 'path' | 'tags'>('original');
   const [defaultFieldSorting, setDefaultFieldSorting] = useState<boolean>(true);
@@ -182,6 +186,12 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setTotalUnusedComponents(res.resultData?.unusedComp?.meta?.total || 0);
           setComponents(res.resultData?.totalComp || defaultCompMetrics);
           setUnusedComponents(res.resultData?.unusedComp || defaultCompMetrics);
+
+          setTotalActions(res.resultData?.totalActions || 0);
+          setTotalAppliedActions(res.resultData?.appliedActions || 0);
+          setTotalUnusedActions((res.resultData?.unusedActions?.length || 0));
+          setUnusedActions(res.resultData?.unusedActions || []);
+
           setErrorMessage(null);
           setLoading(false);
         } else {
@@ -671,6 +681,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         totalUnusedComponents={totalUnusedComponents}
         components={components}
         unusedComponents={unusedComponents}
+        totalActions={totalActions}
+        totalAppliedActions={totalAppliedActions}
+        totalUnusedActions={totalUnusedActions}
+        unusedActions={unusedActions}
       />
 
       {

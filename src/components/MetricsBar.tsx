@@ -12,6 +12,12 @@ export interface ComponentMetrics {
   };
 }
 
+interface UnusedAction {
+  target: string;
+  remove?: boolean;
+  update?: string;
+}
+
 interface MetricsBarProps {
   totalPaths: number;
   totalTags: number;
@@ -19,6 +25,10 @@ interface MetricsBarProps {
   totalUnusedComponents: number;
   components?: ComponentMetrics;
   unusedComponents?: ComponentMetrics;
+  totalActions: number;
+  totalAppliedActions:number;
+  totalUnusedActions: number;
+  unusedActions: UnusedAction[];
 }
 
 const ComponentSection: React.FC<{ title: string; items: string[] }> = ({ title, items }) => {
@@ -54,14 +64,80 @@ const ComponentSection: React.FC<{ title: string; items: string[] }> = ({ title,
   );
 };
 
-const MetricsBar: React.FC<MetricsBarProps> = ({
-  totalPaths,
-  totalTags,
-  totalComponents,
-  totalUnusedComponents,
-  components = { schemas: [], responses: [], parameters: [], examples: [], requestBodies: [], headers: [], meta: { total: 0 } },
-  unusedComponents = { schemas: [], responses: [], parameters: [], examples: [], requestBodies: [], headers: [], meta: { total: 0 } },
-}) => {
+const ActionSection: React.FC<{ actions: UnusedAction[], totalAppliedActions:number }> = ({ actions, totalAppliedActions }) => {
+  const [isCollapsed, setIsCollapsed] = useState(true);
+
+  const toggleSection = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
+  return (
+    <div className="mb-4">
+      <div className="cursor-pointer" className="mb-4">
+        <h4 className="text-md font-semibold flex items-center">
+          Applied Overlay Actions
+          <span
+            className="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-gray-800 text-xs font-semibold">
+            {totalAppliedActions}
+          </span>
+        </h4>
+      </div>
+      <div className="cursor-pointer" onClick={toggleSection}>
+        <h4 className="text-md font-semibold flex items-center">
+          Unused Overlay Actions
+          <span
+            className="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-gray-800 text-xs font-semibold">
+            {actions.length}
+          </span>
+          {actions.length > 0 && (
+            <span className="ml-2">{isCollapsed ? '▲' : '▼'}</span>
+          )}
+        </h4>
+        {!isCollapsed && actions.length > 0 && (
+          <div className="mt-2">
+            <ul className="list-disc list-inside max-h-60 overflow-y-auto">
+              {actions.map((action, index) => (
+                <li key={index}>
+                  Target: {action.target} - Type: {action.update ? 'update' : action.remove ? 'remove' : 'unknown'}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const MetricsBar: React.FC<MetricsBarProps> = (
+  {
+    totalPaths,
+    totalTags,
+    totalComponents,
+    totalUnusedComponents,
+    components = {
+      schemas: [],
+      responses: [],
+      parameters: [],
+      examples: [],
+      requestBodies: [],
+      headers: [],
+      meta: {total: 0}
+    },
+    unusedComponents = {
+      schemas: [],
+      responses: [],
+      parameters: [],
+      examples: [],
+      requestBodies: [],
+      headers: [],
+      meta: {total: 0}
+    },
+    totalActions,
+    totalAppliedActions,
+    totalUnusedActions,
+    unusedActions
+  }) => {
   const [expandableHeight, setExpandableHeight] = useState(0);
 
   const toggleMetricsBar = () => {
@@ -98,6 +174,10 @@ const MetricsBar: React.FC<MetricsBarProps> = ({
           <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">Tags: {totalTags}</span>
           {totalComponents > 0 && (<span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">Components: {totalComponents}</span>)}
           {totalUnusedComponents > 0 && (<span className="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-0.5 rounded">Unused Components: {totalUnusedComponents}</span>)}
+          {totalActions > 0 && (<span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2.5 py-0.5 rounded">Overlay Actions: {totalActions}</span>)}
+          {totalUnusedActions > 0 && (<span className="bg-orange-100 text-orange-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+            Unused Overlay Actions: {totalUnusedActions}
+          </span>)}
         </div>
       </div>
       {expandableHeight > 0 && (
@@ -106,25 +186,40 @@ const MetricsBar: React.FC<MetricsBarProps> = ({
             <div>
               <h3 className="text-lg font-bold mb-2 flex items-center">
                 Total Components
-                <span className="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-gray-800 text-xs font-semibold">
+                <span
+                  className="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-gray-800 text-xs font-semibold">
                   {totalComponents}
                 </span>
               </h3>
               {componentSections.map((section) => (
-                <ComponentSection key={section.title} title={section.title} items={section.items} />
+                <ComponentSection key={section.title} title={section.title} items={section.items}/>
               ))}
             </div>
             <div>
               <h3 className="text-lg font-bold mb-2 flex items-center">
                 Unused Components
-                <span className="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-gray-800 text-xs font-semibold">
+                <span
+                  className="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-gray-800 text-xs font-semibold">
                   {totalUnusedComponents}
                 </span>
               </h3>
               {unusedComponentSections.map((section) => (
-                <ComponentSection key={section.title} title={section.title} items={section.items} />
+                <ComponentSection key={section.title} title={section.title} items={section.items}/>
               ))}
+
             </div>
+            {totalActions > 0 && (
+              <div>
+                <h3 className="text-lg font-bold mb-2 flex items-center">
+                  Total Overlay actions
+                  <span
+                    className="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-gray-800 text-xs font-semibold">
+                  {totalActions}
+                </span>
+                </h3>
+                <ActionSection actions={unusedActions} totalAppliedActions={totalAppliedActions}/>
+              </div>
+            )}
           </div>
         </div>
       )}

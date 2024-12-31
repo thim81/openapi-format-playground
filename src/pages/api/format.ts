@@ -58,9 +58,10 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
     if (overlaySet?.length > 0) {
       const OverlayOpts =  await parseString(overlaySet) as Record<string, unknown>;
       const options = {overlaySet: OverlayOpts} as OpenAPIOverlayOptions
-      const OverlayRes = await openapiOverlay(oaObj, options);
-      output.data = OverlayRes.data;
+      const { data, resultData } = await openapiOverlay(oaObj, options);
+      output.data = data;
       oaObj = output.data as OpenAPIV3.Document || {data: oaObj};
+      output.resultData = { ...output.resultData, ...resultData };
     }
 
     // Sort OpenAPI
@@ -88,7 +89,7 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
     // Convert output to JSON/YAML format
     convertOptions.format = _format
     output.data = await stringify(output.data, convertOptions);
-
+    // console.log('output resultData', output.resultData)
     res.status(200).json(output);
   } catch (error) {
     // @ts-ignore
