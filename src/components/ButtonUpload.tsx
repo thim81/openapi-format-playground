@@ -3,7 +3,7 @@ import React, {useState} from 'react';
 import {parseString, stringify} from "openapi-format";
 
 interface FileUploadProps {
-  context: 'playground' | 'overlay';
+  context: 'playground' | 'overlay' | 'sort';
   onFileLoad: (content: string | null, context: string) => void;
 }
 

@@ -78,7 +78,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [filterPrevent, setFilterPrevent] = useState<boolean>(false);
   const [filterSet, setFilterSet] = useState<string>('');
   const [generateSet, setGenerateSet] = useState<string>('');
-  const [toggleGenerate, seToggleGenerate] = useState<boolean>(false);
+  const [toggleGenerate, setToggleGenerate] = useState<boolean>(false);
   const [casingSet, setCasingSet] = useState<string>('');
   const [toggleCasing, setToggleCasing] = useState<boolean>(false);
   const [toggleOverlay, setToggleOverlay] = useState<boolean>(false);
@@ -225,7 +225,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
           setToggleOverlay(result.config.toggleOverlay ?? false);
           setToggleCasing(result.config.toggleCasing ?? false);
-          seToggleGenerate(result.config.toggleGenerate ?? false);
+          setToggleGenerate(result.config.toggleGenerate ?? false);
 
           setOutputLanguage(result.config.outputLanguage ?? 'yaml');
           setFilterUnused(result?.config?.filterSet?.includes('unusedComponents') ?? false);
@@ -353,12 +353,14 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     const _selectedOptions = await stringify(selectedOptions)
     setGenerateSet(_selectedOptions);
     setGenerateModalOpen(false);
+    setToggleGenerate(true);
   };
 
   const handleCasingSubmit = async (selectedOptions: any) => {
     const _selectedOptions = await stringify(selectedOptions)
     setCasingSet(_selectedOptions);
     setCasingModalOpen(false);
+    setToggleCasing(true);
   };
 
   const handleSortSubmit = async (sortOptions: any) => {
@@ -448,9 +450,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               {/*  Configure*/}
               {/*</button>*/}
             </div>
+
             {outputLanguage === 'yaml' && (
               <>
-                <div className="mb-4">
+                <div className="mb-2">
                   <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
                     Keep comments
                     <input
@@ -462,7 +465,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 </div>
               </>
             )}
-            <div className="mb-2">
+
+            <div className="mb-4">
               <h3 className="text-lg font-semibold mb-2">Sort options</h3>
               <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
                 Sort OpenAPI
@@ -506,55 +510,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 </select>
               </div>
             )}
-            <div className="mb-2">
-              <h3
-                className="text-lg font-semibold mb-2 cursor-pointer flex items-center"
-                onClick={() => setFilterOptionsCollapsed(!isFilterOptionsCollapsed)}
-              >
-                Filter options {isFilterOptionsCollapsed ? '▲' : '▼'}
-                {Object.keys(filterFormOptions).length > 0 && (
-                  <>
-                    <button
-                      className="ml-2 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openFormModal();
-                      }}>
-                      Configure
-                    </button>
-                    <ButtonDownload
-                      content={filterSet} filename="oaf-filter"
-                      format={outputLanguage}
-                      label="Download filter"
-                      className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
-                    /></>
-                )}
-              </h3>
-              {!isFilterOptionsCollapsed && (
-                <div>
-                  <MonacoEditorWrapper value={filterSet} onChange={setFilterSet} height='36vh'/>
-                </div>
-              )}
-              <label className="flex items-center font-medium text-gray-700d dark:text-gray-400">
-                Filter Unused Components
-                <input
-                  type="checkbox"
-                  checked={filterUnused}
-                  onChange={toggleFilterUnused}
-                  className="ml-2"
-                />
-              </label>
-              <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
-                Preserve Empty objects
-                <input
-                  type="checkbox"
-                  checked={filterPrevent}
-                  onChange={togglePreserve}
-                  className="ml-2"
-                />
-              </label>
-            </div>
-            <div className="mb-2">
+
+            <div className="mb-4">
               <h3 className="text-lg font-semibold mb-2 cursor-pointer flex items-center">OpenAPI Overlay</h3>
               <div className="flex items-center">
                 <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
@@ -575,6 +532,60 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 </button>
               </div>
             </div>
+
+            <div className="mb-2">
+              <div className="flex items-center justify-start">
+                <h3
+                  className="text-lg font-semibold mb-2 cursor-pointer flex items-center"
+                  onClick={() => setFilterOptionsCollapsed(!isFilterOptionsCollapsed)}
+                >
+                  Filter options {isFilterOptionsCollapsed ? '▲' : '▼'}
+                </h3>
+                {Object.keys(filterFormOptions).length > 0 && (
+                  <div className="flex items-center space-x-2">
+                    <button
+                      className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openFormModal();
+                      }}>
+                      Configure
+                    </button>
+                    <ButtonDownload
+                      content={filterSet}
+                      filename="oaf-filter"
+                      format={outputLanguage}
+                      label="Download filter"
+                      className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
+                    />
+                  </div>
+                )}
+              </div>
+              {!isFilterOptionsCollapsed && (
+                <div>
+                  <MonacoEditorWrapper value={filterSet} onChange={setFilterSet} height='36vh'/>
+                </div>
+              )}
+              <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
+                Filter Unused Components
+                <input
+                  type="checkbox"
+                  checked={filterUnused}
+                  onChange={toggleFilterUnused}
+                  className="ml-2"
+                />
+              </label>
+              <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
+                Preserve Empty objects
+                <input
+                  type="checkbox"
+                  checked={filterPrevent}
+                  onChange={togglePreserve}
+                  className="ml-2"
+                />
+              </label>
+            </div>
+
             <div className="mb-2">
               <h3 className="text-lg font-semibold mb-2 cursor-pointer flex items-center">Extra options</h3>
               <div className="flex items-center mb-2">
@@ -585,7 +596,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                     id="generateOperationId"
                     className="ml-2 mr-2"
                     checked={toggleGenerate}
-                    onChange={() => seToggleGenerate(!toggleGenerate)}
+                    onChange={() => setToggleGenerate(!toggleGenerate)}
                   />
                 </label>
                 <button
@@ -614,6 +625,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               </div>
             </div>
           </div>
+
           <div className="flex-1 flex flex-col">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-heading text-xl font-bold">OpenAPI Input</h2>
@@ -628,6 +640,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             </div>
             <MonacoEditorWrapper value={input} onChange={handleInputChange}/>
           </div>
+
           <div className="flex-1 flex flex-col">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-heading text-xl font-bold">OpenAPI Output</h2>

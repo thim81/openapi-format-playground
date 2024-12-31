@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import SimpleModal from './SimpleModal';
 
 interface UrlUploadProps {
-  context: 'playground' | 'overlay';
+  context: 'playground' | 'overlay' | 'sort';
   typeTxt?: string;
   onUrlLoad: (content: string | null, context: string) => void;
 }
