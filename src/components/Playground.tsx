@@ -512,7 +512,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             )}
 
             <div className="mb-4">
-              <h3 className="text-lg font-semibold mb-2 cursor-pointer flex items-center">OpenAPI Overlay</h3>
+              <h3 className="text-lg font-semibold mb-2 flex items-center">OpenAPI Overlay</h3>
               <div className="flex items-center">
                 <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
                   Apply Overlay
@@ -587,7 +587,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             </div>
 
             <div className="mb-2">
-              <h3 className="text-lg font-semibold mb-2 cursor-pointer flex items-center">Extra options</h3>
+              <h3 className="text-lg font-semibold mb-2 flex items-center">Extra options</h3>
               <div className="flex items-center mb-2">
                 <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
                   Generate OperationId
