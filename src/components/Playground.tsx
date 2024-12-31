@@ -130,6 +130,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     isFilterOptionsCollapsed,
     toggleGenerate,
     toggleCasing,
+    toggleOverlay,
     outputLanguage,
     pathSort,
     defaultFieldSorting
