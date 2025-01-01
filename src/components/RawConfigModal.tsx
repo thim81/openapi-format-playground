@@ -75,7 +75,7 @@ const RewConfigModal: React.FC<RewConfigModalProps> = (
       <h2 className="text-xl font-bold mb-4">Configure openapi-format options</h2>
       <p>You can set all options for openapi-format configuration.</p>
       <p>The online playground provides an initial set of options of OpenAPI-Format, more options can be found
-        in the <Link href="https://github.com/thim81/openapi-format?tab=readme-ov-file#command-line-interfacet"
+        in the <Link href="https://github.com/thim81/openapi-format?tab=readme-ov-file#command-line-interface"
                      passHref
                      target="_blank">
           <span
