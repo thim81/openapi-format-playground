@@ -1,8 +1,10 @@
 // openapi-format.d.ts
 
 declare module 'openapi-format' {
+  // OpenAPI types
   import { OpenAPIV3 } from 'openapi-types'
 
+  // OpenAPI Format types
   interface OpenAPISortSet {
     root?: Array<'openapi' | 'info' | 'servers' | 'paths' | 'components' | 'tags' | 'x-tagGroups' | 'externalDocs'>
     get?: Array<'operationId' | 'summary' | 'description' | 'parameters' | 'requestBody' | 'responses'>

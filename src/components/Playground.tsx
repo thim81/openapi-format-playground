@@ -29,6 +29,7 @@ import GenerateFormModal from "@/components/GenerateFormModal";
 import CasingFormModal from "@/components/CasingFormModal";
 import SortOptionsModal from "@/components/SortOptionsModal";
 import ButtonUrlModal from "@/components/ButtonUrlModal";
+import OverlayModal from "@/components/OverlayModal";
 
 const defaultCompMetrics = {
   schemas: [],
@@ -53,6 +54,7 @@ export interface PlaygroundConfig extends openapiFormatConfig {
   isFilterOptionsCollapsed?: boolean;
   toggleGenerate?: boolean;
   toggleCasing?: boolean;
+  toggleOverlay?: boolean;
   defaultFieldSorting?: boolean;
   pathSort?: 'original' | 'path' | 'tags';
   outputLanguage?: 'json' | 'yaml';
@@ -63,6 +65,7 @@ export interface openapiFormatConfig {
   keepComments?: boolean;
   filterSet?: string;
   sortSet?: string;
+  overlaySet?: string;
   generateSet?: string;
   casingSet?: string;
   format?: string;
@@ -75,12 +78,14 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [filterPrevent, setFilterPrevent] = useState<boolean>(false);
   const [filterSet, setFilterSet] = useState<string>('');
   const [generateSet, setGenerateSet] = useState<string>('');
-  const [toggleGenerate, seTtoggleGenerate] = useState<boolean>(false);
+  const [toggleGenerate, setToggleGenerate] = useState<boolean>(false);
   const [casingSet, setCasingSet] = useState<string>('');
   const [toggleCasing, setToggleCasing] = useState<boolean>(false);
+  const [toggleOverlay, setToggleOverlay] = useState<boolean>(false);
   const [defaultSortSet, setDefaultSortSet] = useState<string>('');
   const [customSortSet, setCustomSortSet] = useState<string>(defaultSortSet);
   const [sortSet, setSortSet] = useState<string>(defaultSortSet);
+  const [overlaySet, setOverlaySet] = useState<string>('');
   const [isFilterOptionsCollapsed, setFilterOptionsCollapsed] = useState<boolean>(false);
   const [outputLanguage, setOutputLanguage] = useState<'json' | 'yaml'>('yaml');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -89,6 +94,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [isCasingModalOpen, setCasingModalOpen] = useState(false);
   const [isSortModalOpen, setSortModalOpen] = useState(false);
   const [isFormModalOpen, setFormModalOpen] = useState(false);
+  const [isOverlayModalOpen, setOverlayModalOpen] = useState(false);
   const [isInstructionsModalOpen, setInstructionsModalOpen] = useState(false);
   const [isRawConfigModalOpen, setRawConfigModalOpen] = useState(false);
   const [filterFormOptions, setFilterFormOptions] = useState<AnalyzeOpenApiResult>({});
@@ -97,11 +103,16 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   const [components, setComponents] = useState<ComponentMetrics>(defaultCompMetrics);
   const [unusedComponents, setUnusedComponents] = useState<ComponentMetrics>(defaultCompMetrics);
+  const [usedActions, setUsedActions] = useState([]);
+  const [unusedActions, setUnusedActions] = useState([]);
 
   const [totalComponents, setTotalComponents] = useState(0);
   const [totalUnusedComponents, setTotalUnusedComponents] = useState(0);
   const [totalTags, setTotalTags] = useState(0);
   const [totalPaths, setTotalPaths] = useState(0);
+  const [totalActions, setTotalActions] = useState(0);
+  const [totalUsedActions, setTotalUsedActions] = useState(0);
+  const [totalUnusedActions, setTotalUnusedActions] = useState(0);
 
   const [pathSort, setPathSort] = useState<'original' | 'path' | 'tags'>('original');
   const [defaultFieldSorting, setDefaultFieldSorting] = useState<boolean>(true);
@@ -109,6 +120,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const dInput = useDebounce(input, 1000);
   const dFilterSet = useDebounce(filterSet, 1000);
   const dSortSet = useDebounce(sortSet, 1000);
+  const dOverlaySet = useDebounce(overlaySet, 1000);
   const dGenerateSet = useDebounce(generateSet, 1000);
   const dCasingSet = useDebounce(casingSet, 1000);
 
@@ -118,10 +130,12 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     filterSet,
     sortSet,
     casingSet,
+    overlaySet,
     generateSet,
     isFilterOptionsCollapsed,
     toggleGenerate,
     toggleCasing,
+    toggleOverlay,
     outputLanguage,
     pathSort,
     defaultFieldSorting
@@ -147,6 +161,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       keepComments: keepComments,
       filterSet: dFilterSet,
       sortSet: dSortSet,
+      ...(dOverlaySet && toggleOverlay && {overlaySet: dOverlaySet}),
       ...(dGenerateSet && toggleGenerate && {generateSet: dGenerateSet}),
       ...(dCasingSet && toggleCasing && {casingSet: dCasingSet}),
       format: outputLanguage,
@@ -172,6 +187,13 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setTotalUnusedComponents(res.resultData?.unusedComp?.meta?.total || 0);
           setComponents(res.resultData?.totalComp || defaultCompMetrics);
           setUnusedComponents(res.resultData?.unusedComp || defaultCompMetrics);
+
+          setTotalActions(res.resultData?.totalActions || 0);
+          setTotalUsedActions(res.resultData?.totalUsedActions || 0);
+          setTotalUnusedActions((res.resultData?.unusedActions?.length || 0));
+          setUnusedActions(res.resultData?.unusedActions || []);
+          setUsedActions(res.resultData?.usedActions || []);
+
           setErrorMessage(null);
           setLoading(false);
         } else {
@@ -191,7 +213,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       setOutput('');
     }
     setLoading(false);
-  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dGenerateSet, dCasingSet, outputLanguage, pathSort, toggleGenerate, toggleCasing, setOutput, defaultFieldSorting]);
+  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dGenerateSet, dCasingSet, dOverlaySet, outputLanguage, pathSort, toggleGenerate, toggleCasing, toggleOverlay, setOutput, defaultFieldSorting]);
 
   // Decode Share URL
   useEffect(() => {
@@ -204,16 +226,19 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           await handleInputChange(result.openapi);
         }
         if (result?.config) {
+          // console.log('decodeUrl config',result?.config);
           setSort(result.config.sort ?? true);
           setKeepComments(result.config.keepComments ?? false);
           setFilterSet(result.config.filterSet ?? '');
           setGenerateSet(result.config.generateSet ?? '');
           setCasingSet(result.config.casingSet ?? '');
           setSortSet(result.config.sortSet ?? '');
+          setOverlaySet(result.config.overlaySet ?? '');
           setCustomSortSet(result.config.sortSet ?? defaultSortSet);
 
+          setToggleOverlay(result.config.toggleOverlay ?? false);
           setToggleCasing(result.config.toggleCasing ?? false);
-          seTtoggleGenerate(result.config.toggleGenerate ?? false);
+          setToggleGenerate(result.config.toggleGenerate ?? false);
 
           setOutputLanguage(result.config.outputLanguage ?? 'yaml');
           setFilterUnused(result?.config?.filterSet?.includes('unusedComponents') ?? false);
@@ -304,6 +329,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setFormModalOpen(true);
   };
 
+  const openOverlayModal = () => {
+    setOverlayModalOpen(true);
+  };
+
   const openInstructionsModal = () => {
     setInstructionsModalOpen(true);
   };
@@ -312,9 +341,11 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setRawConfigModalOpen(true);
   };
 
-  const handleFileLoad = async (content: string | null) => {
-    setLoading(true);
-    await handleInputChange(content || '');
+  const handleFileLoad = async (content: string | null, context: string) => {
+    if (context === 'playground') {
+      setLoading(true);
+      await handleInputChange(content || '');
+    }
   };
 
   const handleFormSubmit = async (selectedOptions: any) => {
@@ -335,18 +366,27 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     const _selectedOptions = await stringify(selectedOptions)
     setGenerateSet(_selectedOptions);
     setGenerateModalOpen(false);
+    setToggleGenerate(true);
   };
 
   const handleCasingSubmit = async (selectedOptions: any) => {
     const _selectedOptions = await stringify(selectedOptions)
     setCasingSet(_selectedOptions);
     setCasingModalOpen(false);
+    setToggleCasing(true);
   };
 
   const handleSortSubmit = async (sortOptions: any) => {
     setCustomSortSet(sortOptions);
     setSortSet(sortOptions);
     setSortModalOpen(false);
+  };
+
+  const handleOverlaySubmit = async (overlayOptions: any) => {
+    const oaOverlay = await stringify(overlayOptions, {format: outputLanguage});
+    setOverlaySet(oaOverlay);
+    setSortModalOpen(false);
+    setToggleOverlay(true);
   };
 
   const handleDefaultFieldSortingChange = async () => {
@@ -423,10 +463,11 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               {/*  Configure*/}
               {/*</button>*/}
             </div>
+
             {outputLanguage === 'yaml' && (
               <>
-                <div className="mb-4">
-                  <label className="flex items-center font-medium text-gray-700">
+                <div className="mb-2">
+                  <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
                     Keep comments
                     <input
                       type="checkbox"
@@ -437,9 +478,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 </div>
               </>
             )}
-            <div className="mb-2">
+
+            <div className="mb-4">
               <h3 className="text-lg font-semibold mb-2">Sort options</h3>
-              <label className="flex items-center font-medium text-gray-700">
+              <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
                 Sort OpenAPI
                 <input
                   type="checkbox"
@@ -449,19 +491,18 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               </label>
               {sort && (
                 <div className="flex items-center mt-2">
-                  <label className="flex items-center font-medium text-gray-700">
+                  <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
                     Custom OpenAPI field sorting
                     <input
                       type="checkbox"
                       checked={!defaultFieldSorting}
                       onChange={handleDefaultFieldSortingChange}
-                      className="ml-2"
+                      className="ml-2 mr-2"
                     />
                   </label>
-
                   <button
                     onClick={openSortModal}
-                    className="ml-4 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
+                    className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
                   >
                     Configure
                   </button>
@@ -470,7 +511,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             </div>
             {sort && (
               <div className="flex items-center mb-4">
-                <label className="block mb-1 font-medium text-gray-700 mr-4">Sort Paths By</label>
+                <label className="block mb-1 font-medium text-gray-700 dark:text-gray-400 mr-2">Sort Paths By</label>
                 <select
                   value={pathSort}
                   onChange={(e) => handlePathSortChange(e.target.value as 'original' | 'path' | 'tags', sortSet)}
@@ -482,16 +523,41 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 </select>
               </div>
             )}
+
             <div className="mb-4">
-              <h3
-                className="text-lg font-semibold mb-2 cursor-pointer flex items-center"
-                onClick={() => setFilterOptionsCollapsed(!isFilterOptionsCollapsed)}
-              >
-                Filter options {isFilterOptionsCollapsed ? '▲' : '▼'}
+              <h3 className="text-lg font-semibold mb-2 flex items-center">OpenAPI Overlay</h3>
+              <div className="flex items-center">
+                <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
+                  Apply Overlay
+                  <input
+                    type="checkbox"
+                    id="formatOverlay"
+                    checked={toggleOverlay}
+                    onChange={() => setToggleOverlay(!toggleOverlay)}
+                    className="ml-2 mr-2"
+                  />
+                </label>
+                <button
+                  onClick={openOverlayModal}
+                  className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
+                >
+                  Configure
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-2">
+              <div className="flex items-center justify-start">
+                <h3
+                  className="text-lg font-semibold mb-2 cursor-pointer flex items-center"
+                  onClick={() => setFilterOptionsCollapsed(!isFilterOptionsCollapsed)}
+                >
+                  Filter options {isFilterOptionsCollapsed ? '▲' : '▼'}
+                </h3>
                 {Object.keys(filterFormOptions).length > 0 && (
-                  <>
+                  <div className="flex items-center space-x-2">
                     <button
-                      className="ml-2 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
+                      className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
                       onClick={(e) => {
                         e.stopPropagation();
                         openFormModal();
@@ -499,19 +565,21 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                       Configure
                     </button>
                     <ButtonDownload
-                      content={filterSet} filename="oaf-filter"
+                      content={filterSet}
+                      filename="oaf-filter"
                       format={outputLanguage}
                       label="Download filter"
                       className="ml-2 bg-green-500 hover:bg-green-700 text-white text-xs p-1 rounded focus:outline-none"
-                    /></>
+                    />
+                  </div>
                 )}
-              </h3>
+              </div>
               {!isFilterOptionsCollapsed && (
                 <div>
                   <MonacoEditorWrapper value={filterSet} onChange={setFilterSet} height='36vh'/>
                 </div>
               )}
-              <label className="flex items-center font-medium text-gray-700">
+              <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
                 Filter Unused Components
                 <input
                   type="checkbox"
@@ -520,7 +588,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                   className="ml-2"
                 />
               </label>
-              <label className="flex items-center font-medium text-gray-700">
+              <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
                 Preserve Empty objects
                 <input
                   type="checkbox"
@@ -530,17 +598,20 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 />
               </label>
             </div>
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold mb-2 cursor-pointer flex items-center">Extra options</h3>
+
+            <div className="mb-2">
+              <h3 className="text-lg font-semibold mb-2 flex items-center">Extra options</h3>
               <div className="flex items-center mb-2">
-                <span>Generate OperationId</span>
-                <input
-                  type="checkbox"
-                  id="generateOperationId"
-                  className="ml-2 mr-2"
-                  checked={toggleGenerate}
-                  onChange={() => seTtoggleGenerate(!toggleGenerate)}
-                />
+                <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
+                  Generate OperationId
+                  <input
+                    type="checkbox"
+                    id="generateOperationId"
+                    className="ml-2 mr-2"
+                    checked={toggleGenerate}
+                    onChange={() => setToggleGenerate(!toggleGenerate)}
+                  />
+                </label>
                 <button
                   onClick={openGenerateModal}
                   className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
@@ -549,14 +620,15 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                 </button>
               </div>
               <div className="flex items-center">
-                <span>Format casing</span>
-                <input
-                  type="checkbox"
-                  id="formatCasing"
-                  className="ml-2 mr-2"
-                  checked={toggleCasing}
-                  onChange={() => setToggleCasing(!toggleCasing)}
-                />
+                <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">Format casing
+                  <input
+                    type="checkbox"
+                    id="formatCasing"
+                    className="ml-2 mr-2"
+                    checked={toggleCasing}
+                    onChange={() => setToggleCasing(!toggleCasing)}
+                  />
+                </label>
                 <button
                   onClick={openCasingModal}
                   className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
@@ -566,16 +638,22 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
               </div>
             </div>
           </div>
+
           <div className="flex-1 flex flex-col">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-heading text-xl font-bold">OpenAPI Input</h2>
               <div className="flex space-x-2">
-                <ButtonUrlModal onUrlLoad={handleFileLoad}/>
-                <ButtonUpload onFileLoad={handleFileLoad}/>
+                <button onClick={openOverlayModal}
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-medium text-sm py-1 px-2 rounded">
+                  OpenAPI Overlay
+                </button>
+                <ButtonUrlModal context="playground" onUrlLoad={handleFileLoad}/>
+                <ButtonUpload context="playground" onFileLoad={handleFileLoad}/>
               </div>
             </div>
             <MonacoEditorWrapper value={input} onChange={handleInputChange}/>
           </div>
+
           <div className="flex-1 flex flex-col">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-heading text-xl font-bold">OpenAPI Output</h2>
@@ -605,6 +683,11 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         totalUnusedComponents={totalUnusedComponents}
         components={components}
         unusedComponents={unusedComponents}
+        totalActions={totalActions}
+        totalUsedActions={totalUsedActions}
+        totalUnusedActions={totalUnusedActions}
+        unusedActions={unusedActions}
+        usedActions={usedActions}
       />
 
       {
@@ -647,6 +730,15 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         defaultSort={defaultSortSet}
       />
 
+      <OverlayModal
+        isOpen={isOverlayModalOpen}
+        onRequestClose={() => setOverlayModalOpen(false)}
+        overlaySet={overlaySet}
+        openapi={input}
+        onSubmit={handleOverlaySubmit}
+        format={outputLanguage}
+      />
+
       <DiffEditorModal
         isOpen={isDiffModalOpen}
         onRequestClose={() => setDiffModalOpen(false)}
@@ -664,8 +756,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         filterSet={filterSet}
         casingSet={casingSet}
         generateSet={generateSet}
+        overlaySet={overlaySet}
         toggleCasing={toggleCasing}
         toggleGenerate={toggleGenerate}
+        toggleOverlay={toggleOverlay}
         format={outputLanguage}
       />
 

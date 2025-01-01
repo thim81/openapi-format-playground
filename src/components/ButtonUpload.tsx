@@ -3,10 +3,11 @@ import React, {useState} from 'react';
 import {parseString, stringify} from "openapi-format";
 
 interface FileUploadProps {
-  onFileLoad: (content: string | null) => void;
+  context: 'playground' | 'overlay' | 'sort';
+  onFileLoad: (content: string | null, context: string) => void;
 }
 
-const ButtonUpload: React.FC<FileUploadProps> = ({onFileLoad}) => {
+const ButtonUpload: React.FC<FileUploadProps> = ({ context, onFileLoad }) => {
   const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,16 +27,16 @@ const ButtonUpload: React.FC<FileUploadProps> = ({onFileLoad}) => {
         }
 
         setError(null);
-        onFileLoad(await stringify(content));
+        onFileLoad(await stringify(content), context);
       } catch (err) {
         setError('Invalid file content or unsupported file type');
-        onFileLoad(null);
+        onFileLoad(null, context);
       }
     };
 
     reader.onerror = () => {
       setError('Error reading file');
-      onFileLoad(null);
+      onFileLoad(null, context);
     };
 
     reader.readAsText(file);
@@ -45,7 +46,7 @@ const ButtonUpload: React.FC<FileUploadProps> = ({onFileLoad}) => {
 
   // Function to trigger the file input click
   const triggerFileInput = () => {
-    document.getElementById('file-upload')?.click();
+    document.getElementById(`file-upload-${context}`)?.click();
   };
 
   return (
@@ -58,7 +59,7 @@ const ButtonUpload: React.FC<FileUploadProps> = ({onFileLoad}) => {
         Upload File
       </button>
       <input
-        id="file-upload"
+        id={`file-upload-${context}`}
         type="file"
         accept=".json,.yaml,.yml"
         onChange={handleFileChange}

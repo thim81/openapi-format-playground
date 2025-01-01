@@ -2,7 +2,9 @@ import React, {useEffect, useState} from "react";
 import SimpleModal from "./SimpleModal"; // Assuming you have a SimpleModal component
 import MonacoEditorWrapper from "./MonacoEditorWrapper";
 import ButtonDownload from "./ButtonDownload";
-import { OpenAPISortSet} from "openapi-format";
+import {OpenAPISortSet, parseString} from "openapi-format";
+import ButtonUrlModal from "@/components/ButtonUrlModal";
+import ButtonUpload from "@/components/ButtonUpload";
 
 interface SortOptionsModalProps {
   isOpen: boolean;
@@ -22,6 +24,12 @@ const SortOptionsModal: React.FC<SortOptionsModalProps> = ({isOpen, onRequestClo
     }
   }, [sortSet]);
 
+  const handleSortLoad = (content: string | null, context: string) => {
+    if (context === 'sort' && content) {
+      setLocalSortSet(content);
+    }
+  };
+
   // Handle Reset: Reset localSortSet to defaultSort
   const handleReset = () => {
     setLocalSortSet(defaultSort);
@@ -38,20 +46,35 @@ const SortOptionsModal: React.FC<SortOptionsModalProps> = ({isOpen, onRequestClo
         Custom field sorting
       </h3>
 
-      <div className="mb-4">
-        <ButtonDownload
-          content={localSortSet}
-          filename="oaf-sort"
-          format={outputLanguage}
-          label="Download sort"
-          className="ml-2 bg-green-500 text-white text-xs p-1 rounded hover:bg-green-700 focus:outline-none"
-        />
-        <button
-          onClick={handleReset}
-          className="ml-2 bg-yellow-500 text-white text-xs p-1 rounded hover:bg-yellow-600 focus:outline-none"
-        >
-          Reset
-        </button>
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <div className="flex items-center gap-2">
+          <ButtonUrlModal
+            context="sort"
+            typeTxt="Custom Sort"
+            onUrlLoad={(content, context) => {
+              handleSortLoad(content, context);
+            }}
+          />
+          <ButtonUpload
+            context="sort"
+            onFileLoad={handleSortLoad}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <ButtonDownload
+            content={localSortSet}
+            filename="oaf-sort"
+            format={outputLanguage}
+            label="Download sort"
+            className="bg-green-500 text-white text-xs p-2 rounded hover:bg-green-700 focus:outline-none"
+          />
+          <button
+            onClick={handleReset}
+            className="bg-yellow-500 text-white text-xs p-2 rounded hover:bg-yellow-600 focus:outline-none"
+          >
+            Reset
+          </button>
+        </div>
       </div>
 
       <div>
@@ -74,7 +97,7 @@ const SortOptionsModal: React.FC<SortOptionsModalProps> = ({isOpen, onRequestClo
           onClick={handleSubmit}
           className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 focus:outline-none"
         >
-          Submit
+          Apply Sorting
         </button>
       </div>
     </SimpleModal>

@@ -131,7 +131,7 @@ const FilterFormModal: React.FC<FilterFormModalProps> = ({isOpen, onRequestClose
         })}
         <div className="flex justify-end space-x-2">
           <button type="button" onClick={onRequestClose} className="bg-gray-300 dark:bg-gray-500 p-2 rounded">Cancel</button>
-          <button type="submit" className="bg-blue-500 text-white p-2 rounded">Submit</button>
+          <button type="submit" className="bg-blue-500 text-white p-2 rounded">Apply Filter</button>
         </div>
       </form>
     </SimpleModal>

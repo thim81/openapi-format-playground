@@ -29,7 +29,9 @@ const ButtonDownload: React.FC<ButtonDownloadProps> = ({ content, filename, form
   const classes = className || "bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-2 rounded"
 
   return (
-    <button onClick={(e) => {
+    <button
+      type="button"
+      onClick={(e) => {
       e.stopPropagation();
       handleDownload();
     }} className={classes}>

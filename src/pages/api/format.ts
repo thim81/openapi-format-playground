@@ -4,7 +4,7 @@ import {
   openapiFilter,
   OpenAPIFilterOptions,
   OpenAPIFilterSet,
-  openapiGenerate, OpenAPIGenerateOptions, OpenAPIGenerateSet,
+  openapiGenerate, OpenAPIGenerateOptions, OpenAPIGenerateSet, openapiOverlay, OpenAPIOverlayOptions,
   OpenAPIResult,
   openapiSort,
   OpenAPISortOptions,
@@ -24,7 +24,7 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
   }
 
   const {openapi, config} = req.body;
-  const {sort, keepComments, filterSet, sortSet, generateSet, casingSet, format} = config || {};
+  const {sort, keepComments, filterSet, sortSet, generateSet, casingSet, overlaySet, format} = config || {};
 
   if (!openapi) {
     res.status(422).json({message: 'Missing openapi'});
@@ -54,6 +54,16 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
       oaObj = output.data as OpenAPIV3.Document || {data: oaObj};
     }
 
+    // Apply OpenAPI Overlay
+    if (overlaySet?.length > 0) {
+      const OverlayOpts =  await parseString(overlaySet) as Record<string, unknown>;
+      const options = {overlaySet: OverlayOpts} as OpenAPIOverlayOptions
+      const { data, resultData } = await openapiOverlay(oaObj, options);
+      output.data = data;
+      oaObj = output.data as OpenAPIV3.Document || {data: oaObj};
+      output.resultData = { ...output.resultData, ...resultData };
+    }
+
     // Sort OpenAPI
     if (sort) {
       let sortOpts = {}
@@ -73,12 +83,13 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
       const options = {casingSet: caseOpts} as OpenAPICasingOptions
       const casedRes = await openapiChangeCase(oaObj, options);
       output.data = casedRes.data;
+      // oaObj = output.data as OpenAPIV3.Document || {data: oaObj};
     }
 
     // Convert output to JSON/YAML format
     convertOptions.format = _format
     output.data = await stringify(output.data, convertOptions);
-
+    // console.log('output resultData', output.resultData)
     res.status(200).json(output);
   } catch (error) {
     // @ts-ignore
