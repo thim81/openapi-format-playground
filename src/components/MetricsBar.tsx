@@ -12,7 +12,7 @@ export interface ComponentMetrics {
   };
 }
 
-interface UnusedAction {
+interface OverlayAction {
   target: string;
   remove?: boolean;
   update?: string;
@@ -26,9 +26,10 @@ interface MetricsBarProps {
   components?: ComponentMetrics;
   unusedComponents?: ComponentMetrics;
   totalActions: number;
-  totalAppliedActions:number;
+  totalUsedActions:number;
   totalUnusedActions: number;
-  unusedActions: UnusedAction[];
+  unusedActions: OverlayAction[];
+  usedActions: OverlayAction[];
 }
 
 const ComponentSection: React.FC<{ title: string; items: string[] }> = ({ title, items }) => {
@@ -64,7 +65,11 @@ const ComponentSection: React.FC<{ title: string; items: string[] }> = ({ title,
   );
 };
 
-const ActionSection: React.FC<{ actions: UnusedAction[], totalAppliedActions:number }> = ({ actions, totalAppliedActions }) => {
+const ActionSection: React.FC<{
+  title: string
+  actions: OverlayAction[],
+  totalActions: number
+}> = ({actions, totalActions, title}) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
   const toggleSection = () => {
@@ -73,18 +78,9 @@ const ActionSection: React.FC<{ actions: UnusedAction[], totalAppliedActions:num
 
   return (
     <div className="mb-4">
-      <div className="cursor-pointer mb-4">
+      <div className="cursor-pointer mb-4" onClick={toggleSection}>
         <h4 className="text-md font-semibold flex items-center">
-          Applied Overlay Actions
-          <span
-            className="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-gray-800 text-xs font-semibold">
-            {totalAppliedActions}
-          </span>
-        </h4>
-      </div>
-      <div className="cursor-pointer" onClick={toggleSection}>
-        <h4 className="text-md font-semibold flex items-center">
-          Unused Overlay Actions
+          {title}
           <span
             className="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-gray-800 text-xs font-semibold">
             {actions.length}
@@ -134,9 +130,10 @@ const MetricsBar: React.FC<MetricsBarProps> = (
       meta: {total: 0}
     },
     totalActions,
-    totalAppliedActions,
+    totalUsedActions,
     totalUnusedActions,
-    unusedActions
+    unusedActions,
+    usedActions
   }) => {
   const [expandableHeight, setExpandableHeight] = useState(0);
 
@@ -217,7 +214,8 @@ const MetricsBar: React.FC<MetricsBarProps> = (
                   {totalActions}
                 </span>
                 </h3>
-                <ActionSection actions={unusedActions} totalAppliedActions={totalAppliedActions}/>
+                <ActionSection actions={usedActions} totalActions={totalUsedActions} title="Applied Overlay Actions"/>
+                <ActionSection actions={unusedActions} totalActions={totalUnusedActions} title="Unused Overlay Actions"/>
               </div>
             )}
           </div>

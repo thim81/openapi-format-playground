@@ -103,6 +103,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   const [components, setComponents] = useState<ComponentMetrics>(defaultCompMetrics);
   const [unusedComponents, setUnusedComponents] = useState<ComponentMetrics>(defaultCompMetrics);
+  const [usedActions, setUsedActions] = useState([]);
   const [unusedActions, setUnusedActions] = useState([]);
 
   const [totalComponents, setTotalComponents] = useState(0);
@@ -110,7 +111,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [totalTags, setTotalTags] = useState(0);
   const [totalPaths, setTotalPaths] = useState(0);
   const [totalActions, setTotalActions] = useState(0);
-  const [totalAppliedActions, setTotalAppliedActions] = useState(0);
+  const [totalUsedActions, setTotalUsedActions] = useState(0);
   const [totalUnusedActions, setTotalUnusedActions] = useState(0);
 
   const [pathSort, setPathSort] = useState<'original' | 'path' | 'tags'>('original');
@@ -188,9 +189,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setUnusedComponents(res.resultData?.unusedComp || defaultCompMetrics);
 
           setTotalActions(res.resultData?.totalActions || 0);
-          setTotalAppliedActions(res.resultData?.appliedActions || 0);
+          setTotalUsedActions(res.resultData?.totalUsedActions || 0);
           setTotalUnusedActions((res.resultData?.unusedActions?.length || 0));
           setUnusedActions(res.resultData?.unusedActions || []);
+          setUsedActions(res.resultData?.usedActions || []);
 
           setErrorMessage(null);
           setLoading(false);
@@ -682,9 +684,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         components={components}
         unusedComponents={unusedComponents}
         totalActions={totalActions}
-        totalAppliedActions={totalAppliedActions}
+        totalUsedActions={totalUsedActions}
         totalUnusedActions={totalUnusedActions}
         unusedActions={unusedActions}
+        usedActions={usedActions}
       />
 
       {

@@ -233,6 +233,17 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                 >
                   Add Action
                 </button>
+                <ButtonUrlModal
+                  context="overlay"
+                  typeTxt="OpenAPI Overlay"
+                  onUrlLoad={(content, context) => {
+                    handleOverlayLoad(content, context);
+                  }}
+                />
+                <ButtonUpload
+                  context="overlay"
+                  onFileLoad={handleOverlayLoad}
+                />
               </div>
               <div className="flex items-center gap-2">
                 <ButtonDownload
