@@ -1,5 +1,18 @@
 ## unreleased
 
+## [0.2.2] - 2025-04-02
+
+- Use latest openapi-format 1.25.2
+
+## [0.2.1] - 2025-03-29
+
+- Use latest openapi-format 1.25.1
+- 
+## [0.2.0] - 2025-01-01
+
+- Use Openapi overlay 
+- Dark mode & Layout improvements
+
 ## [0.1.19] - 2024-10-15
 
 - Added settings to manage casing
