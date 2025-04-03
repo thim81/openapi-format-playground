@@ -12,6 +12,9 @@ export const metadata: Metadata = {
 export default function RootLayout({children,}: Readonly<{ children: React.ReactNode; }>) {
   return (
     <html lang="en">
+    <head>
+        <link rel="icon" type="image/png" href="/openapi-format-icon.png" />
+      </head>
     <body className={inter.className}>{children}</body>
     <script
       async
