@@ -1,5 +1,9 @@
 ## unreleased
 
+## [0.2.3] - 2025-04-23
+
+- Use latest openapi-format 1.25.3
+
 ## [0.2.2] - 2025-04-02
 
 - Use latest openapi-format 1.25.2
