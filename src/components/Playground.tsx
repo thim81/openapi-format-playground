@@ -517,34 +517,35 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                   className="ml-2"/>
               </label>
               {sort && (
-                <div className="flex items-center mt-2">
-                  <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
-                    Custom OpenAPI field sorting
-                    <input
-                      type="checkbox"
-                      checked={!defaultFieldSorting}
-                      onChange={handleDefaultFieldSortingChange}
-                      className="ml-2 mr-2"
-                    />
-                  </label>
-                  <button
-                    onClick={openSortModal}
-                    className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
-                  >
-                    Configure
-                  </button>
-                </div>
-                <div className="flex items-center mt-2">
-                  <label className="flex items-center font-medium text-gray-700 dark:text-gray-400 mr-2">
-                    Custom components sorting
-                  </label>
-                  <button
-                    onClick={openSortComponentsModal}
-                    className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
-                  >
-                    Configure
-                  </button>
-                </div>
+                <>
+                  <div className="flex items-center mt-2">
+                    <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
+                      Custom OpenAPI field sorting
+                      <input
+                        type="checkbox"
+                        checked={!defaultFieldSorting}
+                        onChange={handleDefaultFieldSortingChange}
+                        className="ml-2 mr-2"/>
+                    </label>
+                    <button
+                      onClick={openSortModal}
+                      className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
+                    >
+                      Configure
+                    </button>
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <label className="flex items-center font-medium text-gray-700 dark:text-gray-400 mr-2">
+                      Custom components sorting
+                    </label>
+                    <button
+                      onClick={openSortComponentsModal}
+                      className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
+                    >
+                      Configure
+                    </button>
+                  </div>
+                </>
               )}
             </div>
             {sort && (
