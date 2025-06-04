@@ -20,6 +20,7 @@ export const generateShareUrl = async (origin: string, openapi?: string, config?
     const configOps = {} as PlaygroundConfig;
 
     if (config.sortSet !== undefined) configOps.sortSet = await stringify(config.sortSet);
+    if (config.sortComponentsSet !== undefined) configOps.sortComponentsSet = await stringify(config.sortComponentsSet);
     if (config.filterSet !== undefined) configOps.filterSet = await stringify(config.filterSet);
     if (config.generateSet !== undefined) configOps.generateSet = await stringify(config.generateSet);
     if (config.casingSet !== undefined) configOps.casingSet = await stringify(config.casingSet);
