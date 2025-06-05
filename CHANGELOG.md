@@ -1,4 +1,5 @@
 ## unreleased
+- Support configuring component sorting list
 
 ## [0.2.3] - 2025-04-23
 
