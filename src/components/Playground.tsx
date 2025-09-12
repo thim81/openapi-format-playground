@@ -155,19 +155,35 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   // Handle format conversion
   useEffect(() => {
-
-    const config = {
-      sort,
-      keepComments: keepComments,
-      filterSet: dFilterSet,
-      sortSet: dSortSet,
-      ...(dOverlaySet && toggleOverlay && {overlaySet: dOverlaySet}),
-      ...(dGenerateSet && toggleGenerate && {generateSet: dGenerateSet}),
-      ...(dCasingSet && toggleCasing && {casingSet: dCasingSet}),
-      format: outputLanguage,
-    };
-
     const handleFormat = async () => {
+      // Prepare overlay for API: filter disabled actions based on session state
+      let overlayForApi = dOverlaySet;
+      try {
+        if (dOverlaySet && toggleOverlay && typeof window !== 'undefined') {
+          const enStr = sessionStorage.getItem('oaf-overlay-enabled');
+          if (enStr) {
+            const enabledArr = JSON.parse(enStr) as boolean[];
+            const overlayObj = await parseString(dOverlaySet) as any;
+            if (Array.isArray(overlayObj?.actions)) {
+              const filtered = overlayObj.actions.filter((_: any, idx: number) => (enabledArr[idx] ?? true) !== false);
+              overlayObj.actions = filtered;
+              overlayForApi = await stringify(overlayObj, {format: outputLanguage});
+            }
+          }
+        }
+      } catch {}
+
+      const config = {
+        sort,
+        keepComments: keepComments,
+        filterSet: dFilterSet,
+        sortSet: dSortSet,
+        ...(overlayForApi && toggleOverlay && {overlaySet: overlayForApi}),
+        ...(dGenerateSet && toggleGenerate && {generateSet: dGenerateSet}),
+        ...(dCasingSet && toggleCasing && {casingSet: dCasingSet}),
+        format: outputLanguage,
+      };
+
       try {
         const response = await fetch('/api/format', {
           method: 'POST',

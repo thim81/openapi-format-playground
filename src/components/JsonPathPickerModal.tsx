@@ -28,7 +28,7 @@ const JsonPathPickerModal: React.FC<JsonPathPickerModalProps> = ({ isOpen, onReq
           className="p-2 border rounded w-1/2 dark:bg-gray-800 dark:text-white"
         />
       </div>
-      <div className="border rounded h-[70%] overflow-auto p-2 dark:bg-gray-900">
+      <div className="border rounded h-[80%] overflow-auto p-2 dark:bg-gray-900">
         {filtered.map((s) => (
           <button
             key={s}

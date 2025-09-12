@@ -45,6 +45,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
   const [pickerIndex, setPickerIndex] = useState<number | null>(null);
   const [isTemplateOpen, setIsTemplateOpen] = useState<boolean>(false);
   const [expandedPersist, setExpandedPersist] = useSessionStorage<boolean[]>("oaf-overlay-expanded", []);
+  const [enabledPersist, setEnabledPersist] = useSessionStorage<boolean[]>("oaf-overlay-enabled", []);
 
   // Initialize actions from overlaySet when modal opens
   useEffect(() => {
@@ -54,8 +55,12 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
       const exp = (expandedPersist?.length === actions.length)
         ? expandedPersist
         : new Array(actions.length).fill(true);
-      setActions(actions.map((a, i) => ({...a, expanded: exp[i]})));
+      const en = (enabledPersist?.length === actions.length)
+        ? enabledPersist
+        : new Array(actions.length).fill(true);
+      setActions(actions.map((a, i) => ({...a, expanded: exp[i], enabled: en[i]})));
       setExpandedPersist(exp);
+      setEnabledPersist(en);
       setOverlaySetCode(overlaySet);
 
       const previews = await computePreviewValues(actions, openapi);
@@ -171,12 +176,18 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
         true,
         ...expandedPersist.slice(index + 1),
       ]);
+      setEnabledPersist([
+        ...enabledPersist.slice(0, index + 1),
+        true,
+        ...enabledPersist.slice(index + 1),
+      ]);
     } else {
       // Default behavior: Add action at the end
       setActions([...actions, { target: "", type: "update", expanded: true }]);
       setPreviewValues([...previewValues, ""]);
       setMatchCounts([...(matchCounts || []), 0]);
       setExpandedPersist([...(expandedPersist || []), true]);
+      setEnabledPersist([...(enabledPersist || []), true]);
     }
   };
 
@@ -185,6 +196,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     setPreviewValues(previewValues.filter((_, i) => i !== index));
     setMatchCounts(matchCounts.filter((_, i) => i !== index));
     setExpandedPersist(expandedPersist.filter((_, i) => i !== index));
+    setEnabledPersist(enabledPersist.filter((_, i) => i !== index));
   };
 
   const handleDuplicateAction = (index: number) => {
@@ -209,6 +221,11 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
       ...expandedPersist.slice(0, index + 1),
       expandedPersist[index] ?? true,
       ...expandedPersist.slice(index + 1),
+    ]);
+    setEnabledPersist([
+      ...enabledPersist.slice(0, index + 1),
+      enabledPersist[index] ?? true,
+      ...enabledPersist.slice(index + 1),
     ]);
   };
 
@@ -257,6 +274,9 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     const wasEnabled = updated[index].enabled !== false;
     updated[index].enabled = !wasEnabled;
     setActions(updated);
+    const en = [...enabledPersist];
+    en[index] = updated[index].enabled ?? true;
+    setEnabledPersist(en);
     // Update preview display for disabled state
     if (!updated[index].enabled) {
       const pv = [...previewValues];
@@ -304,10 +324,16 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     [updatedPreviews[index - 1], updatedPreviews[index]] = [updatedPreviews[index], updatedPreviews[index - 1]];
     const updatedCounts = [...matchCounts];
     [updatedCounts[index - 1], updatedCounts[index]] = [updatedCounts[index], updatedCounts[index - 1]];
+    const updatedExpanded = [...expandedPersist];
+    [updatedExpanded[index - 1], updatedExpanded[index]] = [updatedExpanded[index], updatedExpanded[index - 1]];
+    const updatedEnabled = [...enabledPersist];
+    [updatedEnabled[index - 1], updatedEnabled[index]] = [updatedEnabled[index], updatedEnabled[index - 1]];
 
     setActions(updatedActions);
     setPreviewValues(updatedPreviews);
     setMatchCounts(updatedCounts);
+    setExpandedPersist(updatedExpanded);
+    setEnabledPersist(updatedEnabled);
   };
 
   const handleMoveDown = (index: number) => {
@@ -320,10 +346,16 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     [updatedPreviews[index + 1], updatedPreviews[index]] = [updatedPreviews[index], updatedPreviews[index + 1]];
     const updatedCounts = [...matchCounts];
     [updatedCounts[index + 1], updatedCounts[index]] = [updatedCounts[index], updatedCounts[index + 1]];
+    const updatedExpanded = [...expandedPersist];
+    [updatedExpanded[index + 1], updatedExpanded[index]] = [updatedExpanded[index], updatedExpanded[index + 1]];
+    const updatedEnabled = [...enabledPersist];
+    [updatedEnabled[index + 1], updatedEnabled[index]] = [updatedEnabled[index], updatedEnabled[index + 1]];
 
     setActions(updatedActions);
     setPreviewValues(updatedPreviews);
     setMatchCounts(updatedCounts);
+    setExpandedPersist(updatedExpanded);
+    setEnabledPersist(updatedEnabled);
   };
 
   // Template building moved to OverlayTemplatesModal
@@ -782,7 +814,7 @@ export const convertOverlaySetToActions = async (
         : action.add
           ? await stringify(action.add, { format })
           : undefined,
-      enabled: action['x-oaf-enabled'] === false ? false : true,
+      enabled: true,
     }))
   );
 };
@@ -791,7 +823,7 @@ export const convertActionsToOverlaySet = async (
   actions: Action[],
   baseOverlaySet: any
 ): Promise<any> => {
-  // Keep all actions; annotate disabled ones with vendor key to preserve UI state
+  // Keep all actions; enabled state is tracked in-session
   const actionsArray = await Promise.all(
     actions.map(async (action) => {
       const actionObject: any = {target: action.target};
@@ -802,10 +834,6 @@ export const convertActionsToOverlaySet = async (
         actionObject.add = await parseValuePreserveScalar(action.value);
       } else if (action.type === "remove") {
         actionObject.remove = true;
-      }
-
-      if (action.enabled === false) {
-        actionObject['x-oaf-enabled'] = false;
       }
 
       return actionObject;

@@ -81,10 +81,6 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
     // Apply OpenAPI Overlay
     if (overlaySet?.length > 0) {
       const OverlayOpts =  await parseString(overlaySet) as any;
-      // Filter out disabled actions marked with vendor key
-      if (Array.isArray(OverlayOpts?.actions)) {
-        OverlayOpts.actions = OverlayOpts.actions.filter((a: any) => a?.['x-oaf-enabled'] !== false);
-      }
       const options = {overlaySet: OverlayOpts} as OpenAPIOverlayOptions
       const { data, resultData } = await openapiOverlay(oaObj, options);
       output.data = data;
