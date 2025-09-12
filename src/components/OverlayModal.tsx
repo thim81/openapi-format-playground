@@ -271,7 +271,8 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
         const resolvedValues = resolveJsonPathValue(openapiObj, value);
         if (resolvedValues.length > 0) {
           updatedPreviews[index] = await stringify(resolvedValues[0]);
-          if (!updatedActions[index].value || updatedActions[index].value.trim() === "") {
+          const currVal = updatedActions[index].value;
+          if (!currVal || currVal.trim() === "") {
             updatedActions[index].value = await stringify(resolvedValues[0]);
           }
         } else {
