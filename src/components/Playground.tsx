@@ -384,9 +384,47 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   const handleOverlaySubmit = async (overlayOptions: any) => {
     const oaOverlay = await stringify(overlayOptions, {format: outputLanguage});
+    // Save overlay first so config includes it
     setOverlaySet(oaOverlay);
     setSortModalOpen(false);
     setToggleOverlay(true);
+
+    // If overlay declares an `extends` as http(s) and the input editor is empty, try to load it
+    const extendsRef = overlayOptions?.extends;
+    if (!input || input.trim().length === 0) {
+      if (typeof extendsRef === 'string' && /^(http|https):\/\//i.test(extendsRef)) {
+        // Try client-side fetch first (may fail due to CORS)
+        let loaded = false;
+        try {
+          const resp = await fetch(extendsRef);
+          if (resp.ok) {
+            const baseText = await resp.text();
+            await handleInputChange(baseText);
+            loaded = true;
+          }
+        } catch (_) {}
+
+        // Fallback to server API which can fetch remote extends
+        if (!loaded) {
+          try {
+            const response = await fetch('/api/format', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                openapi: '',
+                config: { overlaySet: oaOverlay, format: outputLanguage, resolveExtendsOnly: true }
+              })
+            });
+            if (response.ok) {
+              const res = await response.json();
+              if (res?.data) {
+                await handleInputChange(res.data);
+              }
+            }
+          } catch (_) {}
+        }
+      }
+    }
   };
 
   const handleDefaultFieldSortingChange = async () => {
@@ -691,7 +729,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       />
 
       {
-        Object.keys(filterFormOptions).length > 0 && (
+        (input && input.trim().length > 0) && (
           <button onClick={openFormModal}
                   className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded-full shadow-lg">
             Open Filter Form

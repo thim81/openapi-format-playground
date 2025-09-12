@@ -193,19 +193,28 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const OverlayOpts =  await parseString(overlaySet) as Record<string, unknown>;
-    const updatedOverlaySet = await convertActionsToOverlaySet(actions, {
-      ...OverlayOpts,
-      info: { ...info }, // Include the updated info object
-    });
+    // Prefer the latest edited code when in Code mode; otherwise use prop overlaySet
+    const baseOverlayRaw = currentMode === 'Code' ? overlaySetCode : overlaySet;
+    const OverlayOpts =  await parseString(baseOverlayRaw) as Record<string, unknown>;
+    // In Code mode, respect the info from code; in UI mode, use the stateful info editor
+    const baseForBuild = currentMode === 'Code'
+      ? OverlayOpts
+      : { ...OverlayOpts, info: { ...info } };
+
+    const updatedOverlaySet = await convertActionsToOverlaySet(actions, baseForBuild);
     onSubmit(updatedOverlaySet);
     onRequestClose();
   };
 
   const handleCodeChange = async (newCode: string) => {
-    const parsedOverlaySet = await parseString(newCode);
+    const parsedOverlaySet = await parseString(newCode) as Record<string, unknown>;
     const updatedActions = await convertOverlaySetToActions(parsedOverlaySet, format);
     setActions(updatedActions);
+    // Keep the info state in sync with code edits
+    if (parsedOverlaySet?.info) {
+      const parsedInfo = parsedOverlaySet.info as { title?: string; version?: string };
+      setInfo({ title: parsedInfo.title || "", version: parsedInfo.version || "" });
+    }
     setOverlaySetCode(newCode);
   };
 
