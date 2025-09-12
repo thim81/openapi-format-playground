@@ -30,6 +30,7 @@ interface ActionsModalProps {
 const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSubmit, overlaySet, openapi, format}) => {
   const [actions, setActions] = useState<Action[]>([]);
   const [previewValues, setPreviewValues] = useState<string[]>([]);
+  const [matchCounts, setMatchCounts] = useState<number[]>([]);
   const [currentMode, setCurrentMode] = useState<"UI" | "Code">("UI");
   const [overlaySetCode, setOverlaySetCode] = useState<string>("");
   const [info, setInfo] = useState<{ title: string; version: string }>({
@@ -52,6 +53,8 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
 
       const previews = await computePreviewValues(actions, openapi);
       setPreviewValues(previews);
+      const counts = await computeMatchCounts(actions, openapi);
+      setMatchCounts(counts);
 
       // Initialize info object if present
       if (OverlayOpts.info) {
@@ -109,6 +112,8 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
 
         const previews = await computePreviewValues(updatedActions, openapi);
         setPreviewValues(previews);
+        const counts = await computeMatchCounts(updatedActions, openapi);
+        setMatchCounts(counts);
 
         // Update the info object
         if (parsedOverlaySet?.info) {
@@ -149,16 +154,23 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
         "",
         ...previewValues.slice(index + 1),
       ]);
+      setMatchCounts([
+        ...matchCounts.slice(0, index + 1),
+        0,
+        ...matchCounts.slice(index + 1),
+      ]);
     } else {
       // Default behavior: Add action at the end
       setActions([...actions, { target: "", type: "update" }]);
       setPreviewValues([...previewValues, ""]);
+      setMatchCounts([...(matchCounts || []), 0]);
     }
   };
 
   const handleRemoveAction = (index: number) => {
     setActions(actions.filter((_, i) => i !== index));
     setPreviewValues(previewValues.filter((_, i) => i !== index));
+    setMatchCounts(matchCounts.filter((_, i) => i !== index));
   };
 
   const handleDuplicateAction = (index: number) => {
@@ -173,6 +185,11 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
       ...previewValues.slice(0, index + 1),
       clonedPreview,
       ...previewValues.slice(index + 1),
+    ]);
+    setMatchCounts([
+      ...matchCounts.slice(0, index + 1),
+      matchCounts[index] || 0,
+      ...matchCounts.slice(index + 1),
     ]);
   };
 
@@ -195,11 +212,20 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
         const resolvedValues = resolveJsonPathValue(openapiObj, value);
         if (resolvedValues.length > 0) {
           updatedPreviews[index] = await stringify(resolvedValues[0]);
+          if (!updatedActions[index].value || updatedActions[index].value.trim() === "") {
+            updatedActions[index].value = await stringify(resolvedValues[0]);
+          }
         } else {
           updatedPreviews[index] = "No matching value found.";
         }
+        const newCounts = [...matchCounts];
+        newCounts[index] = resolvedValues.length;
+        setMatchCounts(newCounts);
       } catch (e) {
         updatedPreviews[index] = "Invalid target or JSONPath.";
+        const newCounts = [...matchCounts];
+        newCounts[index] = 0;
+        setMatchCounts(newCounts);
       }
     }
 
@@ -247,9 +273,12 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     // Swap with the previous item
     [updatedActions[index - 1], updatedActions[index]] = [updatedActions[index], updatedActions[index - 1]];
     [updatedPreviews[index - 1], updatedPreviews[index]] = [updatedPreviews[index], updatedPreviews[index - 1]];
+    const updatedCounts = [...matchCounts];
+    [updatedCounts[index - 1], updatedCounts[index]] = [updatedCounts[index], updatedCounts[index - 1]];
 
     setActions(updatedActions);
     setPreviewValues(updatedPreviews);
+    setMatchCounts(updatedCounts);
   };
 
   const handleMoveDown = (index: number) => {
@@ -260,9 +289,12 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     // Swap with the next item
     [updatedActions[index + 1], updatedActions[index]] = [updatedActions[index], updatedActions[index + 1]];
     [updatedPreviews[index + 1], updatedPreviews[index]] = [updatedPreviews[index], updatedPreviews[index + 1]];
+    const updatedCounts = [...matchCounts];
+    [updatedCounts[index + 1], updatedCounts[index]] = [updatedCounts[index], updatedCounts[index + 1]];
 
     setActions(updatedActions);
     setPreviewValues(updatedPreviews);
+    setMatchCounts(updatedCounts);
   };
 
   // Template building moved to OverlayTemplatesModal
@@ -311,6 +343,10 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
       setExtendsRef("");
     }
     setOverlaySetCode(newCode);
+    const previews = await computePreviewValues(updatedActions, openapi);
+    setPreviewValues(previews);
+    const counts = await computeMatchCounts(updatedActions, openapi);
+    setMatchCounts(counts);
   };
 
   // Utility to remove undefined values to avoid YAML dump errors
@@ -496,7 +532,14 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                     <div className="flex space-x-4">
                       <div className="flex-1">
                         <div className="mb-2">
-                          <label className="block text-sm font-medium mb-1">Target (JSONPath)</label>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="block text-sm font-medium">Target (JSONPath)</label>
+                            <span className={`text-xs px-2 py-0.5 rounded ${
+                              (matchCounts[index] || 0) > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {(matchCounts[index] || 0)} { (matchCounts[index] || 0) === 1 ? 'match' : 'matches' }
+                            </span>
+                          </div>
                           <input
                             type="text"
                             value={action.target}
@@ -666,8 +709,10 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
       format={format}
       onAddActions={async (newActions) => {
         const newPreviews = await computePreviewValues(newActions as any, openapi);
+        const newCounts = await computeMatchCounts(newActions as any, openapi);
         setActions([...actions, ...(newActions as any)]);
         setPreviewValues([...previewValues, ...newPreviews]);
+        setMatchCounts([...(matchCounts || []), ...newCounts]);
       }}
     />
     </>
@@ -702,9 +747,9 @@ export const convertActionsToOverlaySet = async (
       const actionObject: any = {target: action.target};
 
       if (action.type === "update") {
-        actionObject.update = await parseString(action.value || "{}");
+        actionObject.update = await parseValuePreserveScalar(action.value);
       } else if (action.type === "add") {
-        actionObject.add = await parseString(action.value || "{}");
+        actionObject.add = await parseValuePreserveScalar(action.value);
       } else if (action.type === "remove") {
         actionObject.remove = true;
       }
@@ -743,6 +788,23 @@ export const computePreviewValues = async (
   );
 };
 
+export const computeMatchCounts = async (
+  actions: Action[],
+  openapi: string
+): Promise<number[]> => {
+  return Promise.all(
+    actions.map(async (action) => {
+      try {
+        const openapiObj = await parseString(openapi) as Record<string, unknown>;
+        const resolvedValues = resolveJsonPathValue(openapiObj, action.target || "");
+        return resolvedValues.length;
+      } catch {
+        return 0;
+      }
+    })
+  );
+};
+
 // Helpers to generate quick JSONPath suggestions from OpenAPI structure
 function generateJsonPathSuggestions(oa: any): string[] {
   const out = new Set<string>();
@@ -754,6 +816,15 @@ function generateJsonPathSuggestions(oa: any): string[] {
       out.add(`$.servers[${i}]`);
       out.add(`$.servers[${i}].url`);
       out.add(`$.servers[${i}].description`);
+      if (oa.servers[i]?.variables && typeof oa.servers[i].variables === 'object') {
+        Object.keys(oa.servers[i].variables).forEach((v) => {
+          const vKey = escapeJsonPathKey(v);
+          out.add(`$.servers[${i}].variables[${vKey}]`);
+          out.add(`$.servers[${i}].variables[${vKey}].default`);
+          out.add(`$.servers[${i}].variables[${vKey}].enum`);
+          out.add(`$.servers[${i}].variables[${vKey}].description`);
+        });
+      }
     });
   }
   if (oa?.paths && typeof oa.paths === 'object') {
@@ -773,6 +844,19 @@ function generateJsonPathSuggestions(oa: any): string[] {
           out.add(`${mBase}.responses`);
           out.add(`${mBase}.parameters`);
           out.add(`${mBase}.requestBody`);
+          // Parameter examples under operations
+          if (Array.isArray(item[m].parameters)) {
+            item[m].parameters.forEach((_: any, idx: number) => {
+              const pBase = `${mBase}.parameters[${idx}]`;
+              out.add(pBase);
+              out.add(`${pBase}.name`);
+              out.add(`${pBase}.in`);
+              out.add(`${pBase}.required`);
+              out.add(`${pBase}.schema`);
+              out.add(`${pBase}.example`);
+              out.add(`${pBase}.examples`);
+            });
+          }
         }
       });
     });
@@ -784,12 +868,36 @@ function generateJsonPathSuggestions(oa: any): string[] {
         Object.keys(oa.components[g]).forEach((name) => {
           const key = escapeJsonPathKey(name);
           out.add(`$.components.${g}[${key}]`);
+          if (g === 'parameters') {
+            out.add(`$.components.parameters[${key}].name`);
+            out.add(`$.components.parameters[${key}].in`);
+            out.add(`$.components.parameters[${key}].required`);
+            out.add(`$.components.parameters[${key}].schema`);
+            out.add(`$.components.parameters[${key}].example`);
+            out.add(`$.components.parameters[${key}].examples`);
+          }
+          if (g === 'examples') {
+            out.add(`$.components.examples[${key}].summary`);
+            out.add(`$.components.examples[${key}].value`);
+          }
+          if (g === 'securitySchemes') {
+            out.add(`$.components.securitySchemes[${key}].type`);
+            out.add(`$.components.securitySchemes[${key}].scheme`);
+            out.add(`$.components.securitySchemes[${key}].bearerFormat`);
+            out.add(`$.components.securitySchemes[${key}].flows`);
+            out.add(`$.components.securitySchemes[${key}].openIdConnectUrl`);
+          }
         });
       }
     });
   }
   if (Array.isArray(oa?.tags)) {
     out.add('$.tags');
+    oa.tags.forEach((t: any, i: number) => {
+      out.add(`$.tags[${i}]`);
+      out.add(`$.tags[${i}].name`);
+      out.add(`$.tags[${i}].description`);
+    });
   }
   return Array.from(out);
 }
@@ -797,6 +905,18 @@ function generateJsonPathSuggestions(oa: any): string[] {
 function escapeJsonPathKey(key: string): string {
   // Prefer bracket-notation with single quotes, escape any single quotes in key
   return `['${String(key).replace(/'/g, "\\'")}']`;
+}
+
+async function parseValuePreserveScalar(value?: string) {
+  const trimmed = (value ?? '').trim();
+  if (trimmed.length === 0) return {};
+  try {
+    const parsed = await parseString(trimmed);
+    return parsed;
+  } catch {
+    // Fallback: treat as plain string value
+    return trimmed;
+  }
 }
 
 export default ActionsModal;

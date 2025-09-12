@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import SimpleModal from './SimpleModal';
 import { parseString, stringify } from 'openapi-format';
 
@@ -31,6 +31,40 @@ const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, o
   const [tplHeaderStatus, setTplHeaderStatus] = useState('');
   const [tplFromPath, setTplFromPath] = useState('');
   const [tplToPath, setTplToPath] = useState('');
+
+  // Reset form fields when opened/closed for a clean start
+  useEffect(() => {
+    if (isOpen) {
+      setTemplateType(null);
+      setTplUrl('');
+      setTplUrlDesc('');
+      setTplFromTag('');
+      setTplToTag('');
+      setTplHeaderName('');
+      setTplHeaderDesc('');
+      setTplHeaderType('string');
+      setTplHeaderStatus('');
+      setTplFromPath('');
+      setTplToPath('');
+    }
+  }, [isOpen]);
+
+  const isValid = useMemo(() => {
+    switch (templateType) {
+      case 'addServer':
+        return tplUrl.trim().length > 0;
+      case 'renameTag':
+        return tplFromTag.trim().length > 0 && tplToTag.trim().length > 0;
+      case 'setDefaultHeader':
+        return tplHeaderName.trim().length > 0;
+      case 'deprecateByTag':
+        return tplFromTag.trim().length > 0;
+      case 'movePath':
+        return tplFromPath.trim().length > 0 && tplToPath.trim().length > 0;
+      default:
+        return false;
+    }
+  }, [templateType, tplUrl, tplFromTag, tplToTag, tplHeaderName, tplFromPath, tplToPath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,10 +124,9 @@ const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, o
       }
     }
 
-    if (newActions.length > 0) {
-      onAddActions(newActions);
-      onRequestClose();
-    }
+    if (newActions.length === 0) return;
+    onAddActions(newActions);
+    onRequestClose();
   };
 
   return (
@@ -125,6 +158,7 @@ const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, o
             <div className="space-y-2">
               <label className="block text-sm font-medium">Server URL</label>
               <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" value={tplUrl} onChange={e => setTplUrl(e.target.value)} required/>
+              {tplUrl.trim().length === 0 && (<p className="text-red-600 text-xs">URL is required.</p>)}
               <label className="block text-sm font-medium">Description (optional)</label>
               <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" value={tplUrlDesc} onChange={e => setTplUrlDesc(e.target.value)}/>
             </div>
@@ -133,14 +167,17 @@ const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, o
             <div className="space-y-2">
               <label className="block text-sm font-medium">From Tag</label>
               <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" value={tplFromTag} onChange={e => setTplFromTag(e.target.value)} required/>
+              {tplFromTag.trim().length === 0 && (<p className="text-red-600 text-xs">From tag is required.</p>)}
               <label className="block text-sm font-medium">To Tag</label>
               <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" value={tplToTag} onChange={e => setTplToTag(e.target.value)} required/>
+              {tplToTag.trim().length === 0 && (<p className="text-red-600 text-xs">To tag is required.</p>)}
             </div>
           )}
           {templateType === 'setDefaultHeader' && (
             <div className="space-y-2">
               <label className="block text-sm font-medium">Header Name</label>
               <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" value={tplHeaderName} onChange={e => setTplHeaderName(e.target.value)} required/>
+              {tplHeaderName.trim().length === 0 && (<p className="text-red-600 text-xs">Header name is required.</p>)}
               <label className="block text-sm font-medium">Header Description (optional)</label>
               <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" value={tplHeaderDesc} onChange={e => setTplHeaderDesc(e.target.value)}/>
               <label className="block text-sm font-medium">Schema Type</label>
@@ -159,19 +196,22 @@ const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, o
             <div className="space-y-2">
               <label className="block text-sm font-medium">Tag</label>
               <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" value={tplFromTag} onChange={e => setTplFromTag(e.target.value)} required/>
+              {tplFromTag.trim().length === 0 && (<p className="text-red-600 text-xs">Tag is required.</p>)}
             </div>
           )}
           {templateType === 'movePath' && (
             <div className="space-y-2">
               <label className="block text-sm font-medium">From Path</label>
               <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" placeholder="/old" value={tplFromPath} onChange={e => setTplFromPath(e.target.value)} required/>
+              {tplFromPath.trim().length === 0 && (<p className="text-red-600 text-xs">From path is required.</p>)}
               <label className="block text-sm font-medium">To Path</label>
               <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" placeholder="/new" value={tplToPath} onChange={e => setTplToPath(e.target.value)} required/>
+              {tplToPath.trim().length === 0 && (<p className="text-red-600 text-xs">To path is required.</p>)}
             </div>
           )}
           <div className="flex justify-end space-x-2">
             <button type="button" onClick={onRequestClose} className="bg-gray-300 dark:bg-gray-600 p-2 rounded">Cancel</button>
-            <button type="submit" className="bg-blue-500 text-white p-2 rounded">Add Action(s)</button>
+            <button type="submit" disabled={!isValid} className={`p-2 rounded ${isValid ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'}`}>Add Action(s)</button>
           </div>
         </form>
       )}
@@ -184,4 +224,3 @@ function escapeJsonPathKey(key: string): string {
 }
 
 export default OverlayTemplatesModal;
-
