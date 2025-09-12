@@ -49,6 +49,73 @@ const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, o
     }
   }, [isOpen]);
 
+  // Build simple autocomplete suggestions from current OpenAPI
+  const [suggestions, setSuggestions] = useState({
+    tags: [] as string[],
+    paths: [] as string[],
+    statusCodes: [] as string[],
+    headerNames: [] as string[],
+    serverUrls: [] as string[],
+  });
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      const out = {
+        tags: [] as string[],
+        paths: [] as string[],
+        statusCodes: [] as string[],
+        headerNames: [] as string[],
+        serverUrls: [] as string[],
+      };
+      try {
+        if (!openapi || !openapi.trim()) { if (!cancelled) setSuggestions(out); return; }
+        const oa = await parseString(openapi) as any;
+        const tags = new Set<string>();
+        if (Array.isArray(oa?.tags)) {
+          oa.tags.forEach((t: any) => { if (t?.name) tags.add(String(t.name)); });
+        }
+        if (oa?.paths && typeof oa.paths === 'object') {
+          Object.keys(oa.paths).forEach((p) => {
+            out.paths.push(p);
+            const item = oa.paths[p] || {};
+            const methods = ['get','post','put','delete','patch','options','head','trace'];
+            methods.forEach((m) => {
+              if (item[m]) {
+                if (Array.isArray(item[m].tags)) item[m].tags.forEach((tg: any) => tags.add(String(tg)));
+                if (item[m].responses && typeof item[m].responses === 'object') {
+                  Object.keys(item[m].responses).forEach((code) => out.statusCodes.push(code));
+                  Object.values(item[m].responses).forEach((resp: any) => {
+                    if (resp?.headers && typeof resp.headers === 'object') {
+                      Object.keys(resp.headers).forEach((hn) => out.headerNames.push(hn));
+                    }
+                  });
+                }
+              }
+            });
+          });
+        }
+        if (oa?.components?.responses && typeof oa.components.responses === 'object') {
+          Object.values(oa.components.responses).forEach((resp: any) => {
+            if (resp?.headers && typeof resp.headers === 'object') {
+              Object.keys(resp.headers).forEach((hn) => out.headerNames.push(hn));
+            }
+          });
+        }
+        if (Array.isArray(oa?.servers)) {
+          oa.servers.forEach((s: any) => { if (s?.url) out.serverUrls.push(String(s.url)); });
+        }
+        out.tags = Array.from(tags);
+        out.paths = Array.from(new Set(out.paths));
+        out.statusCodes = Array.from(new Set(out.statusCodes.concat(['default'])));
+        out.headerNames = Array.from(new Set(out.headerNames));
+        out.serverUrls = Array.from(new Set(out.serverUrls));
+      } catch {}
+      if (!cancelled) setSuggestions(out);
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [openapi]);
+
   const isValid = useMemo(() => {
     switch (templateType) {
       case 'addServer':
@@ -79,7 +146,8 @@ const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, o
     }
     if (templateType === 'renameTag') {
       if (!tplFromTag.trim() || !tplToTag.trim()) return;
-      const target = `$..tags[?@=='${tplFromTag.trim()}']`;
+      const from = escapeForJsonPathFilter(tplFromTag.trim());
+      const target = `$..tags[?@=="${from}"]`;
       const val = await stringify(tplToTag.trim());
       newActions.push({ target, type: 'update', value: val, enabled: true });
     }
@@ -157,7 +225,12 @@ const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, o
           {templateType === 'addServer' && (
             <div className="space-y-2">
               <label className="block text-sm font-medium">Server URL</label>
-              <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" value={tplUrl} onChange={e => setTplUrl(e.target.value)} required/>
+              <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" list="tpl-server-urls" value={tplUrl} onChange={e => setTplUrl(e.target.value)} required/>
+              <datalist id="tpl-server-urls">
+                {suggestions.serverUrls.slice(0, 100).map((u) => (
+                  <option key={u} value={u} />
+                ))}
+              </datalist>
               {tplUrl.trim().length === 0 && (<p className="text-red-600 text-xs">URL is required.</p>)}
               <label className="block text-sm font-medium">Description (optional)</label>
               <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" value={tplUrlDesc} onChange={e => setTplUrlDesc(e.target.value)}/>
@@ -166,17 +239,22 @@ const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, o
           {templateType === 'renameTag' && (
             <div className="space-y-2">
               <label className="block text-sm font-medium">From Tag</label>
-              <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" value={tplFromTag} onChange={e => setTplFromTag(e.target.value)} required/>
+              <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" list="tpl-tags" value={tplFromTag} onChange={e => setTplFromTag(e.target.value)} required/>
               {tplFromTag.trim().length === 0 && (<p className="text-red-600 text-xs">From tag is required.</p>)}
               <label className="block text-sm font-medium">To Tag</label>
-              <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" value={tplToTag} onChange={e => setTplToTag(e.target.value)} required/>
+              <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" list="tpl-tags" value={tplToTag} onChange={e => setTplToTag(e.target.value)} required/>
               {tplToTag.trim().length === 0 && (<p className="text-red-600 text-xs">To tag is required.</p>)}
+              <datalist id="tpl-tags">
+                {suggestions.tags.slice(0, 200).map((t) => (
+                  <option key={t} value={t} />
+                ))}
+              </datalist>
             </div>
           )}
           {templateType === 'setDefaultHeader' && (
             <div className="space-y-2">
               <label className="block text-sm font-medium">Header Name</label>
-              <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" value={tplHeaderName} onChange={e => setTplHeaderName(e.target.value)} required/>
+              <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" list="tpl-headers" value={tplHeaderName} onChange={e => setTplHeaderName(e.target.value)} required/>
               {tplHeaderName.trim().length === 0 && (<p className="text-red-600 text-xs">Header name is required.</p>)}
               <label className="block text-sm font-medium">Header Description (optional)</label>
               <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" value={tplHeaderDesc} onChange={e => setTplHeaderDesc(e.target.value)}/>
@@ -189,24 +267,39 @@ const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, o
                 <option>array</option>
               </select>
               <label className="block text-sm font-medium">Status Code (optional, blank = default)</label>
-              <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" placeholder="e.g., 200" value={tplHeaderStatus} onChange={e => setTplHeaderStatus(e.target.value)}/>
+              <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" list="tpl-status-codes" placeholder="e.g., 200" value={tplHeaderStatus} onChange={e => setTplHeaderStatus(e.target.value)}/>
+              <datalist id="tpl-headers">
+                {suggestions.headerNames.slice(0, 300).map((h) => (
+                  <option key={h} value={h} />
+                ))}
+              </datalist>
+              <datalist id="tpl-status-codes">
+                {suggestions.statusCodes.slice(0, 200).map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
             </div>
           )}
           {templateType === 'deprecateByTag' && (
             <div className="space-y-2">
               <label className="block text-sm font-medium">Tag</label>
-              <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" value={tplFromTag} onChange={e => setTplFromTag(e.target.value)} required/>
+              <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" list="tpl-tags" value={tplFromTag} onChange={e => setTplFromTag(e.target.value)} required/>
               {tplFromTag.trim().length === 0 && (<p className="text-red-600 text-xs">Tag is required.</p>)}
             </div>
           )}
           {templateType === 'movePath' && (
             <div className="space-y-2">
               <label className="block text-sm font-medium">From Path</label>
-              <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" placeholder="/old" value={tplFromPath} onChange={e => setTplFromPath(e.target.value)} required/>
+              <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" list="tpl-paths" placeholder="/old" value={tplFromPath} onChange={e => setTplFromPath(e.target.value)} required/>
               {tplFromPath.trim().length === 0 && (<p className="text-red-600 text-xs">From path is required.</p>)}
               <label className="block text-sm font-medium">To Path</label>
               <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" placeholder="/new" value={tplToPath} onChange={e => setTplToPath(e.target.value)} required/>
               {tplToPath.trim().length === 0 && (<p className="text-red-600 text-xs">To path is required.</p>)}
+              <datalist id="tpl-paths">
+                {suggestions.paths.slice(0, 500).map((p) => (
+                  <option key={p} value={p} />
+                ))}
+              </datalist>
             </div>
           )}
           <div className="flex justify-end space-x-2">
@@ -224,3 +317,8 @@ function escapeJsonPathKey(key: string): string {
 }
 
 export default OverlayTemplatesModal;
+
+function escapeForJsonPathFilter(s: string): string {
+  // Escape backslashes and double quotes for inclusion inside a JSONPath filter double-quoted string
+  return s.replace(/\\/g, '\\\\').replace(/\"/g, '"').replace(/"/g, '\\"');
+}

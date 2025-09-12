@@ -38,11 +38,6 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
           return;
         }
         openapi = await resp.text();
-        // Optional early return: just resolve extends and return the base spec
-        if (resolveExtendsOnly) {
-          res.status(200).json({ data: openapi });
-          return;
-        }
       }
     } catch (e: any) {
       res.status(422).json({message: `Invalid overlay or extends: ${e?.message || e}`});

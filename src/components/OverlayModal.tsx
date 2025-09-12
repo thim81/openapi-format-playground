@@ -114,7 +114,8 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
       if (extendsRef?.trim()) base.extends = extendsRef.trim();
       const enabledOnly = actions.filter(a => a.enabled !== false);
       const updatedOverlaySet = pruneUndefined(await convertActionsToOverlaySet(enabledOnly, base));
-      const updatedCode = await stringify(updatedOverlaySet, {format});
+      let updatedCode = await stringify(updatedOverlaySet, {format});
+      updatedCode = preferDoubleQuotesForTargets(updatedCode);
       setOverlaySetCode(updatedCode);
     } else {
       // Switch to UI Mode: Merge code edits back into enabled actions, keep disabled ones untouched
@@ -427,6 +428,22 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
       return out;
     }
     return value;
+  }
+
+  // Prefer double quotes for target lines to avoid doubled single-quote YAML escaping
+  function preferDoubleQuotesForTargets(yamlText: string): string {
+    const lines = yamlText.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const m = lines[i].match(/^(\s*-?\s*target:\s*)'(.*)'(\s*)$/);
+      if (m) {
+        // Inside a single-quoted YAML scalar, '' represents a single '
+        let inner = m[2].replace(/''/g, "'");
+        // Escape double quotes for YAML double-quoted style
+        inner = inner.replace(/\\/g, '\\\\').replace(/\"/g, '"').replace(/"/g, '\\"');
+        lines[i] = `${m[1]}"${inner}"${m[3]}`;
+      }
+    }
+    return lines.join('\n');
   }
 
   const handleOverlayLoad = async (content: string | null, context: string) => {
