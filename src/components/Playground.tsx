@@ -729,7 +729,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       />
 
       {
-        (input && input.trim().length > 0) && (
+        Object.keys(filterFormOptions).length > 0 && (
           <button onClick={openFormModal}
                   className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded-full shadow-lg">
             Open Filter Form
