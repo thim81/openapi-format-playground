@@ -507,13 +507,13 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                 >
                   Add Action
                 </button>
-                <button
-                  type="button"
-                  onClick={() => { setIsTemplateOpen(true); }}
-                  className="bg-gray-200 text-gray-800 px-2 py-1 font-medium text-sm rounded hover:bg-gray-300"
-                >
-                  Templates
-                </button>
+                {/*<button*/}
+                {/*  type="button"*/}
+                {/*  onClick={() => { setIsTemplateOpen(true); }}*/}
+                {/*  className="bg-gray-200 text-gray-800 px-2 py-1 font-medium text-sm rounded hover:bg-gray-300"*/}
+                {/*>*/}
+                {/*  Templates*/}
+                {/*</button>*/}
                 <ButtonUrlModal
                   context="overlay"
                   typeTxt="OpenAPI Overlay"
@@ -762,13 +762,13 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                     >
                       Add Your First Action
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => { setIsTemplateOpen(true); }}
-                      className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
-                    >
-                      Templates
-                    </button>
+                    {/*<button*/}
+                    {/*  type="button"*/}
+                    {/*  onClick={() => { setIsTemplateOpen(true); }}*/}
+                    {/*  className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"*/}
+                    {/*>*/}
+                    {/*  Templates*/}
+                    {/*</button>*/}
                   </div>
                 </div>
               )}
