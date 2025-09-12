@@ -13,6 +13,7 @@ interface Action {
   target: string;
   type: "update" | "remove" | "add";
   value?: string;
+  enabled?: boolean; // UI-only flag; disabled actions are excluded from API overlay
 }
 
 interface ActionsModalProps {
@@ -34,6 +35,10 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     version: "",
   });
   const [extendsRef, setExtendsRef] = useState<string>("");
+  const [jsonPathSuggestions, setJsonPathSuggestions] = useState<string[]>([]);
+  const [isPickerOpen, setIsPickerOpen] = useState<boolean>(false);
+  const [pickerIndex, setPickerIndex] = useState<number | null>(null);
+  const [pickerQuery, setPickerQuery] = useState<string>("");
 
   // Initialize actions from overlaySet when modal opens
   useEffect(() => {
@@ -65,6 +70,20 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
 
     initialize();
   }, [overlaySet, openapi, format]);
+
+  // Build JSONPath suggestions from the current OpenAPI document
+  useEffect(() => {
+    const buildSuggestions = async () => {
+      try {
+        const oa = await parseString(openapi) as any;
+        const suggestions = generateJsonPathSuggestions(oa);
+        setJsonPathSuggestions(suggestions);
+      } catch {
+        setJsonPathSuggestions([]);
+      }
+    };
+    buildSuggestions();
+  }, [openapi]);
 
   // Toggle between UI and Code modes
   const toggleMode = async () => {
@@ -140,6 +159,21 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     setPreviewValues(previewValues.filter((_, i) => i !== index));
   };
 
+  const handleDuplicateAction = (index: number) => {
+    const cloned = { ...actions[index] };
+    const clonedPreview = previewValues[index];
+    setActions([
+      ...actions.slice(0, index + 1),
+      cloned,
+      ...actions.slice(index + 1),
+    ]);
+    setPreviewValues([
+      ...previewValues.slice(0, index + 1),
+      clonedPreview,
+      ...previewValues.slice(index + 1),
+    ]);
+  };
+
   const handleActionChange = async (index: number, field: keyof Action, value: string) => {
     const updatedActions = [...actions];
     const updatedPreviews = [...previewValues];
@@ -169,6 +203,32 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
 
     setActions(updatedActions);
     setPreviewValues(updatedPreviews);
+  };
+
+  const handleToggleEnabled = async (index: number) => {
+    const updated = [...actions];
+    const wasEnabled = updated[index].enabled !== false;
+    updated[index].enabled = !wasEnabled;
+    setActions(updated);
+    // Update preview display for disabled state
+    if (!updated[index].enabled) {
+      const pv = [...previewValues];
+      pv[index] = "Action disabled";
+      setPreviewValues(pv);
+    } else {
+      // Recompute this preview only
+      try {
+        const openapiObj = await parseString(openapi) as Record<string, unknown>;
+        const resolvedValues = resolveJsonPathValue(openapiObj, updated[index].target || "");
+        const pv = [...previewValues];
+        pv[index] = resolvedValues.length > 0 ? await stringify(resolvedValues[0]) : "No matching value found.";
+        setPreviewValues(pv);
+      } catch {
+        const pv = [...previewValues];
+        pv[index] = "Invalid target or JSONPath.";
+        setPreviewValues(pv);
+      }
+    }
   };
 
   const handleValueChange = (index: number, value: string) => {
@@ -269,6 +329,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
   };
 
   return (
+    <>
     <SimpleModal isOpen={isOpen} onRequestClose={onRequestClose} width="98%" height="98%">
       <form onSubmit={handleSubmit} className="flex flex-col h-full">
         <div className="flex items-center justify-between mb-4">
@@ -361,7 +422,16 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                   <div key={index} className="border py-2 px-4 rounded bg-gray-50 dark:bg-gray-600 shadow-sm">
                     <div className="flex justify-between items-center mb-2">
                       <h3 className="font-semibold">Action {index + 1}</h3>
-                      <div className="flex space-x-2">
+                      <div className="flex items-center space-x-2">
+                        <label className="flex items-center text-xs mr-2">
+                          <input
+                            type="checkbox"
+                            checked={action.enabled !== false}
+                            onChange={() => handleToggleEnabled(index)}
+                            className="mr-1"
+                          />
+                          Enabled
+                        </label>
                         <button
                           type="button"
                           onClick={() => handleMoveUp(index)}
@@ -384,10 +454,31 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleRemoveAction(index)}
-                          className="text-red-500 hover:text-red-700"
+                          onClick={() => handleDuplicateAction(index)}
+                          aria-label="Duplicate action"
+                          title="Duplicate action"
+                          className="h-6 w-6 flex justify-center items-center text-xs rounded bg-indigo-500 text-white hover:bg-indigo-600"
                         >
-                          Remove
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="h-4 w-4"
+                          >
+                            <path d="M9 7a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2V7z"/>
+                            <path d="M5 9a2 2 0 0 1 2-2h1v7a4 4 0 0 0 4 4h7v1a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9z"/>
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAction(index)}
+                          aria-label="Remove action"
+                          title="Remove action"
+                          className="h-6 w-6 flex justify-center items-center text-xs rounded bg-red-500 text-white hover:bg-red-600"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                            <path d="M17 6H22V8H20V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V8H2V6H7V3C7 2.44772 7.44772 2 8 2H16C16.5523 2 17 2.44772 17 3V6ZM18 8H6V20H18V8ZM9 11H11V17H9V11ZM13 11H15V17H13V11ZM9 4V6H15V4H9Z"></path>
+                          </svg>
                         </button>
                       </div>
                     </div>
@@ -399,9 +490,24 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                             type="text"
                             value={action.target}
                             onChange={(e) => handleActionChange(index, "target", e.target.value)}
+                            list={`jsonpath-suggestions-${index}`}
                             className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white"
                             placeholder="$.paths['/example']"
                           />
+                          <datalist id={`jsonpath-suggestions-${index}`}>
+                            {jsonPathSuggestions.slice(0, 500).map((s) => (
+                              <option key={s} value={s} />
+                            ))}
+                          </datalist>
+                          <div className="mt-2">
+                            <button
+                              type="button"
+                              onClick={() => { setPickerIndex(index); setIsPickerOpen(true); setPickerQuery(""); }}
+                              className="bg-gray-200 text-gray-800 px-2 py-1 font-medium text-xs rounded hover:bg-gray-300"
+                            >
+                              Pick target
+                            </button>
+                          </div>
                         </div>
                         <div className="mb-2">
                           <label className="block text-sm font-medium mb-1">Action Type</label>
@@ -438,7 +544,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                               whiteSpace: "pre-wrap", // Wrap text for readability
                               wordBreak: "break-word", // Break long words
                             }}
-                          >{previewValues[index]}</pre>
+                          >{action.enabled === false ? 'Action disabled' : previewValues[index]}</pre>
                         </div>
                         <button
                           type="button"
@@ -527,6 +633,44 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
         </div>
       </form>
     </SimpleModal>
+    {isPickerOpen && (
+      <SimpleModal isOpen={isPickerOpen} onRequestClose={() => setIsPickerOpen(false)} width="60%" height="70%" zIndex={60}>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-semibold">Pick a JSONPath target</h3>
+          <input
+            type="text"
+            value={pickerQuery}
+            onChange={(e) => setPickerQuery(e.target.value)}
+            placeholder="Search..."
+            className="p-2 border rounded w-1/2 dark:bg-gray-800 dark:text-white"
+          />
+        </div>
+        <div className="border rounded h-[70%] overflow-auto p-2 dark:bg-gray-900">
+          {jsonPathSuggestions
+            .filter(s => s.toLowerCase().includes(pickerQuery.toLowerCase()))
+            .slice(0, 1000)
+            .map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => {
+                  if (pickerIndex != null) {
+                    handleActionChange(pickerIndex, 'target', s);
+                  }
+                  setIsPickerOpen(false);
+                }}
+                className="block text-left w-full px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-sm"
+              >
+                {s}
+              </button>
+            ))}
+        </div>
+        <div className="flex justify-end space-x-2 mt-2">
+          <button type="button" onClick={() => setIsPickerOpen(false)} className="bg-gray-300 dark:bg-gray-600 p-2 rounded">Close</button>
+        </div>
+      </SimpleModal>
+    )}
+    </>
   );
 };
 
@@ -535,7 +679,7 @@ export const convertOverlaySetToActions = async (
   format: "json" | "yaml"
 ): Promise<Action[]> => {
   return Promise.all(
-    overlaySet?.actions?.map(async (action: any) => ({
+    (overlaySet?.actions || []).map(async (action: any) => ({
       target: action.target,
       type: action.update ? "update" : action.add ? "add" : "remove",
       value: action.update
@@ -543,7 +687,8 @@ export const convertOverlaySetToActions = async (
         : action.add
           ? await stringify(action.add, { format })
           : undefined,
-    })) || []
+      enabled: true,
+    }))
   );
 };
 
@@ -551,8 +696,9 @@ export const convertActionsToOverlaySet = async (
   actions: Action[],
   baseOverlaySet: any
 ): Promise<any> => {
+  // Exclude disabled actions from the overlay sent to the API / code
   const actionsArray = await Promise.all(
-    actions.map(async (action) => {
+    actions.filter(a => a.enabled !== false).map(async (action) => {
       const actionObject: any = {target: action.target};
 
       if (action.type === "update") {
@@ -596,5 +742,61 @@ export const computePreviewValues = async (
     })
   );
 };
+
+// Helpers to generate quick JSONPath suggestions from OpenAPI structure
+function generateJsonPathSuggestions(oa: any): string[] {
+  const out = new Set<string>();
+  out.add('$.info');
+  out.add('$.info.title');
+  out.add('$.servers');
+  if (Array.isArray(oa?.servers)) {
+    oa.servers.forEach((_: any, i: number) => {
+      out.add(`$.servers[${i}]`);
+      out.add(`$.servers[${i}].url`);
+      out.add(`$.servers[${i}].description`);
+    });
+  }
+  if (oa?.paths && typeof oa.paths === 'object') {
+    Object.keys(oa.paths).forEach((p) => {
+      const key = escapeJsonPathKey(p);
+      const base = `$.paths[${key}]`;
+      out.add(base);
+      const item = oa.paths[p] || {};
+      const methods = ['get','post','put','delete','patch','options','head','trace'];
+      methods.forEach((m) => {
+        if (item[m]) {
+          const mBase = `${base}.${m}`;
+          out.add(mBase);
+          out.add(`${mBase}.summary`);
+          out.add(`${mBase}.operationId`);
+          out.add(`${mBase}.tags`);
+          out.add(`${mBase}.responses`);
+          out.add(`${mBase}.parameters`);
+          out.add(`${mBase}.requestBody`);
+        }
+      });
+    });
+  }
+  if (oa?.components && typeof oa.components === 'object') {
+    const groups = ['schemas','responses','parameters','examples','requestBodies','headers','securitySchemes','links','callbacks'];
+    groups.forEach((g) => {
+      if (oa.components[g] && typeof oa.components[g] === 'object') {
+        Object.keys(oa.components[g]).forEach((name) => {
+          const key = escapeJsonPathKey(name);
+          out.add(`$.components.${g}[${key}]`);
+        });
+      }
+    });
+  }
+  if (Array.isArray(oa?.tags)) {
+    out.add('$.tags');
+  }
+  return Array.from(out);
+}
+
+function escapeJsonPathKey(key: string): string {
+  // Prefer bracket-notation with single quotes, escape any single quotes in key
+  return `['${String(key).replace(/'/g, "\\'")}']`;
+}
 
 export default ActionsModal;
