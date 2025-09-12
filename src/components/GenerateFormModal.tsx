@@ -179,7 +179,7 @@ const GenerateFormModal: React.FC<GenerateFormModalProps> = ({isOpen, onRequestC
           </div>
         </div>
 
-        <div className="flex justify-end space-x-2 mt-4">
+        <div className="sticky bottom-0 left-0 right-0 bg-white dark:bg-gray-950 py-3 mt-2 border-t flex justify-end space-x-2">
           <button type="button" onClick={onRequestClose} className="bg-gray-300 dark:bg-gray-500 p-2 rounded">Cancel</button>
           <button type="submit" className="bg-blue-500 text-white p-2 rounded">Generate</button>
         </div>
