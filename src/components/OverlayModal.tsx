@@ -16,6 +16,7 @@ interface Action {
   type: "update" | "remove" | "add";
   value?: string;
   enabled?: boolean; // UI-only flag; disabled actions are excluded from API overlay
+  expanded?: boolean; // UI-only flag; controls expand/collapse state
 }
 
 interface ActionsModalProps {
@@ -48,7 +49,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     const initialize = async () => {
       const OverlayOpts = (await parseString(overlaySet)) as Record<string, unknown>;
       const actions = await convertOverlaySetToActions(OverlayOpts, format);
-      setActions(actions);
+      setActions(actions.map(a => ({...a, expanded: a.expanded !== false})));
       setOverlaySetCode(overlaySet);
 
       const previews = await computePreviewValues(actions, openapi);
@@ -146,7 +147,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
       // Insert action at the specified index + 1
       setActions([
         ...actions.slice(0, index + 1),
-        { target: "", type: "update" },
+        { target: "", type: "update", expanded: true },
         ...actions.slice(index + 1),
       ]);
       setPreviewValues([
@@ -161,7 +162,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
       ]);
     } else {
       // Default behavior: Add action at the end
-      setActions([...actions, { target: "", type: "update" }]);
+      setActions([...actions, { target: "", type: "update", expanded: true }]);
       setPreviewValues([...previewValues, ""]);
       setMatchCounts([...(matchCounts || []), 0]);
     }
@@ -263,6 +264,13 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     const updatedActions = [...actions];
     updatedActions[index].value = value;
     setActions(updatedActions);
+  };
+
+  const handleToggleExpanded = (index: number) => {
+    const updated = [...actions];
+    const prev = updated[index].expanded !== false; // default true
+    updated[index].expanded = !prev;
+    setActions(updated);
   };
 
   const handleMoveUp = (index: number) => {
@@ -468,7 +476,26 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                 actions.map((action, index) => (
                   <div key={index} className="border py-2 px-4 rounded bg-gray-50 dark:bg-gray-600 shadow-sm">
                     <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-semibold">Action {index + 1}</h3>
+                      <div className="flex items-center space-x-2 overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleExpanded(index)}
+                          aria-label={action.expanded === false ? 'Expand action' : 'Collapse action'}
+                          title={action.expanded === false ? 'Expand' : 'Collapse'}
+                          className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                        >
+                          {action.expanded === false ? '▸' : '▾'}
+                        </button>
+                        <h3 className="font-semibold">Action {index + 1}</h3>
+                        {action.expanded === false && (
+                          <span
+                            className="text-xs text-gray-600 dark:text-gray-300 truncate max-w-[50vw]"
+                            title={`${action.type || 'update'} → ${action.target || '(no target)'}`}
+                          >
+                            [{action.type}] {action.target || '(no target)'}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center space-x-2">
                         <label className="flex items-center text-xs mr-2">
                           <input
@@ -529,6 +556,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                         </button>
                       </div>
                     </div>
+                    {action.expanded !== false && (
                     <div className="flex space-x-4">
                       <div className="flex-1">
                         <div className="mb-2">
@@ -609,6 +637,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                         </button>
                       </div>
                     </div>
+                    )}
                   </div>
                 ))
               ) : (
