@@ -910,13 +910,14 @@ function escapeJsonPathKey(key: string): string {
 async function parseValuePreserveScalar(value?: string) {
   const trimmed = (value ?? '').trim();
   if (trimmed.length === 0) return {};
-  try {
-    const parsed = await parseString(trimmed);
-    return parsed;
-  } catch {
-    // Fallback: treat as plain string value
-    return trimmed;
-  }
+  const parsed = await parseString(trimmed);
+  const isErrorLike = parsed && typeof parsed === 'object' && (
+    (parsed as any).name && (parsed as any).message
+  );
+  // YAML parser in openapi-format returns Error objects for scalars; treat as string
+  if (isErrorLike) return trimmed;
+  // JSON branch could return primitives, but our parseString YAML branch ensures object or error
+  return parsed;
 }
 
 export default ActionsModal;
