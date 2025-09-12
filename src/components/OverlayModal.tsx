@@ -8,6 +8,8 @@ import {resolveJsonPathValue, parseString, stringify} from "openapi-format";
 import ButtonDownload from "@/components/ButtonDownload";
 import ButtonUrlModal from "@/components/ButtonUrlModal";
 import ButtonUpload from "@/components/ButtonUpload";
+import JsonPathPickerModal from "@/components/JsonPathPickerModal";
+import OverlayTemplatesModal from "@/components/OverlayTemplatesModal";
 
 interface Action {
   target: string;
@@ -38,7 +40,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
   const [jsonPathSuggestions, setJsonPathSuggestions] = useState<string[]>([]);
   const [isPickerOpen, setIsPickerOpen] = useState<boolean>(false);
   const [pickerIndex, setPickerIndex] = useState<number | null>(null);
-  const [pickerQuery, setPickerQuery] = useState<string>("");
+  const [isTemplateOpen, setIsTemplateOpen] = useState<boolean>(false);
 
   // Initialize actions from overlaySet when modal opens
   useEffect(() => {
@@ -263,6 +265,8 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     setPreviewValues(updatedPreviews);
   };
 
+  // Template building moved to OverlayTemplatesModal
+
   const handleInfoChange = (field: keyof typeof info, value: string) => {
     setInfo({ ...info, [field]: value });
   };
@@ -346,6 +350,13 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                   className="bg-indigo-500 text-white px-2 py-1 font-medium text-sm rounded hover:bg-indigo-600"
                 >
                   Add Action
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setIsTemplateOpen(true); }}
+                  className="bg-gray-200 text-gray-800 px-2 py-1 font-medium text-sm rounded hover:bg-gray-300"
+                >
+                  Templates
                 </button>
                 <ButtonUrlModal
                   context="overlay"
@@ -502,7 +513,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                           <div className="mt-2">
                             <button
                               type="button"
-                              onClick={() => { setPickerIndex(index); setIsPickerOpen(true); setPickerQuery(""); }}
+                              onClick={() => { setPickerIndex(index); setIsPickerOpen(true); }}
                               className="bg-gray-200 text-gray-800 px-2 py-1 font-medium text-xs rounded hover:bg-gray-300"
                             >
                               Pick target
@@ -560,12 +571,21 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
               ) : (
                 <div className="flex flex-col justify-center items-center pt-72">
                   <h3 className="text-lg font-semibold mb-2">Get started with OpenAPI Overlay</h3>
-                  <button
-                    onClick={() => handleAddAction()}
-                    className="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600"
-                  >
-                    Add Your First Action
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleAddAction()}
+                      className="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600"
+                    >
+                      Add Your First Action
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setIsTemplateOpen(true); }}
+                      className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
+                    >
+                      Templates
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -633,43 +653,23 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
         </div>
       </form>
     </SimpleModal>
-    {isPickerOpen && (
-      <SimpleModal isOpen={isPickerOpen} onRequestClose={() => setIsPickerOpen(false)} width="60%" height="70%" zIndex={60}>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-semibold">Pick a JSONPath target</h3>
-          <input
-            type="text"
-            value={pickerQuery}
-            onChange={(e) => setPickerQuery(e.target.value)}
-            placeholder="Search..."
-            className="p-2 border rounded w-1/2 dark:bg-gray-800 dark:text-white"
-          />
-        </div>
-        <div className="border rounded h-[70%] overflow-auto p-2 dark:bg-gray-900">
-          {jsonPathSuggestions
-            .filter(s => s.toLowerCase().includes(pickerQuery.toLowerCase()))
-            .slice(0, 1000)
-            .map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => {
-                  if (pickerIndex != null) {
-                    handleActionChange(pickerIndex, 'target', s);
-                  }
-                  setIsPickerOpen(false);
-                }}
-                className="block text-left w-full px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-sm"
-              >
-                {s}
-              </button>
-            ))}
-        </div>
-        <div className="flex justify-end space-x-2 mt-2">
-          <button type="button" onClick={() => setIsPickerOpen(false)} className="bg-gray-300 dark:bg-gray-600 p-2 rounded">Close</button>
-        </div>
-      </SimpleModal>
-    )}
+    <JsonPathPickerModal
+      isOpen={isPickerOpen}
+      onRequestClose={() => setIsPickerOpen(false)}
+      suggestions={jsonPathSuggestions}
+      onPick={(s) => { if (pickerIndex != null) handleActionChange(pickerIndex, 'target', s); }}
+    />
+    <OverlayTemplatesModal
+      isOpen={isTemplateOpen}
+      onRequestClose={() => setIsTemplateOpen(false)}
+      openapi={openapi}
+      format={format}
+      onAddActions={async (newActions) => {
+        const newPreviews = await computePreviewValues(newActions as any, openapi);
+        setActions([...actions, ...(newActions as any)]);
+        setPreviewValues([...previewValues, ...newPreviews]);
+      }}
+    />
     </>
   );
 };
