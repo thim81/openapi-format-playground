@@ -406,8 +406,10 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
       }
     }
 
-    // Build overlay including all actions for storage; API filtering happens in Playground
-    const updatedOverlaySet = pruneUndefined(await convertActionsToOverlaySet(actions, baseForBuild));
+    // Build overlay: in Code mode, submit what user typed; in UI mode, rebuild from actions
+    const updatedOverlaySet = currentMode === 'Code'
+      ? pruneUndefined(baseForBuild)
+      : pruneUndefined(await convertActionsToOverlaySet(actions, baseForBuild));
     onSubmit(updatedOverlaySet);
     onRequestClose();
   };

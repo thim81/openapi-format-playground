@@ -18,7 +18,7 @@ interface OverlayTemplatesModalProps {
 }
 
 const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, onRequestClose, onAddActions, openapi }) => {
-  const [templateType, setTemplateType] = useState<null | 'addServer' | 'renameTag' | 'setDefaultHeader' | 'deprecateByTag' | 'movePath'>(null);
+  const [templateType, setTemplateType] = useState<null | 'addServer' | 'setDefaultHeader' | 'deprecateByTag' | 'movePath'>(null);
 
   // Template form fields
   const [tplUrl, setTplUrl] = useState('');
@@ -39,7 +39,6 @@ const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, o
       setTplUrl('');
       setTplUrlDesc('');
       setTplFromTag('');
-      setTplToTag('');
       setTplHeaderName('');
       setTplHeaderDesc('');
       setTplHeaderType('string');
@@ -120,8 +119,6 @@ const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, o
     switch (templateType) {
       case 'addServer':
         return tplUrl.trim().length > 0;
-      case 'renameTag':
-        return tplFromTag.trim().length > 0 && tplToTag.trim().length > 0;
       case 'setDefaultHeader':
         return tplHeaderName.trim().length > 0;
       case 'deprecateByTag':
@@ -143,13 +140,6 @@ const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, o
       if (tplUrlDesc.trim()) obj.servers[0].description = tplUrlDesc.trim();
       const val = await stringify(obj);
       newActions.push({ target: '$', type: 'update', value: val, enabled: true });
-    }
-    if (templateType === 'renameTag') {
-      if (!tplFromTag.trim() || !tplToTag.trim()) return;
-      const from = escapeForJsonPathFilter(tplFromTag.trim());
-      const target = `$..tags[?@=="${from}"]`;
-      const val = await stringify(tplToTag.trim());
-      newActions.push({ target, type: 'update', value: val, enabled: true });
     }
     if (templateType === 'setDefaultHeader') {
       if (!tplHeaderName.trim()) return;
@@ -207,9 +197,6 @@ const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, o
           <button className="bg-gray-200 dark:bg-gray-800 p-2 rounded hover:bg-gray-300 dark:hover:bg-gray-700 text-left" onClick={() => setTemplateType('addServer')}>
             Add Server URL
           </button>
-          <button className="bg-gray-200 dark:bg-gray-800 p-2 rounded hover:bg-gray-300 dark:hover:bg-gray-700 text-left" onClick={() => setTemplateType('renameTag')}>
-            Rename Tag
-          </button>
           <button className="bg-gray-200 dark:bg-gray-800 p-2 rounded hover:bg-gray-300 dark:hover:bg-gray-700 text-left" onClick={() => setTemplateType('setDefaultHeader')}>
             Set Default Response Header
           </button>
@@ -236,21 +223,7 @@ const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, o
               <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" value={tplUrlDesc} onChange={e => setTplUrlDesc(e.target.value)}/>
             </div>
           )}
-          {templateType === 'renameTag' && (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">From Tag</label>
-              <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" list="tpl-tags" value={tplFromTag} onChange={e => setTplFromTag(e.target.value)} required/>
-              {tplFromTag.trim().length === 0 && (<p className="text-red-600 text-xs">From tag is required.</p>)}
-              <label className="block text-sm font-medium">To Tag</label>
-              <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" list="tpl-tags" value={tplToTag} onChange={e => setTplToTag(e.target.value)} required/>
-              {tplToTag.trim().length === 0 && (<p className="text-red-600 text-xs">To tag is required.</p>)}
-              <datalist id="tpl-tags">
-                {suggestions.tags.slice(0, 200).map((t) => (
-                  <option key={t} value={t} />
-                ))}
-              </datalist>
-            </div>
-          )}
+          
           {templateType === 'setDefaultHeader' && (
             <div className="space-y-2">
               <label className="block text-sm font-medium">Header Name</label>
@@ -285,6 +258,11 @@ const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, o
               <label className="block text-sm font-medium">Tag</label>
               <input className="w-full p-2 border rounded dark:bg-gray-800 dark:text-white" list="tpl-tags" value={tplFromTag} onChange={e => setTplFromTag(e.target.value)} required/>
               {tplFromTag.trim().length === 0 && (<p className="text-red-600 text-xs">Tag is required.</p>)}
+              <datalist id="tpl-tags">
+                {suggestions.tags.slice(0, 200).map((t) => (
+                  <option key={t} value={t} />
+                ))}
+              </datalist>
             </div>
           )}
           {templateType === 'movePath' && (
