@@ -105,26 +105,48 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
   // Toggle between UI and Code modes
   const toggleMode = async () => {
     if (currentMode === "UI") {
-      // Convert actions to overlaySet and update overlaySetCode
+      // Convert only enabled actions to overlaySet and update overlaySetCode (hide disabled in code)
       const OverlayOpts = await parseString(overlaySet) as Record<string, unknown>;
       const base = {
         ...OverlayOpts,
         info: {...info},
       } as any;
       if (extendsRef?.trim()) base.extends = extendsRef.trim();
-      const updatedOverlaySet = pruneUndefined(await convertActionsToOverlaySet(actions, base));
+      const enabledOnly = actions.filter(a => a.enabled !== false);
+      const updatedOverlaySet = pruneUndefined(await convertActionsToOverlaySet(enabledOnly, base));
       const updatedCode = await stringify(updatedOverlaySet, {format});
       setOverlaySetCode(updatedCode);
     } else {
-      // Switch to UI Mode: Update actions from overlaySetCode
+      // Switch to UI Mode: Merge code edits back into enabled actions, keep disabled ones untouched
       try {
         const parsedOverlaySet = await parseString(overlaySetCode) as Record<string, unknown>;
-        const updatedActions = await convertOverlaySetToActions(parsedOverlaySet, format);
-        setActions(updatedActions);
+        const updatedEnabled = await convertOverlaySetToActions(parsedOverlaySet, format);
+        let idx = 0;
+        const merged: Action[] = [];
+        // Replace enabled ones in place; keep disabled where they are
+        for (const a of actions) {
+          if (a.enabled === false) {
+            merged.push(a);
+          } else if (idx < updatedEnabled.length) {
+            const u = updatedEnabled[idx++];
+            merged.push({ ...a, target: u.target, type: u.type, value: u.value, enabled: true });
+          } else {
+            // No corresponding enabled action from code; drop this enabled action
+          }
+        }
+        // Append any extra enabled actions from code
+        while (idx < updatedEnabled.length) {
+          const u = updatedEnabled[idx++];
+          merged.push({ ...u, enabled: true, expanded: true });
+        }
+        setActions(merged);
+        // Sync session persistence arrays to merged list
+        setExpandedPersist(merged.map(a => a.expanded !== false));
+        setEnabledPersist(merged.map(a => a.enabled !== false));
 
-        const previews = await computePreviewValues(updatedActions, openapi);
+        const previews = await computePreviewValues(merged, openapi);
         setPreviewValues(previews);
-        const counts = await computeMatchCounts(updatedActions, openapi);
+        const counts = await computeMatchCounts(merged, openapi);
         setMatchCounts(counts);
 
         // Update the info object
@@ -383,31 +405,15 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
       }
     }
 
+    // Build overlay including all actions for storage; API filtering happens in Playground
     const updatedOverlaySet = pruneUndefined(await convertActionsToOverlaySet(actions, baseForBuild));
     onSubmit(updatedOverlaySet);
     onRequestClose();
   };
 
   const handleCodeChange = async (newCode: string) => {
-    const parsedOverlaySet = await parseString(newCode) as Record<string, unknown>;
-    const updatedActions = await convertOverlaySetToActions(parsedOverlaySet, format);
-    setActions(updatedActions);
-    // Keep the info state in sync with code edits
-    if (parsedOverlaySet?.info) {
-      const parsedInfo = parsedOverlaySet.info as { title?: string; version?: string };
-      setInfo({ title: parsedInfo.title || "", version: parsedInfo.version || "" });
-    }
-    // Keep extends in sync with code edits
-    if ((parsedOverlaySet as any)?.extends) {
-      setExtendsRef(String((parsedOverlaySet as any).extends));
-    } else {
-      setExtendsRef("");
-    }
+    // In Code mode, just update code; merge to UI actions on mode switch
     setOverlaySetCode(newCode);
-    const previews = await computePreviewValues(updatedActions, openapi);
-    setPreviewValues(previews);
-    const counts = await computeMatchCounts(updatedActions, openapi);
-    setMatchCounts(counts);
   };
 
   // Utility to remove undefined values to avoid YAML dump errors
@@ -425,7 +431,41 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
 
   const handleOverlayLoad = async (content: string | null, context: string) => {
     if (context === 'overlay' && content) {
-      await handleCodeChange(content);
+      if (currentMode === 'UI') {
+        // When loading code in UI mode, immediately parse and render actions
+        try {
+          const parsedOverlaySet = await parseString(content) as Record<string, unknown>;
+          const updatedActions = await convertOverlaySetToActions(parsedOverlaySet, format);
+          // Align expand/enabled session state arrays to new actions length
+          const exp = new Array(updatedActions.length).fill(true);
+          const en = new Array(updatedActions.length).fill(true);
+          setActions(updatedActions.map((a, i) => ({ ...a, expanded: exp[i], enabled: en[i] })));
+          setExpandedPersist(exp);
+          setEnabledPersist(en);
+          setOverlaySetCode(content);
+          const previews = await computePreviewValues(updatedActions, openapi);
+          setPreviewValues(previews);
+          const counts = await computeMatchCounts(updatedActions, openapi);
+          setMatchCounts(counts);
+          // Sync info and extends
+          if (parsedOverlaySet?.info) {
+            const parsedInfo = parsedOverlaySet.info as { title?: string; version?: string };
+            setInfo({ title: parsedInfo.title || "", version: parsedInfo.version || "" });
+          } else {
+            setInfo({ title: "", version: "" });
+          }
+          if ((parsedOverlaySet as any)?.extends) {
+            setExtendsRef(String((parsedOverlaySet as any).extends));
+          } else {
+            setExtendsRef("");
+          }
+        } catch {
+          // Ignore parse failure; keep UI state
+        }
+      } else {
+        // In Code mode, just update the code buffer; UI sync happens on toggle
+        await handleCodeChange(content);
+      }
     }
   };
 
