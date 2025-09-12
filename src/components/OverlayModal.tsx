@@ -33,6 +33,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     title: "",
     version: "",
   });
+  const [extendsRef, setExtendsRef] = useState<string>("");
 
   // Initialize actions from overlaySet when modal opens
   useEffect(() => {
@@ -53,6 +54,13 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
           version: info.version || "",
         });
       }
+
+      // Initialize extends if present
+      if ((OverlayOpts as any)?.extends) {
+        setExtendsRef(String((OverlayOpts as any).extends));
+      } else {
+        setExtendsRef("");
+      }
     };
 
     initialize();
@@ -63,10 +71,12 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     if (currentMode === "UI") {
       // Convert actions to overlaySet and update overlaySetCode
       const OverlayOpts = await parseString(overlaySet) as Record<string, unknown>;
-      const updatedOverlaySet = await convertActionsToOverlaySet(actions, {
+      const base = {
         ...OverlayOpts,
-        info: {...info}, // Include the current info object
-      });
+        info: {...info},
+      } as any;
+      if (extendsRef?.trim()) base.extends = extendsRef.trim();
+      const updatedOverlaySet = pruneUndefined(await convertActionsToOverlaySet(actions, base));
       const updatedCode = await stringify(updatedOverlaySet, {format});
       setOverlaySetCode(updatedCode);
     } else {
@@ -88,6 +98,13 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
           });
         } else {
           setInfo({title: "", version: ""});
+        }
+
+        // Sync extends from code when switching to UI mode
+        if ((parsedOverlaySet as any)?.extends) {
+          setExtendsRef(String((parsedOverlaySet as any).extends));
+        } else {
+          setExtendsRef("");
         }
       } catch (error) {
         console.error("Error parsing overlaySet:", error);
@@ -196,12 +213,20 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     // Prefer the latest edited code when in Code mode; otherwise use prop overlaySet
     const baseOverlayRaw = currentMode === 'Code' ? overlaySetCode : overlaySet;
     const OverlayOpts =  await parseString(baseOverlayRaw) as Record<string, unknown>;
-    // In Code mode, respect the info from code; in UI mode, use the stateful info editor
-    const baseForBuild = currentMode === 'Code'
-      ? OverlayOpts
-      : { ...OverlayOpts, info: { ...info } };
+    // In Code mode, respect the info/extends from code; in UI mode, use the stateful editors
+    let baseForBuild: any;
+    if (currentMode === 'Code') {
+      baseForBuild = OverlayOpts;
+    } else {
+      baseForBuild = { ...OverlayOpts, info: { ...info } };
+      if (extendsRef?.trim()) {
+        baseForBuild.extends = extendsRef.trim();
+      } else {
+        delete baseForBuild.extends;
+      }
+    }
 
-    const updatedOverlaySet = await convertActionsToOverlaySet(actions, baseForBuild);
+    const updatedOverlaySet = pruneUndefined(await convertActionsToOverlaySet(actions, baseForBuild));
     onSubmit(updatedOverlaySet);
     onRequestClose();
   };
@@ -215,8 +240,27 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
       const parsedInfo = parsedOverlaySet.info as { title?: string; version?: string };
       setInfo({ title: parsedInfo.title || "", version: parsedInfo.version || "" });
     }
+    // Keep extends in sync with code edits
+    if ((parsedOverlaySet as any)?.extends) {
+      setExtendsRef(String((parsedOverlaySet as any).extends));
+    } else {
+      setExtendsRef("");
+    }
     setOverlaySetCode(newCode);
   };
+
+  // Utility to remove undefined values to avoid YAML dump errors
+  function pruneUndefined(value: any): any {
+    if (Array.isArray(value)) return value.map(pruneUndefined);
+    if (value && typeof value === 'object') {
+      const out: any = {};
+      Object.entries(value).forEach(([k, v]) => {
+        if (v !== undefined) out[k] = pruneUndefined(v);
+      });
+      return out;
+    }
+    return value;
+  }
 
   const handleOverlayLoad = async (content: string | null, context: string) => {
     if (context === 'overlay' && content) {
@@ -295,6 +339,19 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
                     placeholder="Enter version"
                   />
                 </div>
+              </div>
+            </div>
+
+            <div className="border py-2 px-4 rounded bg-gray-50 dark:bg-gray-600 mb-2">
+              <h3 className="font-semibold mb-2">Extends</h3>
+              <div className="flex gap-4 items-center">
+                <input
+                  type="text"
+                  value={extendsRef}
+                  onChange={(e) => setExtendsRef(e.target.value)}
+                  className="flex-1 p-2 border rounded dark:bg-gray-800 dark:text-white"
+                  placeholder="https://example.com/openapi.yaml or local path"
+                />
               </div>
             </div>
 
