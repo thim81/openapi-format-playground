@@ -10,6 +10,7 @@ import ButtonUrlModal from "@/components/ButtonUrlModal";
 import ButtonUpload from "@/components/ButtonUpload";
 import JsonPathPickerModal from "@/components/JsonPathPickerModal";
 import OverlayTemplatesModal from "@/components/OverlayTemplatesModal";
+import useSessionStorage from "@/hooks/useSessionStorage";
 
 interface Action {
   target: string;
@@ -43,13 +44,18 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
   const [isPickerOpen, setIsPickerOpen] = useState<boolean>(false);
   const [pickerIndex, setPickerIndex] = useState<number | null>(null);
   const [isTemplateOpen, setIsTemplateOpen] = useState<boolean>(false);
+  const [expandedPersist, setExpandedPersist] = useSessionStorage<boolean[]>("oaf-overlay-expanded", []);
 
   // Initialize actions from overlaySet when modal opens
   useEffect(() => {
     const initialize = async () => {
       const OverlayOpts = (await parseString(overlaySet)) as Record<string, unknown>;
       const actions = await convertOverlaySetToActions(OverlayOpts, format);
-      setActions(actions.map(a => ({...a, expanded: a.expanded !== false})));
+      const exp = (expandedPersist?.length === actions.length)
+        ? expandedPersist
+        : new Array(actions.length).fill(true);
+      setActions(actions.map((a, i) => ({...a, expanded: exp[i]})));
+      setExpandedPersist(exp);
       setOverlaySetCode(overlaySet);
 
       const previews = await computePreviewValues(actions, openapi);
@@ -160,11 +166,17 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
         0,
         ...matchCounts.slice(index + 1),
       ]);
+      setExpandedPersist([
+        ...expandedPersist.slice(0, index + 1),
+        true,
+        ...expandedPersist.slice(index + 1),
+      ]);
     } else {
       // Default behavior: Add action at the end
       setActions([...actions, { target: "", type: "update", expanded: true }]);
       setPreviewValues([...previewValues, ""]);
       setMatchCounts([...(matchCounts || []), 0]);
+      setExpandedPersist([...(expandedPersist || []), true]);
     }
   };
 
@@ -172,6 +184,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     setActions(actions.filter((_, i) => i !== index));
     setPreviewValues(previewValues.filter((_, i) => i !== index));
     setMatchCounts(matchCounts.filter((_, i) => i !== index));
+    setExpandedPersist(expandedPersist.filter((_, i) => i !== index));
   };
 
   const handleDuplicateAction = (index: number) => {
@@ -191,6 +204,11 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
       ...matchCounts.slice(0, index + 1),
       matchCounts[index] || 0,
       ...matchCounts.slice(index + 1),
+    ]);
+    setExpandedPersist([
+      ...expandedPersist.slice(0, index + 1),
+      expandedPersist[index] ?? true,
+      ...expandedPersist.slice(index + 1),
     ]);
   };
 
@@ -271,6 +289,9 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     const prev = updated[index].expanded !== false; // default true
     updated[index].expanded = !prev;
     setActions(updated);
+    const exp = [...expandedPersist];
+    exp[index] = updated[index].expanded ?? true;
+    setExpandedPersist(exp);
   };
 
   const handleMoveUp = (index: number) => {
@@ -761,7 +782,7 @@ export const convertOverlaySetToActions = async (
         : action.add
           ? await stringify(action.add, { format })
           : undefined,
-      enabled: true,
+      enabled: action['x-oaf-enabled'] === false ? false : true,
     }))
   );
 };
@@ -770,9 +791,9 @@ export const convertActionsToOverlaySet = async (
   actions: Action[],
   baseOverlaySet: any
 ): Promise<any> => {
-  // Exclude disabled actions from the overlay sent to the API / code
+  // Keep all actions; annotate disabled ones with vendor key to preserve UI state
   const actionsArray = await Promise.all(
-    actions.filter(a => a.enabled !== false).map(async (action) => {
+    actions.map(async (action) => {
       const actionObject: any = {target: action.target};
 
       if (action.type === "update") {
@@ -781,6 +802,10 @@ export const convertActionsToOverlaySet = async (
         actionObject.add = await parseValuePreserveScalar(action.value);
       } else if (action.type === "remove") {
         actionObject.remove = true;
+      }
+
+      if (action.enabled === false) {
+        actionObject['x-oaf-enabled'] = false;
       }
 
       return actionObject;
