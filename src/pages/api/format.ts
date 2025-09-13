@@ -15,6 +15,7 @@ import {
 
 import defaultFilterJson from '../../defaults/defaultFilter.json'
 import defaultSortJson from '../../defaults/defaultSort.json'
+import defaultSortComponentsJson from '../../defaults/defaultSortComponents.json'
 import {OpenAPIV3} from "openapi-types";
 
 export default async function format(req: NextApiRequest, res: NextApiResponse) {
@@ -24,7 +25,7 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
   }
 
   let {openapi, config} = req.body;
-  const {sort, keepComments, filterSet, sortSet, generateSet, casingSet, overlaySet, format, resolveExtendsOnly} = config || {};
+  const {sort, keepComments, filterSet, sortSet, sortComponentsSet, generateSet, casingSet, overlaySet, format, resolveExtendsOnly} = config || {};
 
   // Support overlays with top-level `extends` to fetch base OpenAPI when input is missing
   if (!openapi && overlaySet?.length > 0) {
@@ -90,7 +91,13 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
         sortOpts = await parseString(sortSet) as OpenAPISortSet
       }
       const defaultOpts = defaultSortJson as OpenAPISortSet;
-      const options = {sortSet: Object.assign({}, defaultOpts, sortOpts), sortComponentsSet: []} as OpenAPISortOptions;
+      let compOpts: string[] = [];
+      if (sortComponentsSet) {
+        compOpts = await parseString(sortComponentsSet) as string[];
+      } else {
+        compOpts = defaultSortComponentsJson as string[];
+      }
+      const options = {sortSet: Object.assign({}, defaultOpts, sortOpts), sortComponentsSet: compOpts} as OpenAPISortOptions;
       const sortedRes = await openapiSort(oaObj, options) as OpenAPIResult;
       output.data = sortedRes.data;
       oaObj = output.data as OpenAPIV3.Document || {data: oaObj};

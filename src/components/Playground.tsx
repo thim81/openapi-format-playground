@@ -9,6 +9,7 @@ import ButtonDownload from '@/components/ButtonDownload';
 import ButtonShare from "@/components/ButtonShare";
 
 import defaultSort from '../defaults/defaultSort.json'
+import defaultSortComponents from '../defaults/defaultSortComponents.json'
 
 import {
   analyzeOpenApi,
@@ -28,6 +29,7 @@ import RawConfigModal from "@/components/RawConfigModal";
 import GenerateFormModal from "@/components/GenerateFormModal";
 import CasingFormModal from "@/components/CasingFormModal";
 import SortOptionsModal from "@/components/SortOptionsModal";
+import SortComponentsModal from "@/components/SortComponentsModal";
 import ButtonUrlModal from "@/components/ButtonUrlModal";
 import OverlayModal from "@/components/OverlayModal";
 
@@ -65,6 +67,7 @@ export interface openapiFormatConfig {
   keepComments?: boolean;
   filterSet?: string;
   sortSet?: string;
+  sortComponentsSet?: string;
   overlaySet?: string;
   generateSet?: string;
   casingSet?: string;
@@ -85,6 +88,9 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [defaultSortSet, setDefaultSortSet] = useState<string>('');
   const [customSortSet, setCustomSortSet] = useState<string>(defaultSortSet);
   const [sortSet, setSortSet] = useState<string>(defaultSortSet);
+  const [defaultSortComponentsSet, setDefaultSortComponentsSet] = useState<string>('');
+  const [customSortComponentsSet, setCustomSortComponentsSet] = useState<string>(defaultSortComponentsSet);
+  const [sortComponentsSet, setSortComponentsSet] = useState<string>(defaultSortComponentsSet);
   const [overlaySet, setOverlaySet] = useState<string>('');
   const [isFilterOptionsCollapsed, setFilterOptionsCollapsed] = useState<boolean>(false);
   const [outputLanguage, setOutputLanguage] = useState<'json' | 'yaml'>('yaml');
@@ -93,6 +99,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [isGenerateModalOpen, setGenerateModalOpen] = useState(false);
   const [isCasingModalOpen, setCasingModalOpen] = useState(false);
   const [isSortModalOpen, setSortModalOpen] = useState(false);
+  const [isSortComponentsModalOpen, setSortComponentsModalOpen] = useState(false);
   const [isFormModalOpen, setFormModalOpen] = useState(false);
   const [isOverlayModalOpen, setOverlayModalOpen] = useState(false);
   const [isInstructionsModalOpen, setInstructionsModalOpen] = useState(false);
@@ -120,6 +127,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const dInput = useDebounce(input, 1000);
   const dFilterSet = useDebounce(filterSet, 1000);
   const dSortSet = useDebounce(sortSet, 1000);
+  const dSortComponentsSet = useDebounce(sortComponentsSet, 1000);
   const dOverlaySet = useDebounce(overlaySet, 1000);
   const dGenerateSet = useDebounce(generateSet, 1000);
   const dCasingSet = useDebounce(casingSet, 1000);
@@ -129,6 +137,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     keepComments,
     filterSet,
     sortSet,
+    sortComponentsSet,
     casingSet,
     overlaySet,
     generateSet,
@@ -173,16 +182,17 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         }
       } catch {}
 
-      const config = {
-        sort,
-        keepComments: keepComments,
-        filterSet: dFilterSet,
-        sortSet: dSortSet,
-        ...(overlayForApi && toggleOverlay && {overlaySet: overlayForApi}),
-        ...(dGenerateSet && toggleGenerate && {generateSet: dGenerateSet}),
-        ...(dCasingSet && toggleCasing && {casingSet: dCasingSet}),
-        format: outputLanguage,
-      };
+    const config = {
+      sort,
+      keepComments: keepComments,
+      filterSet: dFilterSet,
+      sortSet: dSortSet,
+      sortComponentsSet: dSortComponentsSet,
+      ...(overlayForApi && toggleOverlay && {overlaySet: overlayForApi}),
+      ...(dGenerateSet && toggleGenerate && {generateSet: dGenerateSet}),
+      ...(dCasingSet && toggleCasing && {casingSet: dCasingSet}),
+      format: outputLanguage,
+    };
 
       try {
         const response = await fetch('/api/format', {
@@ -229,7 +239,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       setOutput('');
     }
     setLoading(false);
-  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dGenerateSet, dCasingSet, dOverlaySet, outputLanguage, pathSort, toggleGenerate, toggleCasing, toggleOverlay, setOutput, defaultFieldSorting]);
+  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dSortComponentsSet, dGenerateSet, dCasingSet, dOverlaySet, outputLanguage, pathSort, toggleGenerate, toggleCasing, toggleOverlay, setOutput, defaultFieldSorting]);
 
   // Decode Share URL
   useEffect(() => {
@@ -249,8 +259,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setGenerateSet(result.config.generateSet ?? '');
           setCasingSet(result.config.casingSet ?? '');
           setSortSet(result.config.sortSet ?? '');
+          setSortComponentsSet(result.config.sortComponentsSet ?? '');
           setOverlaySet(result.config.overlaySet ?? '');
           setCustomSortSet(result.config.sortSet ?? defaultSortSet);
+          setCustomSortComponentsSet(result.config.sortComponentsSet ?? defaultSortComponentsSet);
 
           setToggleOverlay(result.config.toggleOverlay ?? false);
           setToggleCasing(result.config.toggleCasing ?? false);
@@ -277,6 +289,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       const result = await stringify(defaultSort, {format: outputLanguage});
       setDefaultSortSet(result);
     };
+    const convertSortComponentsSet = async () => {
+      const result = await stringify(defaultSortComponents, {format: outputLanguage});
+      setDefaultSortComponentsSet(result);
+    };
     const convertFilterSet = async () => {
       if (filterSet && filterSet.length > 0) {
 
@@ -294,6 +310,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     };
 
     convertSortSet();
+    convertSortComponentsSet();
     convertFilterSet();
   }, [outputLanguage, dFilterSet]);
 
@@ -339,6 +356,10 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
 
   const openSortModal = () => {
     setSortModalOpen(true);
+  };
+
+  const openSortComponentsModal = () => {
+    setSortComponentsModalOpen(true);
   };
 
   const openFormModal = () => {
@@ -396,6 +417,12 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     setCustomSortSet(sortOptions);
     setSortSet(sortOptions);
     setSortModalOpen(false);
+  };
+
+  const handleSortComponentsSubmit = async (list: any) => {
+    setCustomSortComponentsSet(list);
+    setSortComponentsSet(list);
+    setSortComponentsModalOpen(false);
   };
 
   const handleOverlaySubmit = async (overlayOptions: any) => {
@@ -544,23 +571,35 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                   className="ml-2"/>
               </label>
               {sort && (
-                <div className="flex items-center mt-2">
-                  <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
-                    Custom OpenAPI field sorting
-                    <input
-                      type="checkbox"
-                      checked={!defaultFieldSorting}
-                      onChange={handleDefaultFieldSortingChange}
-                      className="ml-2 mr-2"
-                    />
-                  </label>
-                  <button
-                    onClick={openSortModal}
-                    className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
-                  >
-                    Configure
-                  </button>
-                </div>
+                <>
+                  <div className="flex items-center mt-2">
+                    <label className="flex items-center font-medium text-gray-700 dark:text-gray-400">
+                      Custom OpenAPI field sorting
+                      <input
+                        type="checkbox"
+                        checked={!defaultFieldSorting}
+                        onChange={handleDefaultFieldSortingChange}
+                        className="ml-2 mr-2"/>
+                    </label>
+                    <button
+                      onClick={openSortModal}
+                      className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
+                    >
+                      Configure
+                    </button>
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <label className="flex items-center font-medium text-gray-700 dark:text-gray-400 mr-2">
+                      Custom components sorting
+                    </label>
+                    <button
+                      onClick={openSortComponentsModal}
+                      className="bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"
+                    >
+                      Configure
+                    </button>
+                  </div>
+                </>
               )}
             </div>
             {sort && (
@@ -782,6 +821,15 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         onSubmit={handleSortSubmit}
         outputLanguage={outputLanguage}
         defaultSort={defaultSortSet}
+      />
+
+      <SortComponentsModal
+        isOpen={isSortComponentsModalOpen}
+        onRequestClose={() => setSortComponentsModalOpen(false)}
+        sortComponentsSet={customSortComponentsSet}
+        onSubmit={handleSortComponentsSubmit}
+        outputLanguage={outputLanguage}
+        defaultSortComponents={defaultSortComponentsSet}
       />
 
       <OverlayModal

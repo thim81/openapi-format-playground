@@ -13,6 +13,7 @@ The playground is powered by the [openapi-format](https://www.npmjs.com/package/
 
 - Format OpenAPI documents to enhance readability
 - Sort OpenAPI document sections for consistency
+- Customize components sorting order
 - Filter OpenAPI document content
 - Apply OpenAPI Overlay actions to OpenAPI document content
 - Format the casing of OpenAPI elements
