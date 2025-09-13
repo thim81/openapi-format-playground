@@ -23,8 +23,27 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
     return;
   }
 
-  const {openapi, config} = req.body;
-  const {sort, keepComments, filterSet, sortSet, generateSet, casingSet, overlaySet, format} = config || {};
+  let {openapi, config} = req.body;
+  const {sort, keepComments, filterSet, sortSet, generateSet, casingSet, overlaySet, format, resolveExtendsOnly} = config || {};
+
+  // Support overlays with top-level `extends` to fetch base OpenAPI when input is missing
+  if (!openapi && overlaySet?.length > 0) {
+    try {
+      const overlayObj = await parseString(overlaySet) as Record<string, unknown>;
+      const extendsRef = overlayObj && typeof overlayObj === 'object' ? (overlayObj as any).extends : undefined;
+      if (extendsRef && typeof extendsRef === 'string' && /^(http|https):\/\//i.test(extendsRef)) {
+        const resp = await fetch(extendsRef);
+        if (!resp.ok) {
+          res.status(422).json({message: `Failed to fetch extends: ${resp.status} ${resp.statusText}`});
+          return;
+        }
+        openapi = await resp.text();
+      }
+    } catch (e: any) {
+      res.status(422).json({message: `Invalid overlay or extends: ${e?.message || e}`});
+      return;
+    }
+  }
 
   if (!openapi) {
     res.status(422).json({message: 'Missing openapi'});
@@ -56,7 +75,7 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
 
     // Apply OpenAPI Overlay
     if (overlaySet?.length > 0) {
-      const OverlayOpts =  await parseString(overlaySet) as Record<string, unknown>;
+      const OverlayOpts =  await parseString(overlaySet) as any;
       const options = {overlaySet: OverlayOpts} as OpenAPIOverlayOptions
       const { data, resultData } = await openapiOverlay(oaObj, options);
       output.data = data;
