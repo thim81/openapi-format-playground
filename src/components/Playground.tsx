@@ -493,8 +493,8 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             {errorMessage}
           </div>
         )}
-        <div className="flex space-x-4 flex-grow">
-          <div className="w-1/5 flex flex-col h-full overflow-auto mb-2">
+        <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 flex-grow">
+          <div className="w-full md:w-1/5 flex flex-col h-full overflow-auto mb-2">
             <div className="flex items-center mb-2">
               <h2 className="text-heading text-xl font-bold">Configuration</h2>
               <div className="ml-4">
@@ -693,7 +693,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 w-full flex flex-col">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-heading text-xl font-bold">OpenAPI Input</h2>
               <div className="flex space-x-2">
@@ -708,7 +708,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
             <MonacoEditorWrapper value={input} onChange={handleInputChange}/>
           </div>
 
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 w-full flex flex-col">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-heading text-xl font-bold">OpenAPI Output</h2>
               {loading && <LoadingSpinner/>}
@@ -718,7 +718,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                   Show Diff
                 </button>
                 <button onClick={openInstructionsModal}
-                        className="bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-2 rounded">
+                        className="hidden lg:inline-flex bg-green-500 hover:bg-green-700 text-white font-medium text-sm py-1 px-2 rounded">
                   CLI instructions
                 </button>
                 <ButtonShare openapi={input} config={config}/>

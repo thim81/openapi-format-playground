@@ -46,6 +46,8 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
   const [isTemplateOpen, setIsTemplateOpen] = useState<boolean>(false);
   const [expandedPersist, setExpandedPersist] = useSessionStorage<boolean[]>("oaf-overlay-expanded", []);
   const [enabledPersist, setEnabledPersist] = useSessionStorage<boolean[]>("oaf-overlay-enabled", []);
+  // Effective OpenAPI used for preview/suggestions; can be fetched from extends
+  const [effectiveOpenapi, setEffectiveOpenapi] = useState<string>(openapi);
 
   // Initialize actions from overlaySet when modal opens
   useEffect(() => {
@@ -63,9 +65,49 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
       setEnabledPersist(en);
       setOverlaySetCode(overlaySet);
 
-      const previews = await computePreviewValues(actions, openapi);
+      // If base OpenAPI is empty and overlay declares an http(s) extends, fetch it for previews
+      let baseOA = openapi;
+      const ext = (OverlayOpts as any)?.extends;
+      if ((!baseOA || baseOA.trim().length === 0) && typeof ext === 'string' && /^(http|https):\/\//i.test(ext)) {
+        let loaded = false;
+        try {
+          const resp = await fetch(ext);
+          if (resp.ok) {
+            baseOA = await resp.text();
+            setEffectiveOpenapi(baseOA);
+            loaded = true;
+          }
+        } catch {
+          // Ignore fetch errors
+        }
+        if (!loaded) {
+          try {
+            const response = await fetch('/api/format', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                openapi: '',
+                config: { overlaySet: overlaySet, format, resolveExtendsOnly: true }
+              })
+            });
+            if (response.ok) {
+              const res = await response.json();
+              if (res?.data) {
+                baseOA = res.data;
+                setEffectiveOpenapi(baseOA);
+              }
+            }
+          } catch {
+            // Ignore server fallback errors
+          }
+        }
+      } else {
+        setEffectiveOpenapi(baseOA);
+      }
+
+      const previews = await computePreviewValues(actions, baseOA || "");
       setPreviewValues(previews);
-      const counts = await computeMatchCounts(actions, openapi);
+      const counts = await computeMatchCounts(actions, baseOA || "");
       setMatchCounts(counts);
 
       // Initialize info object if present
@@ -88,19 +130,35 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     initialize();
   }, [overlaySet, openapi, format]);
 
+  // Keep effectiveOpenapi in sync with prop when it changes externally
+  useEffect(() => {
+    setEffectiveOpenapi(openapi);
+  }, [openapi]);
+
   // Build JSONPath suggestions from the current OpenAPI document
   useEffect(() => {
     const buildSuggestions = async () => {
       try {
-        const oa = await parseString(openapi) as any;
-        const suggestions = generateJsonPathSuggestions(oa);
+        const oa = await parseString(effectiveOpenapi) as any;
+        let suggestions = generateJsonPathSuggestions(oa);
+        // Fallback: if no path suggestions were detected from parsed structure,
+        // scan the raw text for likely path keys under a `paths:` block.
+        const hasPathSuggestions = suggestions.some((s) => s.startsWith('$.paths['));
+        if (!hasPathSuggestions) {
+          const scanned = scanPathsFromRaw(effectiveOpenapi);
+          if (scanned.length > 0) {
+            suggestions = Array.from(new Set([...suggestions, ...scanned]));
+          }
+        }
         setJsonPathSuggestions(suggestions);
       } catch {
-        setJsonPathSuggestions([]);
+        // Parsing failed; use raw-text scan as a best-effort fallback
+        const scanned = scanPathsFromRaw(effectiveOpenapi);
+        setJsonPathSuggestions(scanned);
       }
     };
     buildSuggestions();
-  }, [openapi]);
+  }, [effectiveOpenapi]);
 
   // Toggle between UI and Code modes
   const toggleMode = async () => {
@@ -145,9 +203,47 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
         setExpandedPersist(merged.map(a => a.expanded !== false));
         setEnabledPersist(merged.map(a => a.enabled !== false));
 
-        const previews = await computePreviewValues(merged, openapi);
+        // Determine base OpenAPI: if empty and extends is an http(s) URL, fetch it
+        let baseOA = effectiveOpenapi;
+        const ext = (parsedOverlaySet as any)?.extends;
+        if ((!baseOA || baseOA.trim().length === 0) && typeof ext === 'string' && /^(http|https):\/\//i.test(ext)) {
+          let loaded = false;
+          try {
+            const resp = await fetch(ext);
+            if (resp.ok) {
+              baseOA = await resp.text();
+              setEffectiveOpenapi(baseOA);
+              loaded = true;
+            }
+          } catch {
+            // Ignore fetch errors; will try server fallback
+          }
+          if (!loaded) {
+            try {
+              const response = await fetch('/api/format', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  openapi: '',
+                  config: { overlaySet: overlaySetCode || await stringify(parsedOverlaySet, { format }), format, resolveExtendsOnly: true }
+                })
+              });
+              if (response.ok) {
+                const res = await response.json();
+                if (res?.data) {
+                  baseOA = res.data;
+                  setEffectiveOpenapi(baseOA);
+                }
+              }
+            } catch {
+              // Ignore server fallback errors
+            }
+          }
+        }
+
+        const previews = await computePreviewValues(merged, baseOA || "");
         setPreviewValues(previews);
-        const counts = await computeMatchCounts(merged, openapi);
+        const counts = await computeMatchCounts(merged, baseOA || "");
         setMatchCounts(counts);
 
         // Update the info object
@@ -267,7 +363,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
 
     if (field === "target") {
       try {
-        const openapiObj = await parseString(openapi) as Record<string, unknown>;
+        const openapiObj = await parseString(effectiveOpenapi) as Record<string, unknown>;
         const resolvedValues = resolveJsonPathValue(openapiObj, value);
         if (resolvedValues.length > 0) {
           updatedPreviews[index] = await stringify(resolvedValues[0]);
@@ -309,7 +405,7 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     } else {
       // Recompute this preview only
       try {
-        const openapiObj = await parseString(openapi) as Record<string, unknown>;
+        const openapiObj = await parseString(effectiveOpenapi) as Record<string, unknown>;
         const resolvedValues = resolveJsonPathValue(openapiObj, updated[index].target || "");
         const pv = [...previewValues];
         pv[index] = resolvedValues.length > 0 ? await stringify(resolvedValues[0]) : "No matching value found.";
@@ -463,9 +559,23 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
           setExpandedPersist(exp);
           setEnabledPersist(en);
           setOverlaySetCode(content);
-          const previews = await computePreviewValues(updatedActions, openapi);
+          // Determine base OpenAPI for previews: use effective one or fetch extends
+          let baseOA = effectiveOpenapi;
+          const ext = (parsedOverlaySet as any)?.extends;
+          if ((!baseOA || baseOA.trim().length === 0) && typeof ext === 'string' && /^(http|https):\/\//i.test(ext)) {
+            try {
+              const resp = await fetch(ext);
+              if (resp.ok) {
+                baseOA = await resp.text();
+                setEffectiveOpenapi(baseOA);
+              }
+            } catch {
+              // ignore
+            }
+          }
+          const previews = await computePreviewValues(updatedActions, baseOA || "");
           setPreviewValues(previews);
-          const counts = await computeMatchCounts(updatedActions, openapi);
+          const counts = await computeMatchCounts(updatedActions, baseOA || "");
           setMatchCounts(counts);
           // Sync info and extends
           if (parsedOverlaySet?.info) {
@@ -847,11 +957,11 @@ const ActionsModal: React.FC<ActionsModalProps> = ({isOpen, onRequestClose, onSu
     <OverlayTemplatesModal
       isOpen={isTemplateOpen}
       onRequestClose={() => setIsTemplateOpen(false)}
-      openapi={openapi}
+      openapi={effectiveOpenapi}
       format={format}
       onAddActions={async (newActions) => {
-        const newPreviews = await computePreviewValues(newActions as any, openapi);
-        const newCounts = await computeMatchCounts(newActions as any, openapi);
+        const newPreviews = await computePreviewValues(newActions as any, effectiveOpenapi);
+        const newCounts = await computeMatchCounts(newActions as any, effectiveOpenapi);
         setActions([...actions, ...(newActions as any)]);
         setPreviewValues([...previewValues, ...newPreviews]);
         setMatchCounts([...(matchCounts || []), ...newCounts]);
@@ -950,6 +1060,7 @@ export const computeMatchCounts = async (
 // Helpers to generate quick JSONPath suggestions from OpenAPI structure
 function generateJsonPathSuggestions(oa: any): string[] {
   const out = new Set<string>();
+  out.add('$.paths');
   out.add('$.info');
   out.add('$.info.title');
   out.add('$.servers');
@@ -1047,6 +1158,49 @@ function generateJsonPathSuggestions(oa: any): string[] {
 function escapeJsonPathKey(key: string): string {
   // Prefer bracket-notation with single quotes, escape any single quotes in key
   return `['${String(key).replace(/'/g, "\\'")}']`;
+}
+
+// Best-effort raw-text scanner to suggest basic path targets when YAML parsing fails
+function scanPathsFromRaw(raw: string): string[] {
+  try {
+    const lines = raw.split(/\r?\n/);
+    const out = new Set<string>();
+    // Try to find the indentation level of the `paths:` block
+    let inPaths = false;
+    let baseIndent: number | null = null;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const m = line.match(/^(\s*)paths\s*:\s*$/);
+      if (m) {
+        inPaths = true;
+        baseIndent = m[1].length;
+        continue;
+      }
+      if (!inPaths) continue;
+      // Stop when indentation goes back to or above the base
+      const indentMatch = line.match(/^(\s*)/);
+      const indent = indentMatch ? indentMatch[1].length : 0;
+      if (baseIndent != null && indent <= baseIndent && line.trim().length > 0) {
+        // End of paths section
+        break;
+      }
+      // Look for path item keys like `/things:` or "/things":
+      const pathKeyMatch = line.match(/^\s*(?:['"])?(\/[^{:\s][^:\"]*)(?:['"])?:\s*$/);
+      if (pathKeyMatch) {
+        const key = pathKeyMatch[1].trim();
+        if (key.startsWith('/')) {
+          out.add(`$.paths${escapeJsonPathKey(key)}`);
+        }
+      }
+    }
+    // Always include common roots if we found nothing
+    if (out.size === 0) {
+      return ['$.paths', '$.info', '$.info.title', '$.servers'];
+    }
+    return Array.from(out);
+  } catch {
+    return ['$.paths', '$.info', '$.info.title', '$.servers'];
+  }
 }
 
 async function parseValuePreserveScalar(value?: string) {
