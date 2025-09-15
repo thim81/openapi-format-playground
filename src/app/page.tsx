@@ -11,7 +11,7 @@ const Home: React.FC = () => {
   const [output, setOutput] = useState('');
 
   const [isMobile, setIsMobile] = useState(false);
-  const [dismissedMobileNotice, setDismissedMobileNotice] = useSessionStorage<boolean>('oaf-mobile-dismissed', false);
+  const [dismissedMobileNotice, setDismissedMobileNotice] = useState( false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

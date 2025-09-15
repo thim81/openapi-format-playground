@@ -21,14 +21,14 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({onAction1, onAction2}) => {
       <div className="flex items-center space-x-4">
         <Link href="https://github.com/thim81/openapi-format?tab=readme-ov-file#installation" passHref target="_blank">
           <span
-            className="bg-gray-300 text-gray-800 font-medium text-xs py-1 px-2 rounded-md cursor-pointer hover:bg-gray-400">
+            className="hidden lg:inline-block bg-gray-300 text-gray-800 font-medium text-xs py-1 px-2 rounded-md cursor-pointer hover:bg-gray-400">
             Installation
           </span>
         </Link>
         <Link href="https://github.com/thim81/openapi-format?tab=readme-ov-file#command-line-interface" passHref
               target="_blank">
           <span
-            className="bg-gray-300 text-gray-800 font-medium text-xs py-1 px-2 rounded-md cursor-pointer hover:bg-gray-400">
+            className="hidden lg:inline-block bg-gray-300 text-gray-800 font-medium text-xs py-1 px-2 rounded-md cursor-pointer hover:bg-gray-400">
             CLI Usage
           </span>
         </Link>
