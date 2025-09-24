@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import MonacoEditorWrapper from './MonacoEditorWrapper';
 import DiffEditorModal from './DiffEditorModal';
 import FilterFormModal from './FilterFormModal';
@@ -69,7 +69,35 @@ export interface openapiFormatConfig {
   generateSet?: string;
   casingSet?: string;
   format?: string;
+  convertVersion?: ConvertibleOpenAPIVersion;
 }
+
+type DetectedOpenAPIVersion = '3.0' | '3.1' | '3.2' | 'unknown';
+type ConvertibleOpenAPIVersion = '3.1' | '3.2';
+
+const detectOpenApiVersion = (document: OpenAPIV3.Document | Record<string, any>): DetectedOpenAPIVersion => {
+  const version = typeof (document as any)?.openapi === 'string' ? (document as any).openapi.trim() : '';
+  if (version.startsWith('3.0')) {
+    return '3.0';
+  }
+  if (version.startsWith('3.1')) {
+    return '3.1';
+  }
+  if (version.startsWith('3.2')) {
+    return '3.2';
+  }
+  return 'unknown';
+};
+
+const getConvertibleTargets = (version: DetectedOpenAPIVersion): ConvertibleOpenAPIVersion[] => {
+  if (version === '3.0') {
+    return ['3.1', '3.2'];
+  }
+  if (version === '3.1') {
+    return ['3.2'];
+  }
+  return [];
+};
 
 const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutput}) => {
   const [sort, setSort] = useState<boolean>(true);
@@ -117,12 +145,17 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
   const [pathSort, setPathSort] = useState<'original' | 'path' | 'tags'>('original');
   const [defaultFieldSorting, setDefaultFieldSorting] = useState<boolean>(true);
 
+  const [inputVersion, setInputVersion] = useState<DetectedOpenAPIVersion>('unknown');
+  const [convertVersion, setConvertVersion] = useState<ConvertibleOpenAPIVersion | ''>('');
+
   const dInput = useDebounce(input, 1000);
   const dFilterSet = useDebounce(filterSet, 1000);
   const dSortSet = useDebounce(sortSet, 1000);
   const dOverlaySet = useDebounce(overlaySet, 1000);
   const dGenerateSet = useDebounce(generateSet, 1000);
   const dCasingSet = useDebounce(casingSet, 1000);
+
+  const convertibleTargets = useMemo(() => getConvertibleTargets(inputVersion), [inputVersion]);
 
   const config = {
     sort,
@@ -138,18 +171,29 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
     toggleOverlay,
     outputLanguage,
     pathSort,
-    defaultFieldSorting
+    defaultFieldSorting,
+    convertVersion: convertVersion || undefined,
   } || {} as PlaygroundConfig;
 
   const handleInputChange = useCallback(async (newValue: string) => {
     setLoading(true);
     setErrorMessage(null);
     let convertOptions = {keepComments: keepComments || false};
-    const oaObj = await parseString(newValue, convertOptions) as OpenAPIV3.Document;
-    const oaElements = analyzeOpenApi(oaObj);
-    setTotalPaths(oaElements.operations?.length || 0);
-    setTotalTags(oaElements.tags?.length || 0);
-    setFilterFormOptions(oaElements);
+    try {
+      const oaObj = await parseString(newValue, convertOptions) as OpenAPIV3.Document;
+      const detectedVersion = detectOpenApiVersion(oaObj);
+      setInputVersion(detectedVersion);
+      const validTargets = getConvertibleTargets(detectedVersion);
+      setConvertVersion((current) => (current && validTargets.includes(current) ? current : ''));
+
+      const oaElements = analyzeOpenApi(oaObj);
+      setTotalPaths(oaElements.operations?.length || 0);
+      setTotalTags(oaElements.tags?.length || 0);
+      setFilterFormOptions(oaElements);
+    } catch (error) {
+      setInputVersion('unknown');
+      setConvertVersion('');
+    }
     setInput(newValue);
   }, [setInput]);
 
@@ -181,6 +225,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
         ...(overlayForApi && toggleOverlay && {overlaySet: overlayForApi}),
         ...(dGenerateSet && toggleGenerate && {generateSet: dGenerateSet}),
         ...(dCasingSet && toggleCasing && {casingSet: dCasingSet}),
+        ...(convertVersion && {convertVersion}),
         format: outputLanguage,
       };
 
@@ -229,7 +274,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
       setOutput('');
     }
     setLoading(false);
-  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dGenerateSet, dCasingSet, dOverlaySet, outputLanguage, pathSort, toggleGenerate, toggleCasing, toggleOverlay, setOutput, defaultFieldSorting]);
+  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dGenerateSet, dCasingSet, dOverlaySet, outputLanguage, pathSort, toggleGenerate, toggleCasing, toggleOverlay, convertVersion, setOutput, defaultFieldSorting]);
 
   // Decode Share URL
   useEffect(() => {
@@ -257,6 +302,7 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
           setToggleGenerate(result.config.toggleGenerate ?? false);
 
           setOutputLanguage(result.config.outputLanguage ?? 'yaml');
+          setConvertVersion(result.config.convertVersion ?? '');
           setFilterUnused(result?.config?.filterSet?.includes('unusedComponents') ?? false);
 
           setFilterOptionsCollapsed(result.config.isFilterOptionsCollapsed ?? false);
@@ -507,6 +553,21 @@ const Playground: React.FC<PlaygroundProps> = ({input, setInput, output, setOutp
                   <option value="yaml">YAML</option>
                 </select>
               </div>
+              {convertibleTargets.length > 0 && (
+                <div className="ml-2">
+                  <select
+                    value={convertVersion}
+                    onChange={(e) => setConvertVersion(e.target.value as ConvertibleOpenAPIVersion | '')}
+                    className="p-1 border rounded bg-white text-black text-xs dark:bg-gray-800 dark:text-white"
+                    title="Convert OpenAPI version"
+                  >
+                    <option value="">→ {inputVersion}</option>
+                    {convertibleTargets.map((version) => (
+                      <option key={version} value={version}>{`→ ${version}`}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               {/*<button*/}
               {/*  className="ml-2 bg-blue-500 text-white text-xs p-1 rounded-full hover:bg-blue-600 focus:outline-none"*/}
               {/*  onClick={(e) => {*/}

@@ -77,7 +77,7 @@ const OverlayTemplatesModal: React.FC<OverlayTemplatesModalProps> = ({ isOpen, o
           Object.keys(oa.paths).forEach((p) => {
             out.paths.push(p);
             const item = oa.paths[p] || {};
-            const methods = ['get','post','put','delete','patch','options','head','trace'];
+            const methods = ['get','post','put','delete','patch','options','head','query','trace'];
             methods.forEach((m) => {
               if (item[m]) {
                 if (Array.isArray(item[m].tags)) item[m].tags.forEach((tg: any) => tags.add(String(tg)));
