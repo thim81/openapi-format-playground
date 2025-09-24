@@ -75,6 +75,11 @@ declare module 'openapi-format' {
     overwriteExisting?: boolean
   }
 
+  interface OpenAPIConvertVersionOptions {
+    convertTo?: string
+    convertToVersion?: string | number
+  }
+
   interface OpenAPIFilterOptions {
     filterSet?: OpenAPIFilterSet
     defaultFilter?: OpenAPIFilterSet
@@ -139,6 +144,11 @@ declare module 'openapi-format' {
   export async function openapiChangeCase(
     oaObj: OpenAPIV3.Document,
     options: OpenAPICasingOptions
+  ): Promise<OpenAPIResult>
+
+  export async function openapiConvertVersion(
+    oaObj: OpenAPIV3.Document,
+    options?: OpenAPIConvertVersionOptions
   ): Promise<OpenAPIResult>
 
   /**

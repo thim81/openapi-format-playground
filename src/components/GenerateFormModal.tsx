@@ -76,7 +76,7 @@ const GenerateFormModal: React.FC<GenerateFormModalProps> = ({isOpen, onRequestC
         const pathItem = openapi.paths[pathKey];
 
         // Iterate over methods to fetch operationIds
-        const operations = ['get', 'post', 'put', 'delete', 'patch', 'options', 'head'];
+        const operations = ['get', 'post', 'put', 'delete', 'patch', 'options', 'head', 'query'];
         operations.forEach((method) => {
           if (pathItem && (pathItem as any)[method]) {
             const operation = (pathItem as any)[method];

@@ -9,6 +9,7 @@ import {
   openapiSort,
   OpenAPISortOptions,
   OpenAPISortSet,
+  openapiConvertVersion,
   parseString,
   stringify
 } from 'openapi-format';
@@ -24,7 +25,7 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
   }
 
   let {openapi, config} = req.body;
-  const {sort, keepComments, filterSet, sortSet, generateSet, casingSet, overlaySet, format, resolveExtendsOnly} = config || {};
+  const {sort, keepComments, filterSet, sortSet, generateSet, casingSet, overlaySet, format, resolveExtendsOnly, convertVersion} = config || {};
 
   // Support overlays with top-level `extends` to fetch base OpenAPI when input is missing
   if (!openapi && overlaySet?.length > 0) {
@@ -102,7 +103,27 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
       const options = {casingSet: caseOpts} as OpenAPICasingOptions
       const casedRes = await openapiChangeCase(oaObj, options);
       output.data = casedRes.data;
-      // oaObj = output.data as OpenAPIV3.Document || {data: oaObj};
+      oaObj = casedRes.data as OpenAPIV3.Document;
+    }
+
+    if (convertVersion) {
+      const mergeResultData = (resultData?: Record<string, unknown>) => {
+        if (resultData && Object.keys(resultData).length > 0) {
+          output.resultData = {...(output.resultData || {}), ...resultData};
+        }
+      };
+
+      const converted = await openapiConvertVersion(oaObj, {
+        convertTo: convertVersion,
+        convertToVersion: convertVersion === '3.1' ? 3.1 : 3.2,
+      });
+
+      if (converted?.data) {
+        output.data = converted.data;
+        oaObj = converted.data as OpenAPIV3.Document;
+      }
+
+      mergeResultData(converted?.resultData as Record<string, unknown> | undefined);
     }
 
     // Convert output to JSON/YAML format
