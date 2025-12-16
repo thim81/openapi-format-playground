@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import openapiFormatIcon from '/public/openapi-format-icon.svg';
-import githubIcon from '/public/github-icon.svg';
-import npmIcon from '/public/npm-icon.svg';
+import openapiFormatIcon from '../../public/openapi-format-icon.svg';
+import githubIcon from '../../public/github-icon.svg';
+import npmIcon from '../../public/npm-icon.svg';
 
 interface HeaderBarProps {
   onAction1: () => void;

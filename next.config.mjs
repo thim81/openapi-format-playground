@@ -1,13 +1,21 @@
+import path from 'path';
+
+const fsAliasAbsolute = path.join(process.cwd(), 'src/lib/fs-browser-fallback.js');
+const fsAliasRelative = './src/lib/fs-browser-fallback.js';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-      };
-    }
+  webpack: config => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      fs: fsAliasAbsolute,
+    };
     return config;
+  },
+  turbopack: {
+    resolveAlias: {
+      fs: fsAliasRelative,
+    },
   },
 };
 
