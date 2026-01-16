@@ -20,7 +20,7 @@ export default function RootLayout({children,}: Readonly<{ children: React.React
       async
       defer
       data-domain="openapi-format-playground.vercel.app"
-      src="https://penkle.com/scripts/penkle.min.js"
+      src="https://web-analytics.inspectr.workers.dev/script.js"
     ></script>
     </html>
   );
