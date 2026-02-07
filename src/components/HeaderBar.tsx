@@ -5,11 +5,10 @@ import githubIcon from '../../public/github-icon.svg';
 import npmIcon from '../../public/npm-icon.svg';
 
 interface HeaderBarProps {
-  onAction1: () => void;
-  onAction2: () => void;
+  onOpenMcp: () => void;
 }
 
-export const HeaderBar: React.FC<HeaderBarProps> = ({onAction1, onAction2}) => {
+export const HeaderBar: React.FC<HeaderBarProps> = ({onOpenMcp}) => {
   return (
     <div className="bg-white dark:bg-gray-800 py-2 px-4 flex justify-between items-center border-b-4" style={{borderBottomColor: '#509f60'}}>
       <Link href="/" passHref>
@@ -19,6 +18,12 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({onAction1, onAction2}) => {
         </div>
       </Link>
       <div className="flex items-center space-x-4">
+        <button
+          onClick={onOpenMcp}
+          className="hidden lg:inline-block bg-green-500 text-white font-medium text-xs py-1 px-2 rounded-md cursor-pointer hover:bg-green-600"
+        >
+          MCP Server
+        </button>
         <Link href="https://github.com/thim81/openapi-format?tab=readme-ov-file#installation" passHref target="_blank">
           <span
             className="hidden lg:inline-block bg-gray-300 text-gray-800 font-medium text-xs py-1 px-2 rounded-md cursor-pointer hover:bg-gray-400">

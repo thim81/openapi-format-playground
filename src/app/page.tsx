@@ -3,7 +3,7 @@
 import React, {useEffect, useState} from 'react';
 import Playground from '../components/Playground';
 import {HeaderBar} from "@/components/HeaderBar";
-import useSessionStorage from "@/hooks/useSessionStorage";
+import McpServerModal from "@/components/McpServerModal";
 
 const Home: React.FC = () => {
 
@@ -24,19 +24,11 @@ const Home: React.FC = () => {
     }
   }, []);
 
-  const handleAction1 = () => {
-    // Implement the logic for Action 1
-    console.log('Action 1 clicked');
-  };
-
-  const handleAction2 = () => {
-    // Implement the logic for Action 2
-    console.log('Action 2 clicked');
-  };
+  const [isMcpModalOpen, setMcpModalOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-500 flex flex-col">
-      <HeaderBar onAction1={handleAction1} onAction2={handleAction2} />
+      <HeaderBar onOpenMcp={() => setMcpModalOpen(true)} />
       {isMobile && !dismissedMobileNotice && (
         <div className="px-4">
           <div className="mt-3 mb-0 flex items-start justify-between rounded-md border border-yellow-300 bg-yellow-100 text-yellow-900 p-3 shadow-sm">
@@ -56,6 +48,7 @@ const Home: React.FC = () => {
       <div className="flex-grow p-4">
         <Playground input={input} setInput={setInput} output={output} setOutput={setOutput} />
       </div>
+      <McpServerModal isOpen={isMcpModalOpen} onRequestClose={() => setMcpModalOpen(false)} />
     </div>
   );
 };
