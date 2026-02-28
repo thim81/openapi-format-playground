@@ -128,9 +128,9 @@ export default async function format(req: NextApiRequest, res: NextApiResponse) 
 
     // Convert output to JSON/YAML format
     convertOptions.format = _format
-    output.data = await stringify(output.data, convertOptions);
+    const formattedData = await stringify(output.data, convertOptions);
     // console.log('output resultData', output.resultData)
-    res.status(200).json(output);
+    res.status(200).json({...output, data: formattedData});
   } catch (error) {
     // @ts-ignore
     res.status(500).json({error: error.message});
