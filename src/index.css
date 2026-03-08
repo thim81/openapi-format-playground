@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 99%;
+    --foreground: 220 20% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+
+    --primary: 142 44% 36%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 20% 10%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 10% 46%;
+
+    --accent: 142 44% 94%;
+    --accent-foreground: 142 44% 20%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 142 44% 36%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 220 14% 97%;
+    --sidebar-foreground: 220 20% 10%;
+    --sidebar-primary: 142 44% 36%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 142 44% 94%;
+    --sidebar-accent-foreground: 142 44% 20%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 142 44% 36%;
+
+    --success: 142 44% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+
+    --header-bg: 0 0% 100%;
+    --header-border: 142 44% 36%;
+    --editor-bg: 0 0% 100%;
+    --metrics-bg: 220 14% 97%;
+  }
+
+  .dark {
+    --background: 224 20% 8%;
+    --foreground: 210 40% 95%;
+
+    --card: 224 20% 10%;
+    --card-foreground: 210 40% 95%;
+
+    --popover: 224 20% 10%;
+    --popover-foreground: 210 40% 95%;
+
+    --primary: 142 44% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 224 14% 16%;
+    --secondary-foreground: 210 40% 95%;
+
+    --muted: 224 14% 16%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 142 30% 15%;
+    --accent-foreground: 142 44% 70%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 210 40% 95%;
+
+    --border: 224 14% 20%;
+    --input: 224 14% 20%;
+    --ring: 142 44% 45%;
+
+    --sidebar-background: 224 20% 7%;
+    --sidebar-foreground: 210 40% 95%;
+    --sidebar-primary: 142 44% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 142 30% 12%;
+    --sidebar-accent-foreground: 142 44% 70%;
+    --sidebar-border: 224 14% 18%;
+    --sidebar-ring: 142 44% 45%;
+
+    --success: 142 44% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+
+    --header-bg: 224 20% 10%;
+    --header-border: 142 44% 45%;
+    --editor-bg: 224 20% 6%;
+    --metrics-bg: 224 20% 10%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}

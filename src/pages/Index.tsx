@@ -1,0 +1,881 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Header from '@/components/playground/Header';
+import ConfigSidebar from '@/components/playground/ConfigSidebar';
+import EditorPanel, { UploadButton, ImportUrlButton, DownloadButton, DiffButton } from '@/components/playground/EditorPanel';
+import MetricsBar from '@/components/playground/MetricsBar';
+import FilterFormDialog from '@/components/playground/dialogs/FilterFormDialog';
+import SortOptionsDialog from '@/components/playground/dialogs/SortOptionsDialog';
+import CasingFormDialog from '@/components/playground/dialogs/CasingFormDialog';
+import GenerateFormDialog from '@/components/playground/dialogs/GenerateFormDialog';
+import InstructionsDialog from '@/components/playground/dialogs/InstructionsDialog';
+import DiffEditorDialog from '@/components/playground/dialogs/DiffEditorDialog';
+import OverlayDialog from '@/components/playground/dialogs/OverlayDialog';
+import { getInputEditorLanguage } from '@/components/playground/inputEditorLanguage';
+import { reformatFilterSet } from '@/components/playground/filterSetFormat';
+import { Button } from '@/components/ui/button';
+import { Layers, Filter, MessageSquare } from 'lucide-react';
+import { ChatPanel } from '@/components/chat';
+import type { ToolDefinition, GeneratedResponse, AnswerAction } from '@/components/chat';
+import { useChat } from '@/hooks/useChat';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  processOpenApi,
+  analyzeOpenApi,
+  parseString,
+  stringify,
+  defaultCompMetrics,
+  type ComponentMetrics,
+  type AnalyzeOpenApiResult,
+} from '@/lib/openapi-processor';
+import {
+  generateShareUrl,
+  decodeShareUrl,
+  includeUnusedComponents,
+  includePreserve,
+  type PlaygroundConfig,
+  type DecodedShareUrl,
+} from '@/lib/share';
+import useDebounce from '@/hooks/useDebounce';
+import defaultSortJson from '@/defaults/defaultSort.json';
+import type { OpenAPIV3 } from 'openapi-types';
+import type { OpenAPIFilterSet, OpenAPISortSet } from 'openapi-format';
+import { toast } from '@/hooks/use-toast';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+
+const defaultInput = `openapi: 3.0.3
+info:
+  title: Pet Store API
+  version: 1.0.0
+  description: A sample API for a pet store
+paths:
+  /pets:
+    get:
+      operationId: listPets
+      summary: List all pets
+      description: Returns a list of all pets in the store
+      tags:
+        - Pets
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of pets to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: A list of pets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+    post:
+      operationId: createPet
+      summary: Create a pet
+      tags:
+        - Pets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+      responses:
+        '201':
+          description: Pet created
+  /pets/{petId}:
+    get:
+      operationId: getPet
+      summary: Get a pet by ID
+      tags:
+        - Pets
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A pet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+    delete:
+      operationId: deletePet
+      summary: Delete a pet
+      tags:
+        - Pets
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Pet deleted
+components:
+  schemas:
+    Pet:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Fido
+        tag:
+          type: string
+        status:
+          type: string
+          enum:
+            - available
+            - pending
+            - sold
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+tags:
+  - name: Pets
+    description: Pet operations
+`;
+
+type DetectedOpenAPIVersion = '3.0' | '3.1' | '3.2' | 'unknown';
+type ConvertibleOpenAPIVersion = '3.1' | '3.2';
+
+const detectOpenApiVersion = (doc: any): DetectedOpenAPIVersion => {
+  const version = typeof doc?.openapi === 'string' ? doc.openapi.trim() : '';
+  if (version.startsWith('3.0')) return '3.0';
+  if (version.startsWith('3.1')) return '3.1';
+  if (version.startsWith('3.2')) return '3.2';
+  return 'unknown';
+};
+
+const getConvertibleTargets = (version: DetectedOpenAPIVersion): ConvertibleOpenAPIVersion[] => {
+  if (version === '3.0') return ['3.1', '3.2'];
+  if (version === '3.1') return ['3.2'];
+  return [];
+};
+
+const pruneUndefined = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value.map((item) => pruneUndefined(item));
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    Object.entries(value as Record<string, unknown>).forEach(([key, val]) => {
+      if (val !== undefined) out[key] = pruneUndefined(val);
+    });
+    return out;
+  }
+  return value;
+};
+
+/* ------------------------------------------------------------------ */
+/*  OpenAPI-specific chat tools & response generator                    */
+/* ------------------------------------------------------------------ */
+
+function createOpenApiTools(): ToolDefinition[] {
+  return [
+    {
+      name: 'read_spec',
+      description: 'Read the current OpenAPI specification',
+      execute: async (_args, ctx) => {
+        const spec = ctx.specContent as string;
+        return { result: `Current spec has ${spec.split('\n').length} lines. Loaded successfully.` };
+      },
+    },
+    {
+      name: 'validate_spec',
+      description: 'Validate the OpenAPI specification',
+      execute: async () => {
+        await new Promise((r) => setTimeout(r, 600));
+        return { result: 'Validation passed ✓ — No errors found. 2 warnings: missing "contact" info, missing "license" field.' };
+      },
+    },
+    {
+      name: 'add_path',
+      description: 'Add or update a path in the spec',
+      execute: async (args) => {
+        await new Promise((r) => setTimeout(r, 800));
+        return { result: `Path "${args.path || '/new-endpoint'}" added with ${args.method || 'GET'} operation.` };
+      },
+    },
+    {
+      name: 'add_schema',
+      description: 'Add or update a schema component',
+      execute: async (args) => {
+        await new Promise((r) => setTimeout(r, 800));
+        return { result: `Schema "${args.name || 'NewModel'}" added to components/schemas.` };
+      },
+    },
+    {
+      name: 'modify_spec',
+      description: 'Modify the OpenAPI specification',
+      execute: async () => {
+        await new Promise((r) => setTimeout(r, 800));
+        return { result: 'Specification updated successfully.' };
+      },
+    },
+  ];
+}
+
+function openApiResponseGenerator(userMessage: string): GeneratedResponse {
+  const lower = userMessage.toLowerCase();
+
+  if (lower.includes('validate') || lower.includes('check')) {
+    return {
+      content: "I'll validate your current specification for any issues.",
+      toolCalls: [{ name: 'validate_spec', args: {} }],
+      actions: [
+        { label: 'Fix warnings', prompt: 'Fix the validation warnings' },
+        { label: 'Show details', prompt: 'Show me more details about the validation' },
+      ],
+    };
+  }
+  if (lower.includes('add') && (lower.includes('path') || lower.includes('endpoint') || lower.includes('route'))) {
+    return {
+      content: "Let me add that endpoint to your spec.",
+      toolCalls: [
+        { name: 'read_spec', args: {} },
+        { name: 'add_path', args: { path: '/users', method: 'GET' } },
+      ],
+      actions: [
+        { label: 'Add POST too', prompt: 'Also add a POST /users endpoint' },
+        { label: 'Add schema', prompt: 'Add a User schema for this endpoint' },
+      ],
+    };
+  }
+  if (lower.includes('add') && lower.includes('schema')) {
+    return {
+      content: "I'll create that schema for you.",
+      toolCalls: [{ name: 'add_schema', args: { name: 'User', type: 'object' } }],
+    };
+  }
+  if (lower.includes('read') || lower.includes('show') || lower.includes('current')) {
+    return {
+      content: "Let me take a look at your current specification.",
+      toolCalls: [{ name: 'read_spec', args: {} }],
+    };
+  }
+
+  // General advice
+  if (lower.includes('rest') || lower.includes('best practice')) {
+    return {
+      content: "Here are some REST API best practices:\n\n1. **Use nouns for resources** — `/users` not `/getUsers`\n2. **Use HTTP methods semantically** — GET for reads, POST for creates\n3. **Version your API** — e.g. `/v1/users`\n4. **Use proper status codes** — 201 for created, 404 for not found\n5. **Support pagination** for list endpoints",
+      actions: [
+        { label: 'Apply to my spec', prompt: 'Apply these best practices to my current spec' },
+        { label: 'Security tips', prompt: 'What about API security best practices?' },
+      ],
+    };
+  }
+  if (lower.includes('security') || lower.includes('auth')) {
+    return {
+      content: "For API security in OpenAPI, consider:\n\n- Add `securitySchemes` under components (Bearer, OAuth2, API Key)\n- Apply `security` at the operation or global level\n- Document required scopes for OAuth2 flows\n- Use HTTPS — set `servers` with `https://` URLs",
+    };
+  }
+  return {
+    content: "I can help you with your OpenAPI spec! Try asking me to:\n\n- **Add an endpoint** — \"Add a GET /users endpoint\"\n- **Add a schema** — \"Add a User schema\"\n- **Validate** — \"Check my spec for errors\"\n- **Advice** — \"What are REST best practices?\"",
+    actions: [
+      { label: 'Validate spec', prompt: 'Validate my current spec' },
+      { label: 'Add endpoint', prompt: 'Add a GET /users endpoint' },
+      { label: 'Best practices', prompt: 'What are REST API best practices?' },
+    ],
+  };
+}
+
+const QUICK_ACTIONS = [
+  { label: 'Validate spec', prompt: 'Validate my current spec' },
+  { label: 'Add endpoint', prompt: 'Add a GET /users endpoint' },
+  { label: 'Best practices', prompt: 'What are REST API best practices?' },
+];
+
+const OPENAPI_TOOLS = createOpenApiTools();
+
+const Index = () => {
+  const [input, setInput] = useState(defaultInput);
+  const [output, setOutput] = useState('');
+  const [sort, setSort] = useState(true);
+  const [keepComments, setKeepComments] = useState(false);
+  const [toggleFilter, setToggleFilter] = useState(true);
+  const [filterUnused, setFilterUnused] = useState(false);
+  const [filterPrevent, setFilterPrevent] = useState(false);
+  const [filterSet, setFilterSet] = useState('');
+  const [generateSet, setGenerateSet] = useState('');
+  const [toggleGenerate, setToggleGenerate] = useState(false);
+  const [casingSet, setCasingSet] = useState('');
+  const [toggleCasing, setToggleCasing] = useState(false);
+  const [toggleOverlay, setToggleOverlay] = useState(false);
+  const [defaultSortSet, setDefaultSortSet] = useState('');
+  const [customSortSet, setCustomSortSet] = useState('');
+  const [sortSet, setSortSet] = useState('');
+  const [overlaySet, setOverlaySet] = useState('');
+  const [outputLanguage, setOutputLanguage] = useState<'json' | 'yaml'>('yaml');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const [filterFormOptions, setFilterFormOptions] = useState<AnalyzeOpenApiResult>({});
+  const [components, setComponents] = useState<ComponentMetrics>(defaultCompMetrics);
+  const [unusedComponents, setUnusedComponents] = useState<ComponentMetrics>(defaultCompMetrics);
+  const [totalComponents, setTotalComponents] = useState(0);
+  const [totalUnusedComponents, setTotalUnusedComponents] = useState(0);
+  const [totalTags, setTotalTags] = useState(0);
+  const [totalPaths, setTotalPaths] = useState(0);
+  const [totalActions, setTotalActions] = useState(0);
+  const [totalUsedActions, setTotalUsedActions] = useState(0);
+  const [totalUnusedActions, setTotalUnusedActions] = useState(0);
+  const [usedActions, setUsedActions] = useState<any[]>([]);
+  const [unusedActions, setUnusedActions] = useState<any[]>([]);
+
+  const [pathSort, setPathSort] = useState<'original' | 'path' | 'tags'>('original');
+  const [defaultFieldSorting, setDefaultFieldSorting] = useState(true);
+  const [inputVersion, setInputVersion] = useState<DetectedOpenAPIVersion>('unknown');
+  const [convertVersion, setConvertVersion] = useState<ConvertibleOpenAPIVersion | ''>('');
+  const prevOutputLanguageRef = useRef<'json' | 'yaml'>(outputLanguage);
+  const processRunIdRef = useRef(0);
+
+  // Dialogs
+  const [isDiffOpen, setDiffOpen] = useState(false);
+  const [isFilterOpen, setFilterOpen] = useState(false);
+  const [isSortOpen, setSortOpen] = useState(false);
+  const [isGenerateOpen, setGenerateOpen] = useState(false);
+  const [isCasingOpen, setCasingOpen] = useState(false);
+  const [isOverlayOpen, setOverlayOpen] = useState(false);
+  const [isInstructionsOpen, setInstructionsOpen] = useState(false);
+  const [isChatOpen, setChatOpen] = useState(false);
+
+  const { messages: chatMessages, isThinking: chatThinking, sendMessage, clearMessages } = useChat({
+    greeting: "Hi! I'm your OpenAPI assistant. I can help edit your spec, add endpoints, validate it, or answer API design questions. What would you like to do?",
+    tools: OPENAPI_TOOLS,
+    generateResponse: openApiResponseGenerator,
+    context: { specContent: input },
+    onToolSideEffect: (_, sideEffect) => {
+      if (typeof sideEffect === 'string') handleInputChange(sideEffect);
+    },
+  });
+
+  const dInput = useDebounce(input, 800);
+  const dFilterSet = useDebounce(filterSet, 800);
+  const dSortSet = useDebounce(sortSet, 800);
+  const dOverlaySet = useDebounce(overlaySet, 800);
+  const dGenerateSet = useDebounce(generateSet, 800);
+  const dCasingSet = useDebounce(casingSet, 800);
+
+  const convertibleTargets = useMemo(() => getConvertibleTargets(inputVersion), [inputVersion]);
+
+  // Analyze input on change
+  const handleInputChange = useCallback(async (newValue: string) => {
+    setInput(newValue);
+    try {
+      const oaObj = (await parseString(newValue)) as unknown as OpenAPIV3.Document;
+      const detectedVersion = detectOpenApiVersion(oaObj);
+      setInputVersion(detectedVersion);
+      const validTargets = getConvertibleTargets(detectedVersion);
+      setConvertVersion((current) => (current && validTargets.includes(current as any) ? current : ''));
+      const oaElements = analyzeOpenApi(oaObj as any);
+      setTotalPaths(oaElements.operations?.length || 0);
+      setTotalTags(oaElements.tags?.length || 0);
+      setFilterFormOptions(oaElements);
+    } catch {
+      setInputVersion('unknown');
+      setConvertVersion('');
+    }
+  }, []);
+
+  // Process
+  useEffect(() => {
+    const run = async () => {
+      const runId = ++processRunIdRef.current;
+      if (!dInput) {
+        if (runId === processRunIdRef.current) setOutput('');
+        return;
+      }
+      setLoading(true);
+      setErrorMessage(null);
+      try {
+        let effectiveFilterSet = '';
+        if (toggleFilter) {
+          let effectiveFilterObj: any = {};
+          if (dFilterSet && dFilterSet.trim().length > 0) {
+            effectiveFilterObj = await parseString(dFilterSet);
+            if (!effectiveFilterObj || typeof effectiveFilterObj !== 'object' || Array.isArray(effectiveFilterObj) || effectiveFilterObj instanceof Error) {
+              effectiveFilterObj = {};
+            }
+          }
+          includeUnusedComponents(effectiveFilterObj, filterUnused);
+          includePreserve(effectiveFilterObj, filterPrevent);
+          const serializedFilter = (await stringify(effectiveFilterObj as any, { format: outputLanguage })) as string;
+          effectiveFilterSet = serializedFilter.trim() === '{}' ? '' : serializedFilter;
+        }
+
+        const result = await processOpenApi(dInput, {
+          sort,
+          keepComments,
+          filterSet: effectiveFilterSet,
+          sortSet: dSortSet,
+          overlaySet: toggleOverlay ? dOverlaySet : '',
+          generateSet: toggleGenerate ? dGenerateSet : '',
+          casingSet: toggleCasing ? dCasingSet : '',
+          toggleGenerate,
+          toggleCasing,
+          toggleOverlay,
+          outputLanguage,
+          convertVersion,
+        });
+        if (runId !== processRunIdRef.current) return;
+        setOutput(result.output);
+        setTotalComponents(result.totalComponents);
+        setTotalUnusedComponents(result.totalUnusedComponents);
+        setComponents(result.components);
+        setUnusedComponents(result.unusedComponents);
+        setTotalActions(result.totalActions);
+        setTotalUsedActions(result.totalUsedActions);
+        setTotalUnusedActions(result.totalUnusedActions);
+        setUsedActions(result.usedActions);
+        setUnusedActions(result.unusedActions);
+      } catch (err: any) {
+        if (runId !== processRunIdRef.current) return;
+        setErrorMessage(err?.message || 'Processing error');
+      }
+      if (runId === processRunIdRef.current) setLoading(false);
+    };
+    run();
+  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dGenerateSet, dCasingSet, dOverlaySet, outputLanguage, toggleFilter, filterUnused, filterPrevent, toggleGenerate, toggleCasing, toggleOverlay, convertVersion]);
+
+  // Set default sort
+  useEffect(() => {
+    const convert = async () => {
+      const result = await stringify(defaultSortJson as any, { format: outputLanguage });
+      setDefaultSortSet(result as string);
+    };
+    convert();
+  }, [outputLanguage]);
+
+  // Keep filter set syntax aligned with output language when switching JSON/YAML
+  useEffect(() => {
+    if (prevOutputLanguageRef.current === outputLanguage) return;
+    prevOutputLanguageRef.current = outputLanguage;
+    const syncFilterSet = async () => {
+      try {
+        const reformatted = await reformatFilterSet(filterSet, outputLanguage);
+        if (reformatted !== filterSet) setFilterSet(reformatted);
+      } catch {
+        // Keep existing filter text if it cannot be parsed during a format switch.
+      }
+    };
+    void syncFilterSet();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [outputLanguage]);
+
+  // Keep filter toggles aligned with the current filterSet text.
+  // If users already have `unusedComponents` in the editor, toggles should reflect/apply it.
+  useEffect(() => {
+    let cancelled = false;
+    const syncFilterFlagsFromContent = async () => {
+      const raw = filterSet?.trim();
+      if (!raw) {
+        if (!cancelled) {
+          if (filterUnused) setFilterUnused(false);
+          if (filterPrevent) setFilterPrevent(false);
+        }
+        return;
+      }
+      try {
+        const parsed = await parseString(raw);
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || parsed instanceof Error) return;
+        const obj = parsed as any;
+        const hasUnused = Array.isArray(obj.unusedComponents) && obj.unusedComponents.length > 0;
+        const hasPreserve = obj.preserveEmptyObjects === true;
+        if (!cancelled) {
+          if (filterUnused !== hasUnused) setFilterUnused(hasUnused);
+          if (filterPrevent !== hasPreserve) setFilterPrevent(hasPreserve);
+        }
+      } catch {
+        // Ignore invalid intermediate edits.
+      }
+    };
+
+    void syncFilterFlagsFromContent();
+    return () => {
+      cancelled = true;
+    };
+  }, [filterSet, filterUnused, filterPrevent]);
+
+  // Analyze initial input + decode share URL
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const url = window.location.href;
+        const result = await decodeShareUrl(url);
+        if (result?.openapi) {
+          await handleInputChange(result.openapi);
+        } else {
+          // Analyze default input on mount
+          await handleInputChange(input);
+        }
+        if (result?.config) {
+          const c = result.config;
+          setSort(c.sort ?? true);
+          setKeepComments(c.keepComments ?? false);
+          setFilterSet(c.filterSet ?? '');
+          setToggleFilter(c.toggleFilter ?? true);
+          setGenerateSet(c.generateSet ?? '');
+          setCasingSet(c.casingSet ?? '');
+          setSortSet(c.sortSet ?? '');
+          setOverlaySet(c.overlaySet ?? '');
+          setToggleOverlay(c.toggleOverlay ?? false);
+          setToggleCasing(c.toggleCasing ?? false);
+          setToggleGenerate(c.toggleGenerate ?? false);
+          setOutputLanguage(c.outputLanguage ?? 'yaml');
+          setConvertVersion((c.convertVersion as ConvertibleOpenAPIVersion) ?? '');
+          setPathSort(c.pathSort ?? 'original');
+          setDefaultFieldSorting(c.defaultFieldSorting ?? true);
+        }
+      } catch {}
+    };
+    init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const toggleFilterUnused = async () => {
+    let filterSetObj: any;
+    if (filterSet.trim()) {
+      filterSetObj = await parseString(filterSet);
+    } else {
+      filterSetObj = {};
+    }
+    includeUnusedComponents(filterSetObj, !filterUnused);
+    let str = (await stringify(filterSetObj as any, { format: outputLanguage })) as string;
+    str = str.trim() === '{}' ? '' : str;
+    setFilterSet(str);
+    setFilterUnused(!filterUnused);
+  };
+
+  const togglePreserve = async () => {
+    let filterSetObj: any;
+    if (filterSet.trim()) {
+      filterSetObj = await parseString(filterSet);
+    } else {
+      filterSetObj = {};
+    }
+    includePreserve(filterSetObj, !filterPrevent);
+    let str = (await stringify(filterSetObj as any, { format: outputLanguage })) as string;
+    str = str.trim() === '{}' ? '' : str;
+    setFilterSet(str);
+    setFilterPrevent(!filterPrevent);
+  };
+
+  const handleDefaultFieldSortingChange = async () => {
+    setDefaultFieldSorting(!defaultFieldSorting);
+    if (defaultFieldSorting) {
+      setSortSet(customSortSet);
+      await handlePathSortChange(pathSort, customSortSet);
+    } else {
+      setSortSet('');
+      await handlePathSortChange(pathSort, '');
+    }
+  };
+
+  const handlePathSortChange = async (newPathSort: 'original' | 'path' | 'tags', sortSetStr?: string) => {
+    setPathSort(newPathSort);
+    let sortSetObj = {} as any;
+    if (sortSetStr && sortSetStr.trim() !== '') {
+      sortSetObj = await parseString(sortSetStr);
+    }
+    if (newPathSort === 'original') {
+      delete sortSetObj.sortPathsBy;
+      let str = (await stringify(sortSetObj as any, { format: outputLanguage })) as string;
+      if (Object.keys(sortSetObj).length === 0) str = '';
+      setSortSet(str);
+    } else {
+      sortSetObj.sortPathsBy = newPathSort;
+      const str = (await stringify(sortSetObj as any, { format: outputLanguage })) as string;
+      setSortSet(str);
+    }
+  };
+
+  const handleFilterFormSubmit = async (selectedOptions: Record<string, string[]>) => {
+    const filtered = Object.fromEntries(
+      Object.entries(selectedOptions).filter(([, v]) => v.length > 0)
+    );
+    includeUnusedComponents(filtered, filterUnused);
+    let str = (await stringify(filtered as any, { format: outputLanguage })) as string;
+    str = str.replace(/- '/g, '- ').replace(/'\n/g, '\n');
+    setFilterSet(str);
+    setFilterOpen(false);
+  };
+
+  const handleGenerateSubmit = async (selectedOptions: any) => {
+    const str = (await stringify(selectedOptions as any)) as string;
+    setGenerateSet(str);
+    setToggleGenerate(true);
+  };
+
+  const handleCasingSubmit = async (selectedOptions: any) => {
+    const str = (await stringify(selectedOptions as any)) as string;
+    setCasingSet(str);
+    setToggleCasing(true);
+  };
+
+  const handleOverlaySubmit = async (overlayOptions: any) => {
+    try {
+      if (overlayOptions instanceof Error || !overlayOptions || typeof overlayOptions !== 'object') {
+        throw new Error('Invalid overlay configuration');
+      }
+      const sanitized = pruneUndefined(overlayOptions);
+      const oaOverlay = (await stringify(sanitized as any, { format: outputLanguage })) as string;
+      setOverlaySet(oaOverlay);
+      setToggleOverlay(true);
+    } catch (err: any) {
+      toast({
+        title: 'Overlay not applied',
+        description: err?.message || 'Invalid overlay configuration.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleShare = async () => {
+    const config: PlaygroundConfig = {
+      sort, keepComments, filterSet, sortSet, overlaySet, generateSet, casingSet,
+      toggleGenerate, toggleCasing, toggleOverlay, toggleFilter, outputLanguage,
+      convertVersion: convertVersion || undefined,
+      pathSort, defaultFieldSorting,
+    };
+    const url = await generateShareUrl(window.location.origin, input, config);
+    await navigator.clipboard.writeText(url);
+    toast({ title: 'Share URL copied to clipboard!' });
+  };
+
+  const handleDownloadFilter = () => {
+    const blob = new Blob([filterSet], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `oaf-filter.${outputLanguage}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="flex flex-col h-screen bg-background">
+      <Header
+        outputLanguage={outputLanguage}
+        onOutputLanguageChange={setOutputLanguage}
+        inputVersion={inputVersion}
+        convertVersion={convertVersion}
+        convertibleTargets={convertibleTargets}
+        onConvertVersionChange={(v) => setConvertVersion(v.startsWith('v') ? '' : v as ConvertibleOpenAPIVersion)}
+        onOpenInstructions={() => setInstructionsOpen(true)}
+        onShare={handleShare}
+        isProcessing={loading}
+      />
+
+      {errorMessage && (
+        <div className="px-4 py-1.5 bg-destructive/10 text-destructive text-xs border-b">
+          {errorMessage}
+        </div>
+      )}
+
+      <div className="flex-1 flex min-h-0">
+        <ConfigSidebar
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          sort={sort}
+          onSortChange={setSort}
+          defaultFieldSorting={defaultFieldSorting}
+          onDefaultFieldSortingChange={handleDefaultFieldSortingChange}
+          pathSort={pathSort}
+          onPathSortChange={(v) => handlePathSortChange(v, sortSet)}
+          onOpenSortModal={() => setSortOpen(true)}
+          keepComments={keepComments}
+          onKeepCommentsChange={setKeepComments}
+          outputLanguage={outputLanguage}
+          toggleOverlay={toggleOverlay}
+          onToggleOverlay={setToggleOverlay}
+          onOpenOverlayModal={() => setOverlayOpen(true)}
+          toggleFilter={toggleFilter}
+          onToggleFilter={setToggleFilter}
+          filterSet={filterSet}
+          onFilterSetChange={setFilterSet}
+          filterUnused={filterUnused}
+          onToggleFilterUnused={toggleFilterUnused}
+          filterPrevent={filterPrevent}
+          onTogglePreserve={togglePreserve}
+          onOpenFilterForm={() => setFilterOpen(true)}
+          hasFilterFormOptions={Object.keys(filterFormOptions).length > 0}
+          onDownloadFilter={handleDownloadFilter}
+          toggleGenerate={toggleGenerate}
+          onToggleGenerate={setToggleGenerate}
+          onOpenGenerateModal={() => setGenerateOpen(true)}
+          toggleCasing={toggleCasing}
+          onToggleCasing={setToggleCasing}
+          onOpenCasingModal={() => setCasingOpen(true)}
+        />
+
+        <ResizablePanelGroup direction="horizontal" className="flex-1">
+          <ResizablePanel defaultSize={50} minSize={25}>
+            <EditorPanel
+              title="OpenAPI Input"
+              value={input}
+              onChange={handleInputChange}
+              language={getInputEditorLanguage(outputLanguage)}
+              showPreviewToggle
+              actions={
+                <>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setOverlayOpen(true)}>
+                        <Layers className="h-3 w-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>OpenAPI Overlay</TooltipContent>
+                  </Tooltip>
+                  <ImportUrlButton onUrlLoad={handleInputChange} />
+                  <UploadButton onFileLoad={handleInputChange} />
+                </>
+              }
+            />
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          <ResizablePanel defaultSize={50} minSize={25}>
+            <EditorPanel
+              title="OpenAPI Output"
+              value={output}
+              onChange={setOutput}
+              language={outputLanguage}
+              loading={loading}
+              showPreviewToggle
+              actions={
+                <>
+                  <DiffButton onClick={() => setDiffOpen(true)} />
+                  <DownloadButton content={output} filename="openapi-formatted" format={outputLanguage} />
+                </>
+              }
+            />
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
+
+      <MetricsBar
+        totalPaths={totalPaths}
+        totalTags={totalTags}
+        totalComponents={totalComponents}
+        totalUnusedComponents={totalUnusedComponents}
+        components={components}
+        unusedComponents={unusedComponents}
+        totalActions={totalActions}
+        totalUsedActions={totalUsedActions}
+        totalUnusedActions={totalUnusedActions}
+        usedActions={usedActions}
+        unusedActions={unusedActions}
+      />
+
+      {/* FAB for filter */}
+      {Object.keys(filterFormOptions).length > 0 && (
+        <Button
+          className="fixed bottom-12 right-4 h-10 w-10 rounded-full shadow-lg"
+          size="icon"
+          onClick={() => setFilterOpen(true)}
+        >
+          <Filter className="h-4 w-4" />
+        </Button>
+      )}
+
+      {/* FAB for AI chat */}
+      <Button
+        className="fixed bottom-24 right-4 h-11 w-11 rounded-full shadow-lg bg-primary hover:bg-primary/90"
+        size="icon"
+        onClick={() => setChatOpen(!isChatOpen)}
+      >
+        <MessageSquare className="h-4.5 w-4.5" />
+      </Button>
+
+      {/* AI Chat Panel */}
+      <ChatPanel
+        open={isChatOpen}
+        onClose={() => setChatOpen(false)}
+        messages={chatMessages}
+        isThinking={chatThinking}
+        onSend={sendMessage}
+        onClear={clearMessages}
+        title="API Assistant"
+        subtitle="MCP-powered · OpenAPI helper"
+        quickActions={QUICK_ACTIONS}
+      />
+
+      {/* Dialogs */}
+      <FilterFormDialog
+        isOpen={isFilterOpen}
+        onClose={() => setFilterOpen(false)}
+        onSubmit={handleFilterFormSubmit}
+        filterOptions={filterFormOptions}
+      />
+      <SortOptionsDialog
+        isOpen={isSortOpen}
+        onClose={() => setSortOpen(false)}
+        sortSet={customSortSet}
+        onSubmit={(v) => { setCustomSortSet(v); setSortSet(v); }}
+        outputLanguage={outputLanguage}
+        defaultSort={defaultSortSet}
+      />
+      <GenerateFormDialog
+        isOpen={isGenerateOpen}
+        onClose={() => setGenerateOpen(false)}
+        onSubmit={handleGenerateSubmit}
+        openapi={input}
+        generateOptions={generateSet}
+      />
+      <CasingFormDialog
+        isOpen={isCasingOpen}
+        onClose={() => setCasingOpen(false)}
+        onSubmit={handleCasingSubmit}
+        casingOptions={casingSet}
+      />
+      <OverlayDialog
+        isOpen={isOverlayOpen}
+        onClose={() => setOverlayOpen(false)}
+        overlaySet={overlaySet}
+        openapi={input}
+        onSubmit={handleOverlaySubmit}
+        format={outputLanguage}
+      />
+      <DiffEditorDialog
+        isOpen={isDiffOpen}
+        onClose={() => setDiffOpen(false)}
+        original={input}
+        modified={output}
+        language={outputLanguage}
+      />
+      <InstructionsDialog
+        isOpen={isInstructionsOpen}
+        onClose={() => setInstructionsOpen(false)}
+        sort={sort}
+        keepComments={keepComments}
+        toggleFilter={toggleFilter}
+        sortSet={sortSet}
+        filterSet={filterSet}
+        casingSet={casingSet}
+        generateSet={generateSet}
+        overlaySet={overlaySet}
+        toggleCasing={toggleCasing}
+        toggleGenerate={toggleGenerate}
+        toggleOverlay={toggleOverlay}
+        format={outputLanguage}
+      />
+    </div>
+  );
+};
+
+export default Index;
