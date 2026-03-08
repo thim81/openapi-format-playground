@@ -17,6 +17,7 @@ import DiffEditorDialog from '@/components/playground/dialogs/DiffEditorDialog';
 import OverlayDialog from '@/components/playground/dialogs/OverlayDialog';
 import { getInputEditorLanguage } from '@/components/playground/inputEditorLanguage';
 import { reformatFilterSet } from '@/components/playground/filterSetFormat';
+import { applyPathSortToSortSet } from '@/components/playground/sortSetPathSort';
 import { Button } from '@/components/ui/button';
 import { Layers, Filter, MessageSquare } from 'lucide-react';
 import { ChatPanel } from '@/components/chat';
@@ -401,19 +402,15 @@ const Index = () => {
     sortSetStr?: string,
   ) => {
     setPathSort(newPathSort);
-    let sortSetObj = {} as any;
-    if (sortSetStr && sortSetStr.trim() !== '') {
-      sortSetObj = await parseString(sortSetStr);
-    }
-    if (newPathSort === 'original') {
-      delete sortSetObj.sortPathsBy;
-      let str = (await stringify(sortSetObj as any, { format: outputLanguage })) as string;
-      if (Object.keys(sortSetObj).length === 0) str = '';
-      setSortSet(str);
-    } else {
-      sortSetObj.sortPathsBy = newPathSort;
-      const str = (await stringify(sortSetObj as any, { format: outputLanguage })) as string;
-      setSortSet(str);
+    const sourceSortSet = typeof sortSetStr === 'string' ? sortSetStr : sortSet;
+    const result = await applyPathSortToSortSet(sourceSortSet, newPathSort, outputLanguage);
+    setSortSet(result.sortSet);
+    if (result.recoveredFromInvalidInput) {
+      toast({
+        title: 'Sort options recovered',
+        description:
+          'Existing sort configuration was invalid; applied path sorting with safe defaults.',
+      });
     }
   };
 
