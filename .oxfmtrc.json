@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "singleQuote": true,
+  "jsxSingleQuote": true,
+  "semi": true,
+  "trailingComma": "all",
+  "arrowParens": "always",
+  "bracketSpacing": true,
+  "quoteProps": "as-needed",
+  "printWidth": 100,
+  "tabWidth": 2,
+  "endOfLine": "lf",
+  "ignorePatterns": ["dist/**", "coverage/**", "node_modules/**"]
+}
