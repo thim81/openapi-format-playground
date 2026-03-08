@@ -51,7 +51,7 @@ interface OverlayDialogProps {
 
 const actionTypes = [
   { label: 'Update', value: 'update' },
-  { label: 'Add', value: 'add' },
+  // { label: 'Add', value: 'add' },
   { label: 'Remove', value: 'remove' },
 ];
 
