@@ -28,10 +28,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onActionClick })
           isUser ? 'bg-primary text-primary-foreground' : 'bg-accent text-accent-foreground',
         )}
       >
-        {isUser ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
+        {isUser ? <User className='h-3.5 w-3.5' /> : <Bot className='h-3.5 w-3.5' />}
       </div>
 
-      <div className={cn('flex max-w-[85%] flex-col gap-1.5', isUser ? 'items-end' : 'items-start')}>
+      <div
+        className={cn('flex max-w-[85%] flex-col gap-1.5', isUser ? 'items-end' : 'items-start')}
+      >
         <div
           className={cn(
             'rounded-lg px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap',
@@ -44,7 +46,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onActionClick })
         </div>
 
         {message.toolCalls && message.toolCalls.length > 0 && (
-          <div className="flex w-full flex-col gap-1.5">
+          <div className='flex w-full flex-col gap-1.5'>
             {message.toolCalls.map((tc, i) => (
               <ToolCallBubble key={i} tool={tc} />
             ))}
@@ -55,7 +57,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onActionClick })
           <ActionButtons actions={message.actions} onActionClick={onActionClick} />
         )}
 
-        <span className="text-[10px] text-muted-foreground">
+        <span className='text-[10px] text-muted-foreground'>
           {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </span>
       </div>

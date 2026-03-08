@@ -1,5 +1,14 @@
 {
-  "root": ["openapi", "info", "servers", "paths", "components", "tags", "x-tagGroups", "externalDocs"],
+  "root": [
+    "openapi",
+    "info",
+    "servers",
+    "paths",
+    "components",
+    "tags",
+    "x-tagGroups",
+    "externalDocs"
+  ],
   "get": ["operationId", "summary", "description", "parameters", "requestBody", "responses"],
   "query": ["operationId", "summary", "description", "parameters", "requestBody", "responses"],
   "post": ["operationId", "summary", "description", "parameters", "requestBody", "responses"],

@@ -13,6 +13,6 @@ describe('reformatFilterSet', () => {
     const json = '{\n  "paths": ["$.paths[*]"]\n}\n';
     const yaml = await reformatFilterSet(json, 'yaml');
     expect(yaml).toContain('paths:');
-    expect(yaml).toContain("$.paths[*]");
+    expect(yaml).toContain('$.paths[*]');
   });
 });

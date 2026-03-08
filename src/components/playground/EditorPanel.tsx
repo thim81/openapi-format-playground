@@ -3,7 +3,16 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Upload, Link as LinkIcon, Download, GitCompareArrows, Loader2, Code2, Eye, LayoutList } from 'lucide-react';
+import {
+  Upload,
+  Link as LinkIcon,
+  Download,
+  GitCompareArrows,
+  Loader2,
+  Code2,
+  Eye,
+  LayoutList,
+} from 'lucide-react';
 import MonacoEditor from './MonacoEditor';
 import OpenApiUiEditor from './OpenApiUiEditor';
 
@@ -44,9 +53,9 @@ const ScalarPreview: React.FC<{ content: string }> = ({ content }) => {
   return (
     <iframe
       srcDoc={srcDoc}
-      className="w-full h-full border-0"
-      sandbox="allow-scripts allow-same-origin"
-      title="API Preview"
+      className='w-full h-full border-0'
+      sandbox='allow-scripts allow-same-origin'
+      title='API Preview'
     />
   );
 };
@@ -66,24 +75,26 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [viewMode, setViewMode] = useState<ViewMode>('code');
 
   const modeButtons: { mode: ViewMode; icon: React.ReactNode; label: string }[] = [
-    { mode: 'code', icon: <Code2 className="h-3 w-3" />, label: 'Code' },
-    { mode: 'ui', icon: <LayoutList className="h-3 w-3" />, label: 'UI' },
-    { mode: 'preview', icon: <Eye className="h-3 w-3" />, label: 'Preview' },
+    { mode: 'code', icon: <Code2 className='h-3 w-3' />, label: 'Code' },
+    { mode: 'ui', icon: <LayoutList className='h-3 w-3' />, label: 'UI' },
+    { mode: 'preview', icon: <Eye className='h-3 w-3' />, label: 'Preview' },
   ];
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 h-full">
-      <div className="flex items-center justify-between px-3 py-1.5 border-b bg-card">
-        <div className="flex items-center gap-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</h3>
+    <div className='flex-1 flex flex-col min-w-0 h-full'>
+      <div className='flex items-center justify-between px-3 py-1.5 border-b bg-card'>
+        <div className='flex items-center gap-2'>
+          <h3 className='text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
+            {title}
+          </h3>
           {loading && (
-            <div className="flex items-center gap-1.5 text-primary">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              <span className="text-[11px] font-medium">Processing...</span>
+            <div className='flex items-center gap-1.5 text-primary'>
+              <Loader2 className='h-3.5 w-3.5 animate-spin' />
+              <span className='text-[11px] font-medium'>Processing...</span>
             </div>
           )}
           {showPreviewToggle && (
-            <div className="flex items-center border rounded-md ml-2">
+            <div className='flex items-center border rounded-md ml-2'>
               {modeButtons.map((btn, i) => (
                 <button
                   key={btn.mode}
@@ -102,21 +113,19 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             </div>
           )}
         </div>
-        <div className="flex items-center gap-1">
-          {actions}
-        </div>
+        <div className='flex items-center gap-1'>{actions}</div>
       </div>
-      <div className="flex-1 min-h-0">
+      <div className='flex-1 min-h-0'>
         {viewMode === 'code' ? (
           <MonacoEditor value={value} onChange={onChange} language={language} readOnly={readOnly} />
         ) : viewMode === 'ui' ? (
           <OpenApiUiEditor value={value} onChange={onChange} format={language as 'json' | 'yaml'} />
         ) : (
-          <div className="h-full bg-background">
+          <div className='h-full bg-background'>
             {value ? (
               <ScalarPreview content={value} />
             ) : (
-              <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
+              <div className='h-full flex items-center justify-center text-muted-foreground text-sm'>
                 No output to preview
               </div>
             )}
@@ -130,7 +139,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 export default EditorPanel;
 
 // Reusable action buttons
-export const UploadButton: React.FC<{ onFileLoad: (content: string) => void }> = ({ onFileLoad }) => {
+export const UploadButton: React.FC<{ onFileLoad: (content: string) => void }> = ({
+  onFileLoad,
+}) => {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,11 +157,22 @@ export const UploadButton: React.FC<{ onFileLoad: (content: string) => void }> =
 
   return (
     <>
-      <input type="file" ref={fileRef} onChange={handleFile} accept=".yaml,.yml,.json" className="hidden" />
+      <input
+        type='file'
+        ref={fileRef}
+        onChange={handleFile}
+        accept='.yaml,.yml,.json'
+        className='hidden'
+      />
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => fileRef.current?.click()}>
-            <Upload className="h-3 w-3" />
+          <Button
+            variant='ghost'
+            size='icon'
+            className='h-6 w-6'
+            onClick={() => fileRef.current?.click()}
+          >
+            <Upload className='h-3 w-3' />
           </Button>
         </TooltipTrigger>
         <TooltipContent>Upload file</TooltipContent>
@@ -159,7 +181,9 @@ export const UploadButton: React.FC<{ onFileLoad: (content: string) => void }> =
   );
 };
 
-export const ImportUrlButton: React.FC<{ onUrlLoad: (content: string) => void }> = ({ onUrlLoad }) => {
+export const ImportUrlButton: React.FC<{ onUrlLoad: (content: string) => void }> = ({
+  onUrlLoad,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [urlValue, setUrlValue] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -192,15 +216,15 @@ export const ImportUrlButton: React.FC<{ onUrlLoad: (content: string) => void }>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
+            variant='ghost'
+            size='icon'
+            className='h-6 w-6'
             onClick={() => {
               setError(null);
               setIsOpen(true);
             }}
           >
-            <LinkIcon className="h-3 w-3" />
+            <LinkIcon className='h-3 w-3' />
           </Button>
         </TooltipTrigger>
         <TooltipContent>Import from URL</TooltipContent>
@@ -215,23 +239,25 @@ export const ImportUrlButton: React.FC<{ onUrlLoad: (content: string) => void }>
           }
         }}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className='max-w-md'>
           <DialogHeader>
             <DialogTitle>Import OpenAPI From URL</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className='space-y-3'>
             <Input
               value={urlValue}
               onChange={(e) => {
                 setUrlValue(e.target.value);
                 if (error) setError(null);
               }}
-              placeholder="https://example.com/openapi.yaml"
-              className="font-mono text-sm"
+              placeholder='https://example.com/openapi.yaml'
+              className='font-mono text-sm'
             />
-            {error && <p className="text-xs text-destructive">{error}</p>}
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isLoading}>Cancel</Button>
+            {error && <p className='text-xs text-destructive'>{error}</p>}
+            <div className='flex justify-end gap-2'>
+              <Button variant='outline' onClick={() => setIsOpen(false)} disabled={isLoading}>
+                Cancel
+              </Button>
               <Button onClick={handleImport} disabled={isLoading}>
                 {isLoading ? 'Importing...' : 'Import'}
               </Button>
@@ -244,7 +270,9 @@ export const ImportUrlButton: React.FC<{ onUrlLoad: (content: string) => void }>
 };
 
 export const DownloadButton: React.FC<{ content: string; filename: string; format: string }> = ({
-  content, filename, format,
+  content,
+  filename,
+  format,
 }) => {
   const handleDownload = () => {
     const blob = new Blob([content], { type: 'text/plain' });
@@ -259,8 +287,8 @@ export const DownloadButton: React.FC<{ content: string; filename: string; forma
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleDownload}>
-          <Download className="h-3 w-3" />
+        <Button variant='ghost' size='icon' className='h-6 w-6' onClick={handleDownload}>
+          <Download className='h-3 w-3' />
         </Button>
       </TooltipTrigger>
       <TooltipContent>Download</TooltipContent>
@@ -271,8 +299,8 @@ export const DownloadButton: React.FC<{ content: string; filename: string; forma
 export const DiffButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <Tooltip>
     <TooltipTrigger asChild>
-      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClick}>
-        <GitCompareArrows className="h-3 w-3" />
+      <Button variant='ghost' size='icon' className='h-6 w-6' onClick={onClick}>
+        <GitCompareArrows className='h-3 w-3' />
       </Button>
     </TooltipTrigger>
     <TooltipContent>Show Diff</TooltipContent>

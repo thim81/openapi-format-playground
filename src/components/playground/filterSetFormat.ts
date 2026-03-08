@@ -2,7 +2,7 @@ import { parseString, stringify } from '@/lib/openapi-processor';
 
 export async function reformatFilterSet(
   filterSet: string,
-  outputLanguage: 'json' | 'yaml'
+  outputLanguage: 'json' | 'yaml',
 ): Promise<string> {
   if (!filterSet.trim()) return filterSet;
   const parsed = await parseString(filterSet);

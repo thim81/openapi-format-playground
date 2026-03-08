@@ -1,7 +1,6 @@
-
 # OpenAPI-Format Playground
 
-OpenAPI-Format Playground is a web-based tool for formatting, sorting, filtering, and applying overlays to OpenAPI documents. 
+OpenAPI-Format Playground is a web-based tool for formatting, sorting, filtering, and applying overlays to OpenAPI documents.
 
 ![openapi-format icon](https://github.com/thim81/openapi-format/raw/main/assets/openapi-format-logo.svg)
 The playground is powered by the [openapi-format](https://www.npmjs.com/package/openapi-format) CLI to provide a user-friendly interface for developers to format & filter a OpenAPI specifications.
@@ -52,7 +51,9 @@ Before you begin, ensure you have the following installed on your system:
 ```bash
 npm install
 ```
+
 # or
+
 ```bash
 yarn instal
 ```
@@ -62,14 +63,17 @@ yarn instal
 ```bash
 npm run dev
 ```
+
 # or
+
 ```bash
 yarn dev
 ```
+
 # or
+
 ```bash
 pnpm dev
 ```
 
 4. Open [http://localhost:3000](http://localhost:3000) with your browser to start using the OpenAPI-format playground.
-

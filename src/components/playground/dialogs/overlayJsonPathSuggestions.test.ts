@@ -14,7 +14,9 @@ describe('overlayJsonPathSuggestions', () => {
     const suggestions = generateJsonPathSuggestions(oa);
     expect(suggestions).toContain("$.paths['/pets']");
     expect(suggestions.some((s) => s.includes('/pets'))).toBe(true);
-    expect(suggestions.some((s) => s.includes('/pets') && s.endsWith('.get.operationId'))).toBe(true);
+    expect(suggestions.some((s) => s.includes('/pets') && s.endsWith('.get.operationId'))).toBe(
+      true,
+    );
     expect(suggestions.some((s) => s.includes("[['/pets']]"))).toBe(false);
   });
 

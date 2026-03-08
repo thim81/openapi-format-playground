@@ -1,7 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Header from '@/components/playground/Header';
 import ConfigSidebar from '@/components/playground/ConfigSidebar';
-import EditorPanel, { UploadButton, ImportUrlButton, DownloadButton, DiffButton } from '@/components/playground/EditorPanel';
+import EditorPanel, {
+  UploadButton,
+  ImportUrlButton,
+  DownloadButton,
+  DiffButton,
+} from '@/components/playground/EditorPanel';
 import MetricsBar from '@/components/playground/MetricsBar';
 import FilterFormDialog from '@/components/playground/dialogs/FilterFormDialog';
 import SortOptionsDialog from '@/components/playground/dialogs/SortOptionsDialog';
@@ -84,7 +89,9 @@ function createOpenApiTools(): ToolDefinition[] {
       description: 'Read the current OpenAPI specification',
       execute: async (_args, ctx) => {
         const spec = ctx.specContent as string;
-        return { result: `Current spec has ${spec.split('\n').length} lines. Loaded successfully.` };
+        return {
+          result: `Current spec has ${spec.split('\n').length} lines. Loaded successfully.`,
+        };
       },
     },
     {
@@ -92,7 +99,10 @@ function createOpenApiTools(): ToolDefinition[] {
       description: 'Validate the OpenAPI specification',
       execute: async () => {
         await new Promise((r) => setTimeout(r, 600));
-        return { result: 'Validation passed ✓ — No errors found. 2 warnings: missing "contact" info, missing "license" field.' };
+        return {
+          result:
+            'Validation passed ✓ — No errors found. 2 warnings: missing "contact" info, missing "license" field.',
+        };
       },
     },
     {
@@ -100,7 +110,9 @@ function createOpenApiTools(): ToolDefinition[] {
       description: 'Add or update a path in the spec',
       execute: async (args) => {
         await new Promise((r) => setTimeout(r, 800));
-        return { result: `Path "${args.path || '/new-endpoint'}" added with ${args.method || 'GET'} operation.` };
+        return {
+          result: `Path "${args.path || '/new-endpoint'}" added with ${args.method || 'GET'} operation.`,
+        };
       },
     },
     {
@@ -135,9 +147,12 @@ function openApiResponseGenerator(userMessage: string): GeneratedResponse {
       ],
     };
   }
-  if (lower.includes('add') && (lower.includes('path') || lower.includes('endpoint') || lower.includes('route'))) {
+  if (
+    lower.includes('add') &&
+    (lower.includes('path') || lower.includes('endpoint') || lower.includes('route'))
+  ) {
     return {
-      content: "Let me add that endpoint to your spec.",
+      content: 'Let me add that endpoint to your spec.',
       toolCalls: [
         { name: 'read_spec', args: {} },
         { name: 'add_path', args: { path: '/users', method: 'GET' } },
@@ -156,7 +171,7 @@ function openApiResponseGenerator(userMessage: string): GeneratedResponse {
   }
   if (lower.includes('read') || lower.includes('show') || lower.includes('current')) {
     return {
-      content: "Let me take a look at your current specification.",
+      content: 'Let me take a look at your current specification.',
       toolCalls: [{ name: 'read_spec', args: {} }],
     };
   }
@@ -164,7 +179,8 @@ function openApiResponseGenerator(userMessage: string): GeneratedResponse {
   // General advice
   if (lower.includes('rest') || lower.includes('best practice')) {
     return {
-      content: "Here are some REST API best practices:\n\n1. **Use nouns for resources** — `/users` not `/getUsers`\n2. **Use HTTP methods semantically** — GET for reads, POST for creates\n3. **Version your API** — e.g. `/v1/users`\n4. **Use proper status codes** — 201 for created, 404 for not found\n5. **Support pagination** for list endpoints",
+      content:
+        'Here are some REST API best practices:\n\n1. **Use nouns for resources** — `/users` not `/getUsers`\n2. **Use HTTP methods semantically** — GET for reads, POST for creates\n3. **Version your API** — e.g. `/v1/users`\n4. **Use proper status codes** — 201 for created, 404 for not found\n5. **Support pagination** for list endpoints',
       actions: [
         { label: 'Apply to my spec', prompt: 'Apply these best practices to my current spec' },
         { label: 'Security tips', prompt: 'What about API security best practices?' },
@@ -173,11 +189,13 @@ function openApiResponseGenerator(userMessage: string): GeneratedResponse {
   }
   if (lower.includes('security') || lower.includes('auth')) {
     return {
-      content: "For API security in OpenAPI, consider:\n\n- Add `securitySchemes` under components (Bearer, OAuth2, API Key)\n- Apply `security` at the operation or global level\n- Document required scopes for OAuth2 flows\n- Use HTTPS — set `servers` with `https://` URLs",
+      content:
+        'For API security in OpenAPI, consider:\n\n- Add `securitySchemes` under components (Bearer, OAuth2, API Key)\n- Apply `security` at the operation or global level\n- Document required scopes for OAuth2 flows\n- Use HTTPS — set `servers` with `https://` URLs',
     };
   }
   return {
-    content: "I can help you with your OpenAPI spec! Try asking me to:\n\n- **Add an endpoint** — \"Add a GET /users endpoint\"\n- **Add a schema** — \"Add a User schema\"\n- **Validate** — \"Check my spec for errors\"\n- **Advice** — \"What are REST best practices?\"",
+    content:
+      'I can help you with your OpenAPI spec! Try asking me to:\n\n- **Add an endpoint** — "Add a GET /users endpoint"\n- **Add a schema** — "Add a User schema"\n- **Validate** — "Check my spec for errors"\n- **Advice** — "What are REST best practices?"',
     actions: [
       { label: 'Validate spec', prompt: 'Validate my current spec' },
       { label: 'Add endpoint', prompt: 'Add a GET /users endpoint' },
@@ -195,6 +213,7 @@ const QUICK_ACTIONS = [
 const OPENAPI_TOOLS = createOpenApiTools();
 
 const Index = () => {
+  const showAssistant = import.meta.env.DEV;
   const [input, setInput] = useState(defaultInput);
   const [output, setOutput] = useState('');
   const [sort, setSort] = useState(true);
@@ -247,8 +266,14 @@ const Index = () => {
   const [isInstructionsOpen, setInstructionsOpen] = useState(false);
   const [isChatOpen, setChatOpen] = useState(false);
 
-  const { messages: chatMessages, isThinking: chatThinking, sendMessage, clearMessages } = useChat({
-    greeting: "Hi! I'm your OpenAPI assistant. I can help edit your spec, add endpoints, validate it, or answer API design questions. What would you like to do?",
+  const {
+    messages: chatMessages,
+    isThinking: chatThinking,
+    sendMessage,
+    clearMessages,
+  } = useChat({
+    greeting:
+      "Hi! I'm your OpenAPI assistant. I can help edit your spec, add endpoints, validate it, or answer API design questions. What would you like to do?",
     tools: OPENAPI_TOOLS,
     generateResponse: openApiResponseGenerator,
     context: { specContent: input },
@@ -274,7 +299,9 @@ const Index = () => {
       const detectedVersion = detectOpenApiVersion(oaObj);
       setInputVersion(detectedVersion);
       const validTargets = getConvertibleTargets(detectedVersion);
-      setConvertVersion((current) => (current && validTargets.includes(current as any) ? current : ''));
+      setConvertVersion((current) =>
+        current && validTargets.includes(current as any) ? current : '',
+      );
       const oaElements = analyzeOpenApi(oaObj as any);
       setTotalPaths(oaElements.operations?.length || 0);
       setTotalTags(oaElements.tags?.length || 0);
@@ -301,13 +328,20 @@ const Index = () => {
           let effectiveFilterObj: any = {};
           if (dFilterSet && dFilterSet.trim().length > 0) {
             effectiveFilterObj = await parseString(dFilterSet);
-            if (!effectiveFilterObj || typeof effectiveFilterObj !== 'object' || Array.isArray(effectiveFilterObj) || effectiveFilterObj instanceof Error) {
+            if (
+              !effectiveFilterObj ||
+              typeof effectiveFilterObj !== 'object' ||
+              Array.isArray(effectiveFilterObj) ||
+              effectiveFilterObj instanceof Error
+            ) {
               effectiveFilterObj = {};
             }
           }
           includeUnusedComponents(effectiveFilterObj, filterUnused);
           includePreserve(effectiveFilterObj, filterPrevent);
-          const serializedFilter = (await stringify(effectiveFilterObj as any, { format: outputLanguage })) as string;
+          const serializedFilter = (await stringify(effectiveFilterObj as any, {
+            format: outputLanguage,
+          })) as string;
           effectiveFilterSet = serializedFilter.trim() === '{}' ? '' : serializedFilter;
         }
 
@@ -343,7 +377,24 @@ const Index = () => {
       if (runId === processRunIdRef.current) setLoading(false);
     };
     run();
-  }, [dInput, sort, keepComments, dFilterSet, dSortSet, dGenerateSet, dCasingSet, dOverlaySet, outputLanguage, toggleFilter, filterUnused, filterPrevent, toggleGenerate, toggleCasing, toggleOverlay, convertVersion]);
+  }, [
+    dInput,
+    sort,
+    keepComments,
+    dFilterSet,
+    dSortSet,
+    dGenerateSet,
+    dCasingSet,
+    dOverlaySet,
+    outputLanguage,
+    toggleFilter,
+    filterUnused,
+    filterPrevent,
+    toggleGenerate,
+    toggleCasing,
+    toggleOverlay,
+    convertVersion,
+  ]);
 
   // Set default sort
   useEffect(() => {
@@ -385,7 +436,13 @@ const Index = () => {
       }
       try {
         const parsed = await parseString(raw);
-        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || parsed instanceof Error) return;
+        if (
+          !parsed ||
+          typeof parsed !== 'object' ||
+          Array.isArray(parsed) ||
+          parsed instanceof Error
+        )
+          return;
         const obj = parsed as any;
         const hasUnused = Array.isArray(obj.unusedComponents) && obj.unusedComponents.length > 0;
         const hasPreserve = obj.preserveEmptyObjects === true;
@@ -479,7 +536,10 @@ const Index = () => {
     }
   };
 
-  const handlePathSortChange = async (newPathSort: 'original' | 'path' | 'tags', sortSetStr?: string) => {
+  const handlePathSortChange = async (
+    newPathSort: 'original' | 'path' | 'tags',
+    sortSetStr?: string,
+  ) => {
     setPathSort(newPathSort);
     let sortSetObj = {} as any;
     if (sortSetStr && sortSetStr.trim() !== '') {
@@ -499,7 +559,7 @@ const Index = () => {
 
   const handleFilterFormSubmit = async (selectedOptions: Record<string, string[]>) => {
     const filtered = Object.fromEntries(
-      Object.entries(selectedOptions).filter(([, v]) => v.length > 0)
+      Object.entries(selectedOptions).filter(([, v]) => v.length > 0),
     );
     includeUnusedComponents(filtered, filterUnused);
     let str = (await stringify(filtered as any, { format: outputLanguage })) as string;
@@ -522,7 +582,11 @@ const Index = () => {
 
   const handleOverlaySubmit = async (overlayOptions: any) => {
     try {
-      if (overlayOptions instanceof Error || !overlayOptions || typeof overlayOptions !== 'object') {
+      if (
+        overlayOptions instanceof Error ||
+        !overlayOptions ||
+        typeof overlayOptions !== 'object'
+      ) {
         throw new Error('Invalid overlay configuration');
       }
       const sanitized = pruneUndefined(overlayOptions);
@@ -540,10 +604,21 @@ const Index = () => {
 
   const handleShare = async () => {
     const config: PlaygroundConfig = {
-      sort, keepComments, filterSet, sortSet, overlaySet, generateSet, casingSet,
-      toggleGenerate, toggleCasing, toggleOverlay, toggleFilter, outputLanguage,
+      sort,
+      keepComments,
+      filterSet,
+      sortSet,
+      overlaySet,
+      generateSet,
+      casingSet,
+      toggleGenerate,
+      toggleCasing,
+      toggleOverlay,
+      toggleFilter,
+      outputLanguage,
       convertVersion: convertVersion || undefined,
-      pathSort, defaultFieldSorting,
+      pathSort,
+      defaultFieldSorting,
     };
     const url = await generateShareUrl(window.location.origin, input, config);
     await navigator.clipboard.writeText(url);
@@ -561,26 +636,28 @@ const Index = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className='flex flex-col h-screen bg-background'>
       <Header
         outputLanguage={outputLanguage}
         onOutputLanguageChange={setOutputLanguage}
         inputVersion={inputVersion}
         convertVersion={convertVersion}
         convertibleTargets={convertibleTargets}
-        onConvertVersionChange={(v) => setConvertVersion(v.startsWith('v') ? '' : v as ConvertibleOpenAPIVersion)}
+        onConvertVersionChange={(v) =>
+          setConvertVersion(v.startsWith('v') ? '' : (v as ConvertibleOpenAPIVersion))
+        }
         onOpenInstructions={() => setInstructionsOpen(true)}
         onShare={handleShare}
         isProcessing={loading}
       />
 
       {errorMessage && (
-        <div className="px-4 py-1.5 bg-destructive/10 text-destructive text-xs border-b">
+        <div className='px-4 py-1.5 bg-destructive/10 text-destructive text-xs border-b'>
           {errorMessage}
         </div>
       )}
 
-      <div className="flex-1 flex min-h-0">
+      <div className='flex-1 flex min-h-0'>
         <ConfigSidebar
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -616,10 +693,10 @@ const Index = () => {
           onOpenCasingModal={() => setCasingOpen(true)}
         />
 
-        <ResizablePanelGroup direction="horizontal" className="flex-1">
+        <ResizablePanelGroup direction='horizontal' className='flex-1'>
           <ResizablePanel defaultSize={50} minSize={25}>
             <EditorPanel
-              title="OpenAPI Input"
+              title='OpenAPI Input'
               value={input}
               onChange={handleInputChange}
               language={getInputEditorLanguage(outputLanguage)}
@@ -628,8 +705,13 @@ const Index = () => {
                 <>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setOverlayOpen(true)}>
-                        <Layers className="h-3 w-3" />
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        className='h-6 w-6'
+                        onClick={() => setOverlayOpen(true)}
+                      >
+                        <Layers className='h-3 w-3' />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>OpenAPI Overlay</TooltipContent>
@@ -645,7 +727,7 @@ const Index = () => {
 
           <ResizablePanel defaultSize={50} minSize={25}>
             <EditorPanel
-              title="OpenAPI Output"
+              title='OpenAPI Output'
               value={output}
               onChange={setOutput}
               language={outputLanguage}
@@ -654,7 +736,11 @@ const Index = () => {
               actions={
                 <>
                   <DiffButton onClick={() => setDiffOpen(true)} />
-                  <DownloadButton content={output} filename="openapi-formatted" format={outputLanguage} />
+                  <DownloadButton
+                    content={output}
+                    filename='openapi-formatted'
+                    format={outputLanguage}
+                  />
                 </>
               }
             />
@@ -679,35 +765,39 @@ const Index = () => {
       {/* FAB for filter */}
       {Object.keys(filterFormOptions).length > 0 && (
         <Button
-          className="fixed bottom-12 right-4 h-10 w-10 rounded-full shadow-lg"
-          size="icon"
+          className='fixed bottom-12 right-4 h-10 w-10 rounded-full shadow-lg'
+          size='icon'
           onClick={() => setFilterOpen(true)}
         >
-          <Filter className="h-4 w-4" />
+          <Filter className='h-4 w-4' />
         </Button>
       )}
 
-      {/* FAB for AI chat */}
-      <Button
-        className="fixed bottom-24 right-4 h-11 w-11 rounded-full shadow-lg bg-primary hover:bg-primary/90"
-        size="icon"
-        onClick={() => setChatOpen(!isChatOpen)}
-      >
-        <MessageSquare className="h-4.5 w-4.5" />
-      </Button>
+      {showAssistant && (
+        <>
+          {/* FAB for AI chat */}
+          <Button
+            className='fixed bottom-24 right-4 h-11 w-11 rounded-full shadow-lg bg-primary hover:bg-primary/90'
+            size='icon'
+            onClick={() => setChatOpen(!isChatOpen)}
+          >
+            <MessageSquare className='h-4.5 w-4.5' />
+          </Button>
 
-      {/* AI Chat Panel */}
-      <ChatPanel
-        open={isChatOpen}
-        onClose={() => setChatOpen(false)}
-        messages={chatMessages}
-        isThinking={chatThinking}
-        onSend={sendMessage}
-        onClear={clearMessages}
-        title="API Assistant"
-        subtitle="MCP-powered · OpenAPI helper"
-        quickActions={QUICK_ACTIONS}
-      />
+          {/* AI Chat Panel */}
+          <ChatPanel
+            open={isChatOpen}
+            onClose={() => setChatOpen(false)}
+            messages={chatMessages}
+            isThinking={chatThinking}
+            onSend={sendMessage}
+            onClear={clearMessages}
+            title='API Assistant'
+            subtitle='MCP-powered · OpenAPI helper'
+            quickActions={QUICK_ACTIONS}
+          />
+        </>
+      )}
 
       {/* Dialogs */}
       <FilterFormDialog
@@ -720,7 +810,10 @@ const Index = () => {
         isOpen={isSortOpen}
         onClose={() => setSortOpen(false)}
         sortSet={customSortSet}
-        onSubmit={(v) => { setCustomSortSet(v); setSortSet(v); }}
+        onSubmit={(v) => {
+          setCustomSortSet(v);
+          setSortSet(v);
+        }}
         outputLanguage={outputLanguage}
         defaultSort={defaultSortSet}
       />

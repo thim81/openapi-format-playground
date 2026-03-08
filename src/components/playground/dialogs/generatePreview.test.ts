@@ -15,12 +15,20 @@ paths:
 
 describe('generateOperationIdPreview', () => {
   it('keeps existing operationIds when overwriteExisting is false', async () => {
-    const ids = await generateOperationIdPreview(openapiWithOperationIds, '<method>_<pathPart2>', false);
+    const ids = await generateOperationIdPreview(
+      openapiWithOperationIds,
+      '<method>_<pathPart2>',
+      false,
+    );
     expect(ids).toContain('listPets');
   });
 
   it('applies template to existing operationIds when overwriteExisting is true', async () => {
-    const ids = await generateOperationIdPreview(openapiWithOperationIds, '<method>_<pathPart2>', true);
+    const ids = await generateOperationIdPreview(
+      openapiWithOperationIds,
+      '<method>_<pathPart2>',
+      true,
+    );
     expect(ids).toContain('get_');
     expect(ids).toContain('post_');
   });

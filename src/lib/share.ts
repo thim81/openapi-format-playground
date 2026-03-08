@@ -29,7 +29,7 @@ export interface DecodedShareUrl {
 export const generateShareUrl = async (
   origin: string,
   openapi?: string,
-  config?: PlaygroundConfig
+  config?: PlaygroundConfig,
 ): Promise<string> => {
   const url = new URL(origin);
 
@@ -64,7 +64,7 @@ export const decodeShareUrl = async (url: string): Promise<DecodedShareUrl> => {
 };
 
 export const includeUnusedComponents = (obj: any, include: boolean) => {
-  const components = ["schemas", "parameters", "examples", "headers", "requestBodies", "responses"];
+  const components = ['schemas', 'parameters', 'examples', 'headers', 'requestBodies', 'responses'];
   if (include) {
     if (!obj.unusedComponents) {
       obj.unusedComponents = components;

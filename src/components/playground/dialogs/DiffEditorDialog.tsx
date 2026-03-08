@@ -1,10 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DiffEditor } from '@monaco-editor/react';
 import { useTheme } from 'next-themes';
 import { resolveMonacoTheme } from '../monacoTheme';
@@ -18,7 +13,11 @@ interface DiffEditorDialogProps {
 }
 
 const DiffEditorDialog: React.FC<DiffEditorDialogProps> = ({
-  isOpen, onClose, original, modified, language,
+  isOpen,
+  onClose,
+  original,
+  modified,
+  language,
 }) => {
   const { theme } = useTheme();
   const openInstanceRef = useRef(0);
@@ -31,24 +30,24 @@ const DiffEditorDialog: React.FC<DiffEditorDialogProps> = ({
 
   const originalModelPath = useMemo(
     () => `inmemory://oaf/diff/${openInstanceRef.current}/original.${language}`,
-    [language, isOpen]
+    [language, isOpen],
   );
   const modifiedModelPath = useMemo(
     () => `inmemory://oaf/diff/${openInstanceRef.current}/modified.${language}`,
-    [language, isOpen]
+    [language, isOpen],
   );
   const diffKey = useMemo(
     () => `${openInstanceRef.current}:${language}:${original.length}:${modified.length}`,
-    [language, original, modified, isOpen]
+    [language, original, modified, isOpen],
   );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[96vw] max-w-[96vw] h-[96vh] max-h-[96vh]">
+      <DialogContent className='w-[96vw] max-w-[96vw] h-[96vh] max-h-[96vh]'>
         <DialogHeader>
           <DialogTitle>Diff View</DialogTitle>
         </DialogHeader>
-        <div className="h-[84vh] border rounded-md overflow-hidden">
+        <div className='h-[84vh] border rounded-md overflow-hidden'>
           {isOpen && (
             <DiffEditor
               key={diffKey}

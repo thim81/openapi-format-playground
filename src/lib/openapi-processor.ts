@@ -75,18 +75,26 @@ export interface ProcessConfig {
   convertVersion: string;
 }
 
-export async function processOpenApi(
-  input: string,
-  config: ProcessConfig
-): Promise<ProcessResult> {
+export async function processOpenApi(input: string, config: ProcessConfig): Promise<ProcessResult> {
   const {
-    sort, keepComments, filterSet, sortSet,
-    overlaySet, generateSet, casingSet,
-    toggleGenerate, toggleCasing, toggleOverlay,
-    outputLanguage, convertVersion,
+    sort,
+    keepComments,
+    filterSet,
+    sortSet,
+    overlaySet,
+    generateSet,
+    casingSet,
+    toggleGenerate,
+    toggleCasing,
+    toggleOverlay,
+    outputLanguage,
+    convertVersion,
   } = config;
 
-  const convertOptions = { keepComments: keepComments || false, format: undefined as string | undefined };
+  const convertOptions = {
+    keepComments: keepComments || false,
+    format: undefined as string | undefined,
+  };
   let oaObj = (await parseString(input, convertOptions)) as unknown as OpenAPIV3.Document;
   let output = { data: oaObj } as OpenAPIResult;
 
@@ -110,7 +118,12 @@ export async function processOpenApi(
   // Overlay
   if (overlaySet?.length > 0 && toggleOverlay) {
     const overlayParsed = await parseString(overlaySet);
-    if (overlayParsed instanceof Error || !overlayParsed || typeof overlayParsed !== 'object' || Array.isArray(overlayParsed)) {
+    if (
+      overlayParsed instanceof Error ||
+      !overlayParsed ||
+      typeof overlayParsed !== 'object' ||
+      Array.isArray(overlayParsed)
+    ) {
       throw new Error('Invalid overlay configuration');
     }
     const overlayOpts = { ...(overlayParsed as any) };
@@ -172,7 +185,10 @@ export async function processOpenApi(
 
   const _format = outputLanguage || (await detectFormat(input));
   convertOptions.format = _format;
-  const formattedData = await stringify(output.data as unknown as Record<string, unknown>, convertOptions);
+  const formattedData = await stringify(
+    output.data as unknown as Record<string, unknown>,
+    convertOptions,
+  );
 
   const rd = (output.resultData || {}) as any;
 

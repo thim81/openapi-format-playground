@@ -26,7 +26,7 @@ const JsonPathPickerDialog: React.FC<JsonPathPickerDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col gap-3">
+      <DialogContent className='max-w-3xl max-h-[80vh] flex flex-col gap-3'>
         <DialogHeader>
           <DialogTitle>Pick a JSONPath target</DialogTitle>
         </DialogHeader>
@@ -34,21 +34,21 @@ const JsonPathPickerDialog: React.FC<JsonPathPickerDialogProps> = ({
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search JSONPath suggestions..."
-          className="h-9 font-mono text-sm"
+          placeholder='Search JSONPath suggestions...'
+          className='h-9 font-mono text-sm'
         />
 
-        <ScrollArea className="border rounded-md h-[50vh]">
-          <div className="p-2 space-y-1">
+        <ScrollArea className='border rounded-md h-[50vh]'>
+          <div className='p-2 space-y-1'>
             {filtered.map((s) => (
               <button
                 key={s}
-                type="button"
+                type='button'
                 onClick={() => {
                   onPick(s);
                   onClose();
                 }}
-                className="w-full text-left px-2 py-1.5 rounded text-sm font-mono hover:bg-muted"
+                className='w-full text-left px-2 py-1.5 rounded text-sm font-mono hover:bg-muted'
               >
                 {s}
               </button>
@@ -56,8 +56,10 @@ const JsonPathPickerDialog: React.FC<JsonPathPickerDialogProps> = ({
           </div>
         </ScrollArea>
 
-        <div className="flex justify-end">
-          <Button variant="outline" onClick={onClose}>Close</Button>
+        <div className='flex justify-end'>
+          <Button variant='outline' onClick={onClose}>
+            Close
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

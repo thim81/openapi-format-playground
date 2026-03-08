@@ -14,7 +14,7 @@ export async function parseSortConfig(raw: string): Promise<SortConfig> {
 
 export async function serializeSortConfig(
   config: SortConfig,
-  outputLanguage: 'json' | 'yaml'
+  outputLanguage: 'json' | 'yaml',
 ): Promise<string> {
   return (await stringify(config as any, { format: outputLanguage })) as string;
 }

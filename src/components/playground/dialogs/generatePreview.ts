@@ -5,7 +5,7 @@ import type { OpenAPIV3 } from 'openapi-types';
 export async function generateOperationIdPreview(
   openapi: string,
   operationIdTemplate: string,
-  overwriteExisting: boolean
+  overwriteExisting: boolean,
 ): Promise<string[]> {
   if (!openapi || !operationIdTemplate) return [];
 

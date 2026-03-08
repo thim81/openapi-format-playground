@@ -1,13 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
-import type {
-  ChatMessage,
-  ToolCall,
-  ToolDefinition,
-  UseChatConfig,
-} from '@/components/chat/types';
+import type { ChatMessage, ToolCall, ToolDefinition, UseChatConfig } from '@/components/chat/types';
 
-const DEFAULT_GREETING =
-  "Hi! I'm your AI assistant. How can I help you today?";
+const DEFAULT_GREETING = "Hi! I'm your AI assistant. How can I help you today?";
 
 export function useChat(config: UseChatConfig) {
   const {
