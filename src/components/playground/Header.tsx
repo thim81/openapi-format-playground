@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Github, Terminal, Share2, FileCode2, Loader2 } from 'lucide-react';
+import { Github, Terminal, Share2, Loader2 } from 'lucide-react';
 
 interface HeaderProps {
   outputLanguage: 'json' | 'yaml';
@@ -40,8 +40,14 @@ const Header: React.FC<HeaderProps> = ({
       className='h-12 flex items-center justify-between px-4 border-b-2 bg-card'
       style={{ borderBottomColor: 'hsl(var(--primary))' }}
     >
-      <div className='flex items-center gap-3'>
-        <FileCode2 className='h-6 w-6 text-primary' />
+      <div className='flex items-center gap-1'>
+        <img
+          src='/openapi-format-icon.svg'
+          alt='OpenAPI Format'
+          className='h-6 w-6 shrink-0'
+          width={24}
+          height={24}
+        />
         <h1 className='text-base font-bold tracking-tight'>
           OpenAPI-Format <span className='text-muted-foreground font-normal'>Playground</span>
         </h1>
