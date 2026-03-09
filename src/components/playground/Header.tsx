@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Github, Terminal, Share2, Loader2 } from 'lucide-react';
+import { Github, Terminal, Share2, Loader2, Globe } from 'lucide-react';
 
 interface HeaderProps {
   outputLanguage: 'json' | 'yaml';
@@ -110,6 +110,17 @@ const Header: React.FC<HeaderProps> = ({
             </Button>
           </TooltipTrigger>
           <TooltipContent>Share</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <a href='https://openapi-format.com' target='_blank' rel='noopener noreferrer'>
+              <Button variant='ghost' size='icon' className='h-7 w-7'>
+                <Globe className='h-3.5 w-3.5' />
+              </Button>
+            </a>
+          </TooltipTrigger>
+          <TooltipContent>Website</TooltipContent>
         </Tooltip>
 
         <Tooltip>
