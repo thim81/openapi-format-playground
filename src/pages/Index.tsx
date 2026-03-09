@@ -132,17 +132,6 @@ const Index = () => {
   const [isInstructionsOpen, setInstructionsOpen] = useState(false);
   const [isChatOpen, setChatOpen] = useState(false);
 
-  const {
-    messages: chatMessages,
-    isThinking: chatThinking,
-    sendMessage,
-    clearMessages,
-    quickActions: chatQuickActions,
-  } = useOpenApiAssistant({
-    specContent: input,
-    onSpecReplace: handleInputChange,
-  });
-
   const dInput = useDebounce(input, 800);
   const dFilterSet = useDebounce(filterSet, 800);
   const dSortSet = useDebounce(sortSet, 800);
@@ -172,6 +161,17 @@ const Index = () => {
       setConvertVersion('');
     }
   }, []);
+
+  const {
+    messages: chatMessages,
+    isThinking: chatThinking,
+    sendMessage,
+    clearMessages,
+    quickActions: chatQuickActions,
+  } = useOpenApiAssistant({
+    specContent: input,
+    onSpecReplace: handleInputChange,
+  });
 
   // Process
   useEffect(() => {
