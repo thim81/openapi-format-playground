@@ -94,21 +94,21 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             </div>
           )}
           {showPreviewToggle && (
-            <div className='flex items-center border rounded-md ml-2'>
+            <div className='flex items-center border rounded-md ml-2 overflow-hidden'>
               {modeButtons.map((btn, i) => (
-                <button
-                  key={btn.mode}
-                  onClick={() => setViewMode(btn.mode)}
-                  className={`flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium transition-colors ${
-                    i === 0 ? 'rounded-l-md' : i === modeButtons.length - 1 ? 'rounded-r-md' : ''
-                  } ${
-                    viewMode === btn.mode
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {btn.icon} {btn.label}
-                </button>
+                <React.Fragment key={btn.mode}>
+                  <button
+                    onClick={() => setViewMode(btn.mode)}
+                    className={`flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                      viewMode === btn.mode
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {btn.icon} {btn.label}
+                  </button>
+                  {i < modeButtons.length - 1 && <span className='h-3.5 w-px bg-border/70' />}
+                </React.Fragment>
               ))}
             </div>
           )}
