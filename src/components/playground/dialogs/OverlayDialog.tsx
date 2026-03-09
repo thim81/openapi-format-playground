@@ -134,6 +134,7 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
   const [expandedActions, setExpandedActions] = useState<Set<number>>(new Set());
   const [enabledActions, setEnabledActions] = useState<Set<number>>(new Set());
   const [parsedOpenApi, setParsedOpenApi] = useState<any>(null);
+  const [targetPreviews, setTargetPreviews] = useState<Map<number, string>>(new Map());
   const [actionUpdateValues, setActionUpdateValues] = useState<Map<number, string>>(new Map());
   const [jsonPathSuggestions, setJsonPathSuggestions] = useState<string[]>([]);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -226,6 +227,48 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
     };
     if (isOpen) parse();
   }, [overlaySet, isOpen, format]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const buildTargetPreviews = async () => {
+      if (!parsedOpenApi) {
+        if (!cancelled) setTargetPreviews(new Map());
+        return;
+      }
+      const next = new Map<number, string>();
+      const actions = overlay.actions || [];
+      for (let i = 0; i < actions.length; i++) {
+        const target = actions[i]?.target || '';
+        if (!target) {
+          next.set(i, '');
+          continue;
+        }
+        const { value } = resolveJsonPath(parsedOpenApi, target);
+        if (value === undefined) {
+          next.set(i, '');
+          continue;
+        }
+        try {
+          const rendered =
+            typeof value === 'object'
+              ? ((await stringify(value as any, { format })) as string)
+              : String(value);
+          next.set(i, rendered.slice(0, 500));
+        } catch {
+          try {
+            next.set(i, JSON.stringify(value, null, 2).slice(0, 500));
+          } catch {
+            next.set(i, String(value).slice(0, 500));
+          }
+        }
+      }
+      if (!cancelled) setTargetPreviews(next);
+    };
+    void buildTargetPreviews();
+    return () => {
+      cancelled = true;
+    };
+  }, [parsedOpenApi, overlay.actions, format]);
 
   const syncCodeFromUi = async () => {
     try {
@@ -489,20 +532,6 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
     e.target.value = '';
   };
 
-  const getTargetPreview = (target: string): string => {
-    if (!parsedOpenApi) return '';
-    const { value } = resolveJsonPath(parsedOpenApi, target);
-    if (value === undefined) return '';
-    if (typeof value === 'object') {
-      try {
-        return JSON.stringify(value, null, 2).slice(0, 500);
-      } catch {
-        return String(value);
-      }
-    }
-    return String(value);
-  };
-
   const getMatchCount = (target: string): number => {
     if (!parsedOpenApi) return 0;
     return resolveJsonPath(parsedOpenApi, target).matches;
@@ -669,7 +698,7 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
                   const isExpanded = expandedActions.has(i);
                   const isEnabled = enabledActions.has(i);
                   const matchCount = getMatchCount(action.target);
-                  const preview = getTargetPreview(action.target);
+                  const preview = targetPreviews.get(i) || '';
                   const isRemove = !!action.remove;
                   const isAdd = action.add !== undefined && !isRemove;
                   const actionKind = isRemove ? 'remove' : isAdd ? 'add' : 'update';
