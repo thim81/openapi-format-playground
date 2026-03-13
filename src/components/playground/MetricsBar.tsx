@@ -253,15 +253,13 @@ const MetricsBar: React.FC<MetricsBarProps> = ({
 
       {expanded && (
         <div className='absolute bottom-full left-0 right-0 border-t border-b bg-card shadow-lg max-h-[420px] overflow-y-auto z-20'>
-          <div className='sticky top-0 z-10 flex items-center justify-end px-4 py-2 border-b bg-card/95 backdrop-blur-sm'>
-            <button
-              className='inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors'
-              onClick={() => setExpanded(false)}
-            >
-              <span>Close</span>
-              <ChevronDown className='h-3.5 w-3.5' />
-            </button>
-          </div>
+          <button
+            className='sticky top-0 z-10 flex w-full items-center justify-end gap-1.5 border-b bg-card/95 px-4 py-2 text-[11px] text-muted-foreground backdrop-blur-sm transition-colors hover:text-foreground'
+            onClick={() => setExpanded(false)}
+          >
+            <span>Close</span>
+            <ChevronDown className='h-3.5 w-3.5' />
+          </button>
           <div className='px-4 py-4 grid grid-cols-2 gap-4 bg-muted/20'>
             <ComponentSection
               title='Total Components'
