@@ -17,7 +17,12 @@ import GenerateFormDialog from '@/components/playground/dialogs/GenerateFormDial
 import InstructionsDialog from '@/components/playground/dialogs/InstructionsDialog';
 import DiffEditorDialog from '@/components/playground/dialogs/DiffEditorDialog';
 import OverlayDialog from '@/components/playground/dialogs/OverlayDialog';
-import { getInputEditorLanguage } from '@/components/playground/inputEditorLanguage';
+import {
+  detectInputDocumentFormat,
+  getInputEditorLanguage,
+  normalizeImportedInput,
+  type InputDocumentFormat,
+} from '@/components/playground/inputDocumentFormat';
 import { reformatFilterSet } from '@/components/playground/filterSetFormat';
 import { applyPathSortToSortSet } from '@/components/playground/sortSetPathSort';
 import { Button } from '@/components/ui/button';
@@ -100,6 +105,7 @@ const Index = () => {
   const [sortSet, setSortSet] = useState('');
   const [overlaySet, setOverlaySet] = useState('');
   const [outputLanguage, setOutputLanguage] = useState<'json' | 'yaml'>('yaml');
+  const [inputDocumentFormat, setInputDocumentFormat] = useState<InputDocumentFormat>('yaml');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -144,10 +150,20 @@ const Index = () => {
   const convertibleTargets = useMemo(() => getConvertibleTargets(inputVersion), [inputVersion]);
 
   // Analyze input on change
-  const handleInputChange = useCallback(async (newValue: string) => {
-    setInput(newValue);
+  const applyInputValue = useCallback(async (newValue: string, normalizeImported = false) => {
+    let nextValue = newValue;
+    let detectedFormat = await detectInputDocumentFormat(newValue);
+
+    if (normalizeImported) {
+      const normalized = await normalizeImportedInput(newValue);
+      nextValue = normalized.text;
+      detectedFormat = normalized.format;
+    }
+
+    setInput(nextValue);
+    setInputDocumentFormat(detectedFormat === 'unknown' ? 'yaml' : detectedFormat);
     try {
-      const oaObj = (await parseString(newValue)) as unknown as OpenAPIV3.Document;
+      const oaObj = (await parseString(nextValue)) as unknown as OpenAPIV3.Document;
       const detectedVersion = detectOpenApiVersion(oaObj);
       setInputVersion(detectedVersion);
       const validTargets = getConvertibleTargets(detectedVersion);
@@ -163,6 +179,14 @@ const Index = () => {
       setConvertVersion('');
     }
   }, []);
+
+  const handleInputChange = useCallback(async (newValue: string) => {
+    await applyInputValue(newValue, false);
+  }, [applyInputValue]);
+
+  const handleImportedInput = useCallback(async (newValue: string) => {
+    await applyInputValue(newValue, true);
+  }, [applyInputValue]);
 
   const {
     messages: chatMessages,
@@ -558,7 +582,7 @@ const Index = () => {
               title='OpenAPI Input'
               value={input}
               onChange={handleInputChange}
-              language={getInputEditorLanguage(outputLanguage)}
+              language={getInputEditorLanguage(inputDocumentFormat)}
               showPreviewToggle
               actions={
                 <>
@@ -572,8 +596,8 @@ const Index = () => {
                     </TooltipTrigger>
                     <TooltipContent>OpenAPI Overlay</TooltipContent>
                   </Tooltip>
-                  <ImportUrlButton onUrlLoad={handleInputChange} />
-                  <UploadButton onFileLoad={handleInputChange} />
+                  <ImportUrlButton onUrlLoad={handleImportedInput} />
+                  <UploadButton onFileLoad={handleImportedInput} />
                 </>
               }
             />
