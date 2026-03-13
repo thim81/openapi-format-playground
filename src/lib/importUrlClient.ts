@@ -1,7 +1,7 @@
 import { normalizeImportUrl, type ImportUrlErrorPayload } from './importUrlShared';
 
 export const buildImportUrlProxyPath = (url: string): string =>
-  `/api/import-url?url=${encodeURIComponent(normalizeImportUrl(url))}`;
+  `/api/import?url=${encodeURIComponent(normalizeImportUrl(url))}`;
 
 export const importTextFromUrl = async (url: string): Promise<string> => {
   const response = await fetch(buildImportUrlProxyPath(url));

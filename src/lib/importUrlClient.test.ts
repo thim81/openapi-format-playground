@@ -9,7 +9,7 @@ afterEach(() => {
 describe('buildImportUrlProxyPath', () => {
   it('encodes the remote URL into the proxy endpoint', () => {
     expect(buildImportUrlProxyPath('https://example.com/openapi.yaml?x=1')).toBe(
-      '/api/import-url?url=https%3A%2F%2Fexample.com%2Fopenapi.yaml%3Fx%3D1',
+      '/api/import?url=https%3A%2F%2Fexample.com%2Fopenapi.yaml%3Fx%3D1',
     );
   });
 

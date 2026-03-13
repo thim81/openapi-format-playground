@@ -1,15 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { onRequestGet } from '../../functions/api/import-url';
+import { onRequestGet } from '../../functions/api/import';
 
 afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('import-url Pages Function', () => {
+describe('import Pages Function', () => {
   it('rejects missing URLs', async () => {
     const response = await onRequestGet({
-      request: new Request('https://playground.openapi-format.com/api/import-url'),
+      request: new Request('https://playground.openapi-format.com/api/import'),
     } as any);
 
     expect(response.status).toBe(400);
@@ -21,7 +21,7 @@ describe('import-url Pages Function', () => {
   it('rejects blocked private targets', async () => {
     const response = await onRequestGet({
       request: new Request(
-        'https://playground.openapi-format.com/api/import-url?url=http://127.0.0.1/openapi.yaml',
+        'https://playground.openapi-format.com/api/import?url=http://127.0.0.1/openapi.yaml',
       ),
     } as any);
 
@@ -44,7 +44,7 @@ describe('import-url Pages Function', () => {
 
     const response = await onRequestGet({
       request: new Request(
-        'https://playground.openapi-format.com/api/import-url?url=https://example.com/openapi.yaml',
+        'https://playground.openapi-format.com/api/import?url=https://example.com/openapi.yaml',
       ),
     } as any);
 
@@ -59,7 +59,7 @@ describe('import-url Pages Function', () => {
 
     const response = await onRequestGet({
       request: new Request(
-        'https://playground.openapi-format.com/api/import-url?url=https://example.com/openapi.yaml',
+        'https://playground.openapi-format.com/api/import?url=https://example.com/openapi.yaml',
       ),
     } as any);
 
@@ -83,7 +83,7 @@ describe('import-url Pages Function', () => {
 
     const response = await onRequestGet({
       request: new Request(
-        'https://playground.openapi-format.com/api/import-url?url=https://example.com/openapi.yaml',
+        'https://playground.openapi-format.com/api/import?url=https://example.com/openapi.yaml',
       ),
     } as any);
 
