@@ -39,9 +39,7 @@ const ipv4ToNumber = (ip: string): number | null => {
   if (parts.length !== 4) return null;
   const octets = parts.map((part) => Number.parseInt(part, 10));
   if (octets.some((part) => Number.isNaN(part) || part < 0 || part > 255)) return null;
-  return (
-    octets[0] * 256 ** 3 + octets[1] * 256 ** 2 + octets[2] * 256 + octets[3]
-  );
+  return octets[0] * 256 ** 3 + octets[1] * 256 ** 2 + octets[2] * 256 + octets[3];
 };
 
 const isPrivateIPv4 = (host: string): boolean => {

@@ -109,7 +109,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
   return (
     <div className='flex-1 flex flex-col min-w-0 h-full'>
-      <div ref={headerRef} className='flex items-center justify-between px-3 py-1.5 border-b bg-card'>
+      <div
+        ref={headerRef}
+        className='flex items-center justify-between px-3 py-1.5 border-b bg-card'
+      >
         <div className='flex items-center gap-2'>
           <h3 className='text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
             {title}
@@ -142,9 +145,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           )}
         </div>
         <ActionButtonCompactContext.Provider value={compactActions}>
-          <div className='flex items-center gap-1 min-w-0'>
-            {actions}
-          </div>
+          <div className='flex items-center gap-1 min-w-0'>{actions}</div>
         </ActionButtonCompactContext.Provider>
       </div>
       <div className='flex-1 min-h-0'>

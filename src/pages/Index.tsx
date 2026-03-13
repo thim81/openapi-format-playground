@@ -51,6 +51,7 @@ import {
   type PlaygroundConfig,
   type DecodedShareUrl,
 } from '@/lib/share';
+import { importTextFromUrl } from '@/lib/importUrlClient';
 import useDebounce from '@/hooks/useDebounce';
 import defaultSortJson from '@/defaults/defaultSort.json';
 import type { OpenAPIV3 } from 'openapi-types';
@@ -185,13 +186,19 @@ const Index = () => {
     }
   }, []);
 
-  const handleInputChange = useCallback(async (newValue: string) => {
-    await applyInputValue(newValue, false);
-  }, [applyInputValue]);
+  const handleInputChange = useCallback(
+    async (newValue: string) => {
+      await applyInputValue(newValue, false);
+    },
+    [applyInputValue],
+  );
 
-  const handleImportedInput = useCallback(async (newValue: string) => {
-    await applyInputValue(newValue, true);
-  }, [applyInputValue]);
+  const handleImportedInput = useCallback(
+    async (newValue: string) => {
+      await applyInputValue(newValue, true);
+    },
+    [applyInputValue],
+  );
 
   const {
     messages: chatMessages,
@@ -495,6 +502,22 @@ const Index = () => {
       const oaOverlay = (await stringify(sanitized as any, { format: outputLanguage })) as string;
       setOverlaySet(oaOverlay);
       setToggleOverlay(true);
+
+      // Overlay Extend: if input is empty and overlay declares remote extends, preload base OpenAPI.
+      const extendsRef = typeof sanitized?.extends === 'string' ? sanitized.extends.trim() : '';
+      if (!input.trim() && /^https?:\/\//i.test(extendsRef)) {
+        try {
+          const baseOpenApi = await importTextFromUrl(extendsRef);
+          await handleImportedInput(baseOpenApi);
+        } catch {
+          toast({
+            title: 'Overlay applied',
+            description:
+              'Could not load overlay extends into input. Import the extends URL manually if needed.',
+            variant: 'destructive',
+          });
+        }
+      }
     } catch (err: any) {
       toast({
         title: 'Overlay not applied',

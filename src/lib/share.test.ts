@@ -24,7 +24,11 @@ describe('share helpers', () => {
   });
 
   it('omits config from the URL when it is empty', async () => {
-    const url = await generateShareUrl('https://playground.openapi-format.com', 'openapi: 3.0.0', {});
+    const url = await generateShareUrl(
+      'https://playground.openapi-format.com',
+      'openapi: 3.0.0',
+      {},
+    );
     expect(new URL(url).searchParams.has('config')).toBe(false);
   });
 

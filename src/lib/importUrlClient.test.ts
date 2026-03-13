@@ -14,9 +14,9 @@ describe('buildImportUrlProxyPath', () => {
   });
 
   it('converts GitHub blob URLs to raw URLs', () => {
-    expect(
-      buildImportUrlProxyPath('https://github.com/org/repo/blob/main/openapi.yaml'),
-    ).toContain(encodeURIComponent('https://raw.githubusercontent.com/org/repo/main/openapi.yaml'));
+    expect(buildImportUrlProxyPath('https://github.com/org/repo/blob/main/openapi.yaml')).toContain(
+      encodeURIComponent('https://raw.githubusercontent.com/org/repo/main/openapi.yaml'),
+    );
   });
 });
 
@@ -32,17 +32,22 @@ describe('importTextFromUrl', () => {
       ),
     );
 
-    await expect(importTextFromUrl('https://example.com/spec.yaml')).resolves.toBe('openapi: 3.0.3');
+    await expect(importTextFromUrl('https://example.com/spec.yaml')).resolves.toBe(
+      'openapi: 3.0.3',
+    );
   });
 
   it('surfaces normalized proxy errors', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ error: 'blocked_target', message: 'Private hosts are blocked.' }), {
-          status: 400,
-          headers: { 'content-type': 'application/json' },
-        }),
+        new Response(
+          JSON.stringify({ error: 'blocked_target', message: 'Private hosts are blocked.' }),
+          {
+            status: 400,
+            headers: { 'content-type': 'application/json' },
+          },
+        ),
       ),
     );
 

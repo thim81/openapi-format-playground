@@ -10,12 +10,7 @@ export async function normalizeOriginalForDiff(
 ): Promise<string> {
   try {
     const parsed = await parseString(original);
-    if (
-      parsed instanceof Error ||
-      !parsed ||
-      typeof parsed !== 'object' ||
-      Array.isArray(parsed)
-    ) {
+    if (parsed instanceof Error || !parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       return original;
     }
     return (await stringify(parsed as any, { format: outputFormat })) as string;

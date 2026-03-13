@@ -96,7 +96,12 @@ const Header: React.FC<HeaderProps> = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant='ghost' size='sm' className='h-7 gap-1.5 px-2 text-xs' onClick={onOpenInstructions}>
+            <Button
+              variant='ghost'
+              size='sm'
+              className='h-7 gap-1.5 px-2 text-xs'
+              onClick={onOpenInstructions}
+            >
               <Terminal className='h-3.5 w-3.5' />
               CLI usage
             </Button>
@@ -106,7 +111,12 @@ const Header: React.FC<HeaderProps> = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant='ghost' size='sm' className='h-7 gap-1.5 px-2 text-xs' onClick={onShare}>
+            <Button
+              variant='ghost'
+              size='sm'
+              className='h-7 gap-1.5 px-2 text-xs'
+              onClick={onShare}
+            >
               <Share2 className='h-3.5 w-3.5' />
               Share
             </Button>

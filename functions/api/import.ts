@@ -53,10 +53,7 @@ export const onRequestGet = async (context: { request: Request }): Promise<Respo
     });
   } catch (error: unknown) {
     if (error instanceof Error && error.name === 'AbortError') {
-      return jsonError(
-        { error: 'timeout', message: 'Remote URL import timed out.' },
-        504,
-      );
+      return jsonError({ error: 'timeout', message: 'Remote URL import timed out.' }, 504);
     }
 
     if (error instanceof Error && error.message === 'oversized_response') {
