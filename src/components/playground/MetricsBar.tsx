@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { ChevronUp, ChevronDown, Route, Tags, Box, AlertTriangle, Layers } from 'lucide-react';
 import type { ComponentMetrics } from '@/lib/openapi-processor';
+import openapiFormatPackageJson from '../../../node_modules/openapi-format/package.json';
+
+const openapiFormatVersion = openapiFormatPackageJson.version;
 
 interface OverlayAction {
   target: string;
@@ -229,7 +232,10 @@ const MetricsBar: React.FC<MetricsBarProps> = ({
             />
           </>
         )}
-        <div className='ml-auto flex items-center gap-1 text-xs text-muted-foreground'>
+        <div className='ml-auto flex items-center gap-2 text-xs text-muted-foreground'>
+          <span className='text-[10px] font-mono rounded bg-muted px-1.5 py-0.5'>
+            v{openapiFormatVersion}
+          </span>
           <span className='text-[10px]'>{expanded ? 'Collapse' : 'Details'}</span>
           {expanded ? (
             <ChevronDown className='h-3.5 w-3.5' />

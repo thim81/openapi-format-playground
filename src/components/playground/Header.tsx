@@ -96,8 +96,9 @@ const Header: React.FC<HeaderProps> = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant='ghost' size='icon' className='h-7 w-7' onClick={onOpenInstructions}>
+            <Button variant='ghost' size='sm' className='h-7 gap-1.5 px-2 text-xs' onClick={onOpenInstructions}>
               <Terminal className='h-3.5 w-3.5' />
+              CLI usage
             </Button>
           </TooltipTrigger>
           <TooltipContent>CLI Instructions</TooltipContent>
@@ -105,8 +106,9 @@ const Header: React.FC<HeaderProps> = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant='ghost' size='icon' className='h-7 w-7' onClick={onShare}>
+            <Button variant='ghost' size='sm' className='h-7 gap-1.5 px-2 text-xs' onClick={onShare}>
               <Share2 className='h-3.5 w-3.5' />
+              Share
             </Button>
           </TooltipTrigger>
           <TooltipContent>Share</TooltipContent>
@@ -115,12 +117,13 @@ const Header: React.FC<HeaderProps> = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <a href='https://openapi-format.com' target='_blank' rel='noopener noreferrer'>
-              <Button variant='ghost' size='icon' className='h-7 w-7'>
+              <Button variant='ghost' size='sm' className='h-7 gap-1.5 px-2 text-xs'>
                 <Globe className='h-3.5 w-3.5' />
+                Docs
               </Button>
             </a>
           </TooltipTrigger>
-          <TooltipContent>Website</TooltipContent>
+          <TooltipContent>Docs</TooltipContent>
         </Tooltip>
 
         <Tooltip>

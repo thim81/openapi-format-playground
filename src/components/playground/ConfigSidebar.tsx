@@ -269,12 +269,12 @@ const ConfigSidebar: React.FC<ConfigSidebarProps> = (props) => {
                 </div>
               </div>
 
-              <div className='h-[240px] border rounded-md overflow-hidden'>
+              <div className='h-[300px] border rounded-md overflow-hidden'>
                 <MonacoEditor
                   value={props.filterSet}
                   onChange={props.onFilterSetChange}
                   language={props.outputLanguage}
-                  height='240px'
+                  height='300px'
                   showLineNumbers={false}
                   readOnly={!props.toggleFilter}
                 />
