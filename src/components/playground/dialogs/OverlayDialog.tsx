@@ -630,9 +630,9 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
         </div>
 
         {/* Content */}
-        <div className='flex-1 min-h-0 overflow-auto'>
+        <div className='flex-1 min-h-0 overflow-hidden'>
           {mode === 'ui' ? (
-            <div className='max-h-[60vh] overflow-y-auto'>
+            <div className='h-full overflow-y-auto'>
               <div className='p-6 space-y-4'>
                 {/* Info + Extends row */}
                 <div className='grid grid-cols-[1fr_120px_1fr] gap-3'>
@@ -953,7 +953,7 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
               </div>
             </div>
           ) : (
-            <div className='h-[60vh] p-4'>
+            <div className='h-full p-4'>
               <div className='h-full border rounded-lg overflow-hidden'>
                 <MonacoEditor value={codeValue} onChange={setCodeValue} language={format} />
               </div>
