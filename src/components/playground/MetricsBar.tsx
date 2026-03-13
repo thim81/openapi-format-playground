@@ -185,7 +185,7 @@ const MetricsBar: React.FC<MetricsBarProps> = ({
   return (
     <div className='border-t bg-card shrink-0 relative'>
       <button
-        className='w-full h-9 flex items-center gap-2 px-4 hover:bg-muted/50 transition-colors cursor-pointer'
+        className='w-full min-h-9 py-1 flex items-center gap-2 px-4 hover:bg-muted/50 transition-colors cursor-pointer'
         onClick={() => setExpanded(!expanded)}
       >
         <MetricPill
@@ -233,9 +233,15 @@ const MetricsBar: React.FC<MetricsBarProps> = ({
           </>
         )}
         <div className='ml-auto flex items-center gap-2 text-xs text-muted-foreground'>
-          <span className='text-[10px] font-mono rounded bg-muted px-1.5 py-0.5'>
+          <a
+            href='https://github.com/thim81/openapi-format'
+            target='_blank'
+            rel='noopener noreferrer'
+            className='text-[10px] font-mono rounded bg-muted px-1.5 py-0.5 hover:bg-accent hover:text-foreground transition-colors'
+            onClick={(e) => e.stopPropagation()}
+          >
             v{openapiFormatVersion}
-          </span>
+          </a>
           <span className='text-[10px]'>{expanded ? 'Collapse' : 'Details'}</span>
           {expanded ? (
             <ChevronDown className='h-3.5 w-3.5' />
@@ -246,7 +252,16 @@ const MetricsBar: React.FC<MetricsBarProps> = ({
       </button>
 
       {expanded && (
-        <div className='absolute bottom-full left-0 right-0 border-t border-b bg-card shadow-lg max-h-[300px] overflow-y-auto z-20'>
+        <div className='absolute bottom-full left-0 right-0 border-t border-b bg-card shadow-lg max-h-[420px] overflow-y-auto z-20'>
+          <div className='sticky top-0 z-10 flex items-center justify-end px-4 py-2 border-b bg-card/95 backdrop-blur-sm'>
+            <button
+              className='inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors'
+              onClick={() => setExpanded(false)}
+            >
+              <span>Close</span>
+              <ChevronDown className='h-3.5 w-3.5' />
+            </button>
+          </div>
           <div className='px-4 py-4 grid grid-cols-2 gap-4 bg-muted/20'>
             <ComponentSection
               title='Total Components'
