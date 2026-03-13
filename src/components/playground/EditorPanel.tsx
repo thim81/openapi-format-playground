@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -8,6 +8,7 @@ import {
   Link as LinkIcon,
   Download,
   GitCompareArrows,
+  Copy,
   Loader2,
   Code2,
   Eye,
@@ -15,6 +16,8 @@ import {
 } from 'lucide-react';
 import MonacoEditor from './MonacoEditor';
 import OpenApiUiEditor from './OpenApiUiEditor';
+import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface EditorPanelProps {
   title: string;
@@ -61,6 +64,8 @@ const ScalarPreview: React.FC<{ content: string }> = ({ content }) => {
 };
 
 type ViewMode = 'code' | 'preview' | 'ui';
+const ActionButtonCompactContext = React.createContext(false);
+export const shouldUseCompactActions = (headerWidth: number) => headerWidth < 620;
 
 const EditorPanel: React.FC<EditorPanelProps> = ({
   title,
@@ -73,6 +78,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   showPreviewToggle = false,
 }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('code');
+  const [compactActions, setCompactActions] = useState(false);
+  const headerRef = useRef<HTMLDivElement>(null);
 
   const modeButtons: { mode: ViewMode; icon: React.ReactNode; label: string }[] = [
     { mode: 'code', icon: <Code2 className='h-3 w-3' />, label: 'Code' },
@@ -80,9 +87,24 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     { mode: 'preview', icon: <Eye className='h-3 w-3' />, label: 'Preview' },
   ];
 
+  useEffect(() => {
+    const node = headerRef.current;
+    if (!node) return;
+
+    const updateCompactState = () => {
+      setCompactActions(shouldUseCompactActions(node.clientWidth));
+    };
+
+    updateCompactState();
+    const observer = new ResizeObserver(updateCompactState);
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className='flex-1 flex flex-col min-w-0 h-full'>
-      <div className='flex items-center justify-between px-3 py-1.5 border-b bg-card'>
+      <div ref={headerRef} className='flex items-center justify-between px-3 py-1.5 border-b bg-card'>
         <div className='flex items-center gap-2'>
           <h3 className='text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
             {title}
@@ -113,7 +135,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             </div>
           )}
         </div>
-        <div className='flex items-center gap-1'>{actions}</div>
+        <ActionButtonCompactContext.Provider value={compactActions}>
+          <div className='flex items-center gap-1 min-w-0'>
+            {actions}
+          </div>
+        </ActionButtonCompactContext.Provider>
       </div>
       <div className='flex-1 min-h-0'>
         {viewMode === 'code' ? (
@@ -139,6 +165,35 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 export default EditorPanel;
 
 // Reusable action buttons
+const actionButtonClassName = 'h-7 border border-border/70 bg-background hover:bg-accent';
+
+export const EditorActionButton: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+}> = ({ icon, label, onClick, disabled, className }) => {
+  const compact = React.useContext(ActionButtonCompactContext);
+
+  return (
+    <Button
+      variant='ghost'
+      size='sm'
+      className={cn(
+        actionButtonClassName,
+        compact ? 'w-7 px-0 justify-center' : 'gap-1.5 px-2 text-[11px]',
+        className,
+      )}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {icon}
+      <span className={compact ? 'sr-only' : ''}>{label}</span>
+    </Button>
+  );
+};
+
 export const UploadButton: React.FC<{ onFileLoad: (content: string) => void }> = ({
   onFileLoad,
 }) => {
@@ -166,14 +221,11 @@ export const UploadButton: React.FC<{ onFileLoad: (content: string) => void }> =
       />
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant='ghost'
-            size='icon'
-            className='h-6 w-6'
+          <EditorActionButton
+            icon={<Upload className='h-3 w-3' />}
+            label='Upload file'
             onClick={() => fileRef.current?.click()}
-          >
-            <Upload className='h-3 w-3' />
-          </Button>
+          />
         </TooltipTrigger>
         <TooltipContent>Upload file</TooltipContent>
       </Tooltip>
@@ -215,17 +267,14 @@ export const ImportUrlButton: React.FC<{ onUrlLoad: (content: string) => void }>
     <>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant='ghost'
-            size='icon'
-            className='h-6 w-6'
+          <EditorActionButton
+            icon={<LinkIcon className='h-3 w-3' />}
+            label='Import URL'
             onClick={() => {
               setError(null);
               setIsOpen(true);
             }}
-          >
-            <LinkIcon className='h-3 w-3' />
-          </Button>
+          />
         </TooltipTrigger>
         <TooltipContent>Import from URL</TooltipContent>
       </Tooltip>
@@ -287,11 +336,29 @@ export const DownloadButton: React.FC<{ content: string; filename: string; forma
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant='ghost' size='icon' className='h-6 w-6' onClick={handleDownload}>
-          <Download className='h-3 w-3' />
-        </Button>
+        <EditorActionButton
+          icon={<Download className='h-3 w-3' />}
+          label='Download'
+          onClick={handleDownload}
+        />
       </TooltipTrigger>
       <TooltipContent>Download</TooltipContent>
+    </Tooltip>
+  );
+};
+
+export const CopyButton: React.FC<{ content: string }> = ({ content }) => {
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(content);
+    toast({ title: 'Copied to clipboard' });
+  };
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <EditorActionButton icon={<Copy className='h-3 w-3' />} label='Copy' onClick={handleCopy} />
+      </TooltipTrigger>
+      <TooltipContent>Copy</TooltipContent>
     </Tooltip>
   );
 };
@@ -299,9 +366,11 @@ export const DownloadButton: React.FC<{ content: string; filename: string; forma
 export const DiffButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <Tooltip>
     <TooltipTrigger asChild>
-      <Button variant='ghost' size='icon' className='h-6 w-6' onClick={onClick}>
-        <GitCompareArrows className='h-3 w-3' />
-      </Button>
+      <EditorActionButton
+        icon={<GitCompareArrows className='h-3 w-3' />}
+        label='Show diff'
+        onClick={onClick}
+      />
     </TooltipTrigger>
     <TooltipContent>Show Diff</TooltipContent>
   </Tooltip>

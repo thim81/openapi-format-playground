@@ -6,6 +6,8 @@ import EditorPanel, {
   ImportUrlButton,
   DownloadButton,
   DiffButton,
+  CopyButton,
+  EditorActionButton,
 } from '@/components/playground/EditorPanel';
 import MetricsBar from '@/components/playground/MetricsBar';
 import FilterFormDialog from '@/components/playground/dialogs/FilterFormDialog';
@@ -562,14 +564,11 @@ const Index = () => {
                 <>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        className='h-6 w-6'
+                      <EditorActionButton
+                        icon={<Layers className='h-3 w-3' />}
+                        label='OpenAPI Overlay'
                         onClick={() => setOverlayOpen(true)}
-                      >
-                        <Layers className='h-3 w-3' />
-                      </Button>
+                      />
                     </TooltipTrigger>
                     <TooltipContent>OpenAPI Overlay</TooltipContent>
                   </Tooltip>
@@ -593,6 +592,7 @@ const Index = () => {
               actions={
                 <>
                   <DiffButton onClick={() => setDiffOpen(true)} />
+                  <CopyButton content={output} />
                   <DownloadButton
                     content={output}
                     filename='openapi-formatted'
