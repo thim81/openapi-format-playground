@@ -1,6 +1,6 @@
 {
   "name": "openapi-format-playground",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Playground to format & filter OpenAPI documents",
   "type": "module",

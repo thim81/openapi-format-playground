@@ -10,6 +10,7 @@ import MonacoEditor from '../MonacoEditor';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from '@/hooks/use-toast';
 import { parseSortConfig, serializeSortConfig, type SortConfig } from './sortConfigFormat';
+import { importTextFromUrl } from '@/lib/importUrlClient';
 
 interface SortOptionsDialogProps {
   isOpen: boolean;
@@ -372,11 +373,7 @@ const SortOptionsDialog: React.FC<SortOptionsDialogProps> = ({
     setImportUrlLoading(true);
     setImportUrlError(null);
     try {
-      // Convert GitHub blob URLs to raw
-      const rawUrl = url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
-      const resp = await fetch(rawUrl);
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const text = await resp.text();
+      const text = await importTextFromUrl(url);
       await loadContent(text);
       setIsImportUrlOpen(false);
     } catch (err: any) {

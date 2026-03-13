@@ -18,6 +18,7 @@ import MonacoEditor from './MonacoEditor';
 import OpenApiUiEditor from './OpenApiUiEditor';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { importTextFromUrl } from '@/lib/importUrlClient';
 
 interface EditorPanelProps {
   title: string;
@@ -260,9 +261,7 @@ export const ImportUrlButton: React.FC<{ onUrlLoad: (content: string) => void }>
     setIsLoading(true);
     setError(null);
     try {
-      const resp = await fetch(url);
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const text = await resp.text();
+      const text = await importTextFromUrl(url);
       onUrlLoad(text);
       setIsOpen(false);
       setUrlValue('');

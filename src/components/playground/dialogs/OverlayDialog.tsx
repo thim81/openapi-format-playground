@@ -36,6 +36,7 @@ import { parseString, stringify, resolveJsonPathValue } from 'openapi-format';
 import { toast } from '@/hooks/use-toast';
 import JsonPathPickerDialog from './JsonPathPickerDialog';
 import { generateJsonPathSuggestions, scanPathsFromRaw } from './overlayJsonPathSuggestions';
+import { importTextFromUrl } from '@/lib/importUrlClient';
 
 interface OverlayAction {
   target: string;
@@ -150,8 +151,7 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
     const ext = (overlayDoc?.extends || overlay.extends || '').trim();
     if (/^https?:\/\//i.test(ext)) {
       try {
-        const resp = await fetch(ext);
-        if (resp.ok) return await resp.text();
+        return await importTextFromUrl(ext);
       } catch {
         // Ignore fetch errors; preview remains empty without a base OpenAPI document.
       }
@@ -483,9 +483,7 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
     setImportUrlLoading(true);
     setImportUrlError(null);
     try {
-      const resp = await fetch(url);
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const text = await resp.text();
+      const text = await importTextFromUrl(url);
       if (mode === 'code') {
         setCodeValue(text);
       } else {
