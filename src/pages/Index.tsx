@@ -16,6 +16,10 @@ import CasingFormDialog from '@/components/playground/dialogs/CasingFormDialog';
 import GenerateFormDialog from '@/components/playground/dialogs/GenerateFormDialog';
 import InstructionsDialog from '@/components/playground/dialogs/InstructionsDialog';
 import DiffEditorDialog from '@/components/playground/dialogs/DiffEditorDialog';
+import {
+  normalizeOriginalForDiff,
+  resolveDiffEditorLanguage,
+} from '@/components/playground/dialogs/diffEditorLanguage';
 import OverlayDialog from '@/components/playground/dialogs/OverlayDialog';
 import {
   detectInputDocumentFormat,
@@ -106,6 +110,7 @@ const Index = () => {
   const [overlaySet, setOverlaySet] = useState('');
   const [outputLanguage, setOutputLanguage] = useState<'json' | 'yaml'>('yaml');
   const [inputDocumentFormat, setInputDocumentFormat] = useState<InputDocumentFormat>('yaml');
+  const [diffOriginal, setDiffOriginal] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -282,6 +287,20 @@ const Index = () => {
     toggleOverlay,
     convertVersion,
   ]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncDiffOriginal = async () => {
+      const normalized = await normalizeOriginalForDiff(input, outputLanguage);
+      if (!cancelled) setDiffOriginal(normalized);
+    };
+
+    void syncDiffOriginal();
+    return () => {
+      cancelled = true;
+    };
+  }, [input, outputLanguage]);
 
   // Set default sort
   useEffect(() => {
@@ -722,9 +741,9 @@ const Index = () => {
       <DiffEditorDialog
         isOpen={isDiffOpen}
         onClose={() => setDiffOpen(false)}
-        original={input}
+        original={diffOriginal}
         modified={output}
-        language={outputLanguage}
+        language={resolveDiffEditorLanguage(outputLanguage)}
       />
       <InstructionsDialog
         isOpen={isInstructionsOpen}
