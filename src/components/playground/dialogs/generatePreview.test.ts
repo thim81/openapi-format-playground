@@ -17,7 +17,7 @@ describe('generateOperationIdPreview', () => {
   it('keeps existing operationIds when overwriteExisting is false', async () => {
     const ids = await generateOperationIdPreview(
       openapiWithOperationIds,
-      '<method>_<pathPart2>',
+      '<method>_<pathPart1>',
       false,
     );
     expect(ids).toContain('listPets');
@@ -26,10 +26,10 @@ describe('generateOperationIdPreview', () => {
   it('applies template to existing operationIds when overwriteExisting is true', async () => {
     const ids = await generateOperationIdPreview(
       openapiWithOperationIds,
-      '<method>_<pathPart2>',
+      '<method>_<pathPart1>',
       true,
     );
-    expect(ids).toContain('get_');
-    expect(ids).toContain('post_');
+    expect(ids).toContain('get_pets');
+    expect(ids).toContain('post_pets');
   });
 });

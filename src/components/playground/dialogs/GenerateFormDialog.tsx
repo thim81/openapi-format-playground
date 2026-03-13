@@ -39,7 +39,7 @@ const GenerateFormDialog: React.FC<GenerateFormDialogProps> = ({
   openapi,
   generateOptions,
 }) => {
-  const [operationIdTemplate, setOperationIdTemplate] = useState('<method>_<pathPart2>');
+  const [operationIdTemplate, setOperationIdTemplate] = useState('<method>_<pathPart1>');
   const [overwriteExisting, setOverwriteExisting] = useState(false);
   const [preview, setPreview] = useState<string[]>([]);
 
@@ -48,7 +48,7 @@ const GenerateFormDialog: React.FC<GenerateFormDialogProps> = ({
       try {
         if (generateOptions) {
           const parsed = (await parseString(generateOptions)) as OpenAPIGenerateSet;
-          setOperationIdTemplate(parsed.operationIdTemplate ?? '<method>_<pathPart2>');
+          setOperationIdTemplate(parsed.operationIdTemplate ?? '<method>_<pathPart1>');
           setOverwriteExisting(parsed.overwriteExisting ?? false);
         }
       } catch {}
