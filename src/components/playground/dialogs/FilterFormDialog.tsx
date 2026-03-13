@@ -165,7 +165,7 @@ const FilterFormDialog: React.FC<FilterFormDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className='max-w-4xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden'>
+      <DialogContent className='w-[94vw] max-w-[94vw] h-[90vh] max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden'>
         {/* Header */}
         <div className='px-6 pt-5 pb-4 border-b bg-gradient-to-b from-muted/50 to-transparent'>
           <DialogHeader>
@@ -184,7 +184,7 @@ const FilterFormDialog: React.FC<FilterFormDialogProps> = ({
         </div>
 
         {/* Two-panel layout */}
-        <div className='flex flex-1 min-h-0' style={{ height: '60vh' }}>
+        <div className='flex flex-1 min-h-0'>
           {/* Left sidebar — category list */}
           <div className='w-56 border-r bg-muted/20 flex flex-col shrink-0'>
             <div className='px-3 py-2 border-b'>
@@ -324,7 +324,7 @@ const FilterFormDialog: React.FC<FilterFormDialogProps> = ({
                   <p className='text-sm'>No items match your search</p>
                 </div>
               ) : (
-                <div className='grid grid-cols-2 lg:grid-cols-3 gap-1.5'>
+                <div className='grid grid-cols-2 lg:grid-cols-4 gap-1.5'>
                   {filteredItems.map((item) => {
                     const isChecked = selectedOptions[activeCategory]?.includes(item);
                     return (
