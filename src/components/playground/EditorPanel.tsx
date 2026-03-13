@@ -66,6 +66,7 @@ const ScalarPreview: React.FC<{ content: string }> = ({ content }) => {
 type ViewMode = 'code' | 'preview' | 'ui';
 const ActionButtonCompactContext = React.createContext(false);
 export const shouldUseCompactActions = (headerWidth: number) => headerWidth < 620;
+export const shouldUseCompactModeTabs = (headerWidth: number) => headerWidth < 520;
 
 const EditorPanel: React.FC<EditorPanelProps> = ({
   title,
@@ -79,6 +80,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('code');
   const [compactActions, setCompactActions] = useState(false);
+  const [compactModeTabs, setCompactModeTabs] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
 
   const modeButtons: { mode: ViewMode; icon: React.ReactNode; label: string }[] = [
@@ -92,7 +94,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     if (!node) return;
 
     const updateCompactState = () => {
-      setCompactActions(shouldUseCompactActions(node.clientWidth));
+      const width = node.clientWidth;
+      setCompactActions(shouldUseCompactActions(width));
+      setCompactModeTabs(shouldUseCompactModeTabs(width));
     };
 
     updateCompactState();
@@ -127,7 +131,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    {btn.icon} {btn.label}
+                    {btn.icon}
+                    <span className={compactModeTabs ? 'sr-only' : ''}>{btn.label}</span>
                   </button>
                   {i < modeButtons.length - 1 && <span className='h-3.5 w-px bg-border/70' />}
                 </React.Fragment>
@@ -167,17 +172,21 @@ export default EditorPanel;
 // Reusable action buttons
 const actionButtonClassName = 'h-7 border border-border/70 bg-background hover:bg-accent';
 
-export const EditorActionButton: React.FC<{
-  icon: React.ReactNode;
-  label: string;
-  onClick?: () => void;
-  disabled?: boolean;
-  className?: string;
-}> = ({ icon, label, onClick, disabled, className }) => {
+export const EditorActionButton = React.forwardRef<
+  HTMLButtonElement,
+  {
+    icon: React.ReactNode;
+    label: string;
+    onClick?: () => void;
+    disabled?: boolean;
+    className?: string;
+  }
+>(({ icon, label, onClick, disabled, className }, ref) => {
   const compact = React.useContext(ActionButtonCompactContext);
 
   return (
     <Button
+      ref={ref}
       variant='ghost'
       size='sm'
       className={cn(
@@ -192,7 +201,8 @@ export const EditorActionButton: React.FC<{
       <span className={compact ? 'sr-only' : ''}>{label}</span>
     </Button>
   );
-};
+});
+EditorActionButton.displayName = 'EditorActionButton';
 
 export const UploadButton: React.FC<{ onFileLoad: (content: string) => void }> = ({
   onFileLoad,
