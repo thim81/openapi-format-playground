@@ -676,7 +676,7 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
                           info: { ...overlay.info, version: e.target.value },
                         })
                       }
-                      placeholder='1.1.0'
+                      placeholder='1.0.0'
                       className='h-9'
                     />
                   </div>
