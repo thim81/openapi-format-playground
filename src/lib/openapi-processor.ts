@@ -24,6 +24,7 @@ import {
 import type { OpenAPIV3 } from 'openapi-types';
 import defaultSortJson from '@/defaults/defaultSort.json';
 import defaultFilterJson from '@/defaults/defaultFilter.json';
+import { normalizeOverlayForProcessing } from '@/lib/overlay-normalize';
 
 export interface ComponentMetrics {
   schemas: string[];
@@ -126,7 +127,7 @@ export async function processOpenApi(input: string, config: ProcessConfig): Prom
     ) {
       throw new Error('Invalid overlay configuration');
     }
-    const overlayOpts = { ...(overlayParsed as any) };
+    const overlayOpts = normalizeOverlayForProcessing(overlayParsed as any) as any;
     if (Array.isArray(overlayOpts.actions)) {
       overlayOpts.actions = overlayOpts.actions
         .filter((action: any) => action?.enabled !== false)

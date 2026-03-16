@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -11,7 +12,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -37,22 +37,13 @@ import { toast } from '@/hooks/use-toast';
 import JsonPathPickerDialog from './JsonPathPickerDialog';
 import { generateJsonPathSuggestions, scanPathsFromRaw } from './overlayJsonPathSuggestions';
 import { importTextFromUrl } from '@/lib/importUrlClient';
-
-interface OverlayAction {
-  target: string;
-  update?: any;
-  add?: any;
-  remove?: boolean;
-  enabled?: boolean;
-  description?: string;
-}
-
-interface OverlayDocument {
-  overlay?: string;
-  info?: { title?: string; version?: string };
-  extends?: string;
-  actions?: OverlayAction[];
-}
+import {
+  DEFAULT_OVERLAY_VERSION,
+  getOverlayActionKind,
+  normalizeOverlayForUi,
+  type OverlayAction,
+  type OverlayDocument,
+} from '@/lib/overlay-normalize';
 
 interface OverlayDialogProps {
   isOpen: boolean;
@@ -65,7 +56,7 @@ interface OverlayDialogProps {
 
 const actionTypes = [
   { label: 'Update', value: 'update' },
-  // { label: 'Add', value: 'add' },
+  { label: 'Copy', value: 'copy' },
   { label: 'Remove', value: 'remove' },
 ];
 
@@ -73,16 +64,6 @@ const isOverlayDocument = (value: unknown): value is OverlayDocument => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   if (value instanceof Error) return false;
   return true;
-};
-
-const normalizeOverlayDocument = (value: OverlayDocument): OverlayDocument => {
-  const actions = Array.isArray(value.actions) ? value.actions : [];
-  return {
-    overlay: value.overlay ?? '1.0.0',
-    info: value.info ?? { title: '', version: '' },
-    extends: value.extends,
-    actions,
-  };
 };
 
 const getEnabledActions = (actions: OverlayAction[]): Set<number> =>
@@ -102,18 +83,19 @@ const pruneUndefined = (value: unknown): unknown => {
   return value;
 };
 
-const resolveJsonPath = (obj: any, path: string): { value: any; matches: number } => {
+const resolveJsonPath = (
+  obj: any,
+  path: string,
+): { value: any; matches: number; invalid: boolean } => {
   try {
-    if (!obj || !path) return { value: undefined, matches: 0 };
-    // Accept common typo: $..[['key']] -> $..['key']
-    const normalizedPath = path.replace(/\[\[\s*(['"][^'"]+['"])\s*\]\]/g, '[$1]');
+    if (!obj || !path) return { value: undefined, matches: 0, invalid: false };
     const values = resolveJsonPathValue(
       obj as Record<string, unknown>,
-      normalizedPath,
+      path,
     ) as unknown[];
-    return { value: values?.[0], matches: values?.length || 0 };
+    return { value: values?.[0], matches: values?.length || 0, invalid: false };
   } catch {
-    return { value: undefined, matches: 0 };
+    return { value: undefined, matches: 0, invalid: true };
   }
 };
 
@@ -127,8 +109,8 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
 }) => {
   const [mode, setMode] = useState<'ui' | 'code'>('ui');
   const [overlay, setOverlay] = useState<OverlayDocument>({
-    overlay: '1.0.0',
-    info: { title: '', version: '' },
+    overlay: DEFAULT_OVERLAY_VERSION,
+    info: { title: '', version: '', description: '' },
     actions: [],
   });
   const [codeValue, setCodeValue] = useState('');
@@ -194,7 +176,7 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
         try {
           const rawParsed = await parseString(overlaySet);
           if (!isOverlayDocument(rawParsed)) throw new Error('Invalid overlay document');
-          const parsed = normalizeOverlayDocument(rawParsed);
+          const parsed = normalizeOverlayForUi(rawParsed);
           setOverlay(parsed);
           setCodeValue(overlaySet);
           const actions = parsed.actions || [];
@@ -202,7 +184,7 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
           setEnabledActions(getEnabledActions(actions));
           const vals = new Map<number, string>();
           for (let i = 0; i < actions.length; i++) {
-            const actionValue = actions[i].add !== undefined ? actions[i].add : actions[i].update;
+            const actionValue = actions[i].update;
             if (actionValue !== undefined) {
               if (typeof actionValue === 'object') {
                 vals.set(i, (await stringify(actionValue as any, { format })) as string);
@@ -217,7 +199,13 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
           setCodeValue(overlaySet);
         }
       } else {
-        setOverlay({ overlay: '1.0.0', info: { title: '', version: '' }, actions: [] });
+        setOverlay(
+          normalizeOverlayForUi({
+            overlay: DEFAULT_OVERLAY_VERSION,
+            info: { title: '', version: '', description: '' },
+            actions: [],
+          }),
+        );
         setCodeValue('');
         setExpandedActions(new Set());
         setEnabledActions(new Set());
@@ -281,7 +269,7 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
   const syncUiFromCode = async (): Promise<boolean> => {
     try {
       if (!codeValue.trim()) {
-        const parsed = normalizeOverlayDocument({});
+        const parsed = normalizeOverlayForUi({});
         setOverlay(parsed);
         setExpandedActions(new Set());
         setEnabledActions(new Set());
@@ -292,14 +280,14 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
 
       const rawParsed = await parseString(codeValue);
       if (!isOverlayDocument(rawParsed)) throw new Error('Invalid overlay document');
-      const parsed = normalizeOverlayDocument(rawParsed);
+      const parsed = normalizeOverlayForUi(rawParsed);
       setOverlay(parsed);
       const actions = parsed.actions || [];
       setExpandedActions(new Set(actions.map((_, i) => i)));
       setEnabledActions(getEnabledActions(actions));
       const vals = new Map<number, string>();
       for (let i = 0; i < actions.length; i++) {
-        const actionValue = actions[i].add !== undefined ? actions[i].add : actions[i].update;
+        const actionValue = actions[i].update;
         if (actionValue !== undefined) {
           if (typeof actionValue === 'object') {
             vals.set(i, (await stringify(actionValue as any, { format })) as string);
@@ -408,21 +396,29 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
 
   const handleActionTypeChange = (index: number, type: string) => {
     const actions = [...(overlay.actions || [])];
+    const next = { ...actions[index] } as any;
+    delete next.remove;
+    delete next.copy;
+    delete next.from;
+    delete next.add;
+
     if (type === 'remove') {
-      const next = { ...actions[index] } as any;
       delete next.update;
-      delete next.add;
       actions[index] = { ...next, remove: true };
-    } else if (type === 'add') {
-      const next = { ...actions[index] } as any;
-      delete next.remove;
+      setActionUpdateValues((prev) => {
+        const map = new Map(prev);
+        map.delete(index);
+        return map;
+      });
+    } else if (type === 'copy') {
       delete next.update;
-      actions[index] = { ...next, add: {} };
-      setActionUpdateValues((prev) => new Map(prev).set(index, ''));
+      actions[index] = { ...next, copy: true, from: '$' };
+      setActionUpdateValues((prev) => {
+        const map = new Map(prev);
+        map.delete(index);
+        return map;
+      });
     } else {
-      const next = { ...actions[index] } as any;
-      delete next.remove;
-      delete next.add;
       actions[index] = { ...next, update: {} };
       setActionUpdateValues((prev) => new Map(prev).set(index, ''));
     }
@@ -431,14 +427,12 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
 
   const handleUpdateValueChange = async (index: number, val: string) => {
     setActionUpdateValues((prev) => new Map(prev).set(index, val));
-    const actions = [...(overlay.actions || [])];
-    const isAddAction = actions[index]?.add !== undefined;
     try {
       const parsed = await parseString(val);
       if (parsed instanceof Error) throw parsed;
-      updateAction(index, isAddAction ? 'add' : 'update', parsed);
+      updateAction(index, 'update', parsed);
     } catch {
-      updateAction(index, isAddAction ? 'add' : 'update', val);
+      updateAction(index, 'update', val);
     }
   };
 
@@ -455,7 +449,7 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
       try {
         const rawParsed = await parseString(codeValue);
         if (!isOverlayDocument(rawParsed)) throw new Error('Invalid overlay document');
-        onSubmit(pruneUndefined(normalizeOverlayDocument(rawParsed)) as OverlayDocument);
+        onSubmit(pruneUndefined(normalizeOverlayForUi(rawParsed)) as OverlayDocument);
       } catch {
         toast({
           title: 'Invalid overlay code',
@@ -499,7 +493,7 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
       } else {
         const rawParsed = await parseString(text);
         if (!isOverlayDocument(rawParsed)) throw new Error('Invalid overlay document');
-        const parsed = normalizeOverlayDocument(rawParsed);
+        const parsed = normalizeOverlayForUi(rawParsed);
         setOverlay(parsed);
         const actions = parsed.actions || [];
         setExpandedActions(new Set(actions.map((_, i) => i)));
@@ -528,7 +522,7 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
         try {
           const rawParsed = await parseString(text);
           if (!isOverlayDocument(rawParsed)) throw new Error('Invalid overlay document');
-          const parsed = normalizeOverlayDocument(rawParsed);
+          const parsed = normalizeOverlayForUi(rawParsed);
           setOverlay(parsed);
           const actions = parsed.actions || [];
           setExpandedActions(new Set(actions.map((_, i) => i)));
@@ -545,6 +539,13 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
     return resolveJsonPath(parsedOpenApi, target).matches;
   };
 
+  const getJsonPathValidationMessage = (target: string): string | null => {
+    if (!target) return null;
+    if (!target.startsWith('$')) return 'JSONPath must start with "$".';
+    const { invalid } = resolveJsonPath(parsedOpenApi, target);
+    return invalid ? 'Invalid JSONPath expression.' : null;
+  };
+
   const actionsCount = overlay.actions?.length || 0;
   const enabledCount = enabledActions.size;
 
@@ -559,6 +560,12 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
                 <Layers className='h-4 w-4 text-primary' />
               </div>
               Manage Overlay Actions
+              <Badge
+                variant='outline'
+                className='ml-1 h-5 rounded-md px-2 py-0 text-[10px] font-mono'
+              >
+                overlay {overlay.overlay || DEFAULT_OVERLAY_VERSION}
+              </Badge>
               {actionsCount > 0 && (
                 <Badge variant='secondary' className='ml-1 text-[10px] font-mono'>
                   {enabledCount}/{actionsCount} active
@@ -669,7 +676,7 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
                           info: { ...overlay.info, version: e.target.value },
                         })
                       }
-                      placeholder='1.0.0'
+                      placeholder='1.1.0'
                       className='h-9'
                     />
                   </div>
@@ -685,7 +692,22 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
                     />
                   </div>
                 </div>
-
+                <div className='space-y-1.5 min-w-0'>
+                  <Label className='text-xs font-medium text-muted-foreground uppercase tracking-wider'>
+                    Description
+                  </Label>
+                  <Textarea
+                    value={overlay.info?.description || ''}
+                    onChange={(e) =>
+                      setOverlay({
+                        ...overlay,
+                        info: { ...overlay.info, description: e.target.value },
+                      })
+                    }
+                    placeholder='Overlay to add docs metadata and copy values'
+                    className='min-h-[72px] text-sm'
+                  />
+                </div>
                 {actionsCount === 0 && (
                   <div className='border-2 border-dashed rounded-xl py-12 flex flex-col items-center gap-3 text-muted-foreground'>
                     <div className='h-12 w-12 rounded-full bg-muted flex items-center justify-center'>
@@ -706,10 +728,12 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
                   const isExpanded = expandedActions.has(i);
                   const isEnabled = enabledActions.has(i);
                   const matchCount = getMatchCount(action.target);
+                  const targetPathValidation = getJsonPathValidationMessage(action.target);
                   const preview = targetPreviews.get(i) || '';
-                  const isRemove = !!action.remove;
-                  const isAdd = action.add !== undefined && !isRemove;
-                  const actionKind = isRemove ? 'remove' : isAdd ? 'add' : 'update';
+                  const actionKind = getOverlayActionKind(action);
+                  const isRemove = actionKind === 'remove';
+                  const isCopy = actionKind === 'copy';
+                  const isUpdate = actionKind === 'update';
 
                   return (
                     <div
@@ -851,6 +875,10 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
                                     <span className='text-[11px] font-bold text-primary bg-primary/15 px-2 py-0.5 rounded-full'>
                                       {matchCount} match
                                     </span>
+                                  ) : targetPathValidation ? (
+                                    <span className='text-[11px] text-destructive font-medium'>
+                                      invalid JSONPath
+                                    </span>
                                   ) : (
                                     <span className='text-[11px] text-destructive font-medium'>
                                       no match
@@ -869,6 +897,9 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
                                     <option key={s} value={s} />
                                   ))}
                                 </datalist>
+                                {targetPathValidation && (
+                                  <p className='text-[11px] text-destructive'>{targetPathValidation}</p>
+                                )}
                                 <Button
                                   variant='outline'
                                   size='sm'
@@ -903,10 +934,30 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
                                 </Select>
                               </div>
 
-                              {!isRemove && (
+                              {isCopy && (
+                                <div className='space-y-2'>
+                                  <Label className='text-xs font-bold uppercase tracking-wider text-muted-foreground'>
+                                    From (JSONPath)
+                                  </Label>
+                                  <Input
+                                    value={action.from || ''}
+                                    onChange={(e) => updateAction(i, 'from', e.target.value)}
+                                    list={`jsonpath-suggestions-from-${i}`}
+                                    className='h-9 font-mono text-sm border-2 focus-visible:border-primary'
+                                    placeholder='$.components.schemas.Pet'
+                                  />
+                                  <datalist id={`jsonpath-suggestions-from-${i}`}>
+                                    {jsonPathSuggestions.slice(0, 500).map((s) => (
+                                      <option key={s} value={s} />
+                                    ))}
+                                  </datalist>
+                                </div>
+                              )}
+
+                              {isUpdate && (
                                 <div className='space-y-2 flex-1'>
                                   <Label className='text-xs font-bold uppercase tracking-wider text-muted-foreground'>
-                                    {isAdd ? 'Add Value' : 'Update Value'}
+                                    Update Value
                                   </Label>
                                   <div className='h-[140px] border-2 rounded-lg overflow-hidden'>
                                     <MonacoEditor

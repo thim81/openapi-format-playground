@@ -9,7 +9,7 @@ interface OverlayAction {
   target: string;
   remove?: boolean;
   update?: unknown;
-  add?: unknown;
+  copy?: boolean;
 }
 
 interface MetricsBarProps {
@@ -137,8 +137,8 @@ const ActionSection: React.FC<{
           {actions.map((action, idx) => {
             const actionType = action.remove
               ? 'remove'
-              : action.add !== undefined
-                ? 'add'
+              : action.copy === true
+                ? 'copy'
                 : 'update';
             return (
               <li key={`${action.target}-${idx}`} className='text-xs'>
