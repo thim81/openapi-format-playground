@@ -280,6 +280,16 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
 
   const syncUiFromCode = async (): Promise<boolean> => {
     try {
+      if (!codeValue.trim()) {
+        const parsed = normalizeOverlayDocument({});
+        setOverlay(parsed);
+        setExpandedActions(new Set());
+        setEnabledActions(new Set());
+        setActionUpdateValues(new Map());
+        await setPreviewSource(parsed);
+        return true;
+      }
+
       const rawParsed = await parseString(codeValue);
       if (!isOverlayDocument(rawParsed)) throw new Error('Invalid overlay document');
       const parsed = normalizeOverlayDocument(rawParsed);
