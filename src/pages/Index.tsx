@@ -619,7 +619,7 @@ const Index = () => {
         />
 
         <ResizablePanelGroup direction='horizontal' className='flex-1'>
-          <ResizablePanel defaultSize={50} minSize={25}>
+          <ResizablePanel defaultSize={50} minSize={1}>
             <EditorPanel
               title='OpenAPI Input'
               value={input}
@@ -647,7 +647,7 @@ const Index = () => {
 
           <ResizableHandle withHandle />
 
-          <ResizablePanel defaultSize={50} minSize={25}>
+          <ResizablePanel defaultSize={50} minSize={1}>
             <EditorPanel
               title='OpenAPI Output'
               value={output}
