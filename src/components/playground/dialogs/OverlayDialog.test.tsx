@@ -14,7 +14,9 @@ vi.mock('../MonacoEditor', () => ({
     onChange: (next: string) => void;
     language?: string;
     height?: string;
-  }) => <textarea data-testid='monaco-mock' value={value} onChange={(e) => onChange(e.target.value)} />,
+  }) => (
+    <textarea data-testid='monaco-mock' value={value} onChange={(e) => onChange(e.target.value)} />
+  ),
 }));
 
 vi.mock('./JsonPathPickerDialog', () => ({

@@ -89,10 +89,7 @@ const resolveJsonPath = (
 ): { value: any; matches: number; invalid: boolean } => {
   try {
     if (!obj || !path) return { value: undefined, matches: 0, invalid: false };
-    const values = resolveJsonPathValue(
-      obj as Record<string, unknown>,
-      path,
-    ) as unknown[];
+    const values = resolveJsonPathValue(obj as Record<string, unknown>, path) as unknown[];
     return { value: values?.[0], matches: values?.length || 0, invalid: false };
   } catch {
     return { value: undefined, matches: 0, invalid: true };
@@ -898,7 +895,9 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
                                   ))}
                                 </datalist>
                                 {targetPathValidation && (
-                                  <p className='text-[11px] text-destructive'>{targetPathValidation}</p>
+                                  <p className='text-[11px] text-destructive'>
+                                    {targetPathValidation}
+                                  </p>
                                 )}
                                 <Button
                                   variant='outline'
