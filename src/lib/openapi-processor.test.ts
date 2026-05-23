@@ -58,3 +58,33 @@ actions:
     expect(result.output).toContain('version: 2.0.0');
   });
 });
+
+describe('processOpenApi casing keep chars', () => {
+  it('preserves configured keep characters when changing casing', async () => {
+    const input = `openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+paths:
+  /pets:
+    get:
+      operationId: get_foo-bar
+      responses:
+        '200':
+          description: OK
+`;
+
+    const result = await processOpenApi(input, {
+      ...baseConfig,
+      sort: false,
+      casingSet: `operationId: camelCase
+operationIdKeepChars:
+  - '_'
+  - '-'
+`,
+      toggleCasing: true,
+    });
+
+    expect(result.output).toContain('operationId: get_foo-bar');
+  });
+});

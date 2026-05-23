@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { CaseSensitive, Braces, Box, ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { parseString } from 'openapi-format';
 import type { OpenAPICasingSet } from 'openapi-format';
 import { cn } from '@/lib/utils';
+import { formatKeepCharsInput, getKeepCharsKey, parseKeepCharsInput } from './casingKeepChars';
 
 const casingOptionsList = [
   { label: 'camelCase', value: 'camelCase', example: 'myPropertyName' },
@@ -94,12 +94,29 @@ const CasingFormDialog: React.FC<CasingFormDialogProps> = ({
 
   const handleChange = (field: string, value: string) => {
     setCasingSet((prev) => {
+      const keepCharsKey = getKeepCharsKey(field);
       if (!value || value === 'none') {
         const next = { ...prev };
         delete (next as any)[field];
+        delete (next as any)[keepCharsKey];
         return next;
       }
       return { ...prev, [field]: value };
+    });
+  };
+
+  const handleKeepCharsChange = (field: string, value: string) => {
+    const keepCharsKey = getKeepCharsKey(field);
+    const keepChars = parseKeepCharsInput(value);
+
+    setCasingSet((prev) => {
+      const next = { ...prev };
+      if (keepChars.length > 0) {
+        next[keepCharsKey as keyof OpenAPICasingSet] = keepChars;
+      } else {
+        delete (next as any)[keepCharsKey];
+      }
+      return next;
     });
   };
 
@@ -177,6 +194,10 @@ const CasingFormDialog: React.FC<CasingFormDialogProps> = ({
                         const currentOption = casingOptionsList.find(
                           (o) => o.value === currentValue,
                         );
+                        const keepCharsKey = getKeepCharsKey(key);
+                        const currentKeepChars = formatKeepCharsInput(
+                          (casingSet as any)[keepCharsKey],
+                        );
 
                         return (
                           <div key={key} className='px-4 py-3 space-y-2'>
@@ -190,7 +211,7 @@ const CasingFormDialog: React.FC<CasingFormDialogProps> = ({
                                 </code>
                               )}
                             </div>
-                            {/* Casing Chips */}
+                            {/* Casing chips */}
                             <div className='flex flex-wrap gap-1.5'>
                               {casingOptionsList.map((opt) => {
                                 const isSelected = currentValue === opt.value;
@@ -213,6 +234,25 @@ const CasingFormDialog: React.FC<CasingFormDialogProps> = ({
                                 );
                               })}
                             </div>
+                            {currentValue && (
+                              <div className='space-y-1.5 pt-1'>
+                                <Label className='text-[11px] font-semibold uppercase tracking-wider text-muted-foreground'>
+                                  Keep chars
+                                </Label>
+                                <Input
+                                  value={currentKeepChars}
+                                  onChange={(e) =>
+                                    handleKeepCharsChange(key, e.currentTarget.value)
+                                  }
+                                  placeholder='e.g. _, -, .'
+                                  className='h-8 text-xs font-mono'
+                                />
+                                <p className='text-[11px] text-muted-foreground'>
+                                  Separate multiple characters with commas, spaces, or a plain
+                                  character sequence.
+                                </p>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
