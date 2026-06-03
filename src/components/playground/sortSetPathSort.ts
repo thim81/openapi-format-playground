@@ -7,6 +7,23 @@ export type ApplyPathSortResult = {
   recoveredFromInvalidInput: boolean;
 };
 
+const PATH_SORT_MODES: PathSortMode[] = ['original', 'path', 'tags'];
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
+
+function isValidSortSet(value: unknown): value is Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+
+  return Object.entries(value).every(([key, entry]) => {
+    if (key === 'sortPathsBy') {
+      return typeof entry === 'string' && PATH_SORT_MODES.includes(entry as PathSortMode);
+    }
+    return isStringArray(entry);
+  });
+}
+
 export async function applyPathSortToSortSet(
   sortSetStr: string,
   newPathSort: PathSortMode,
@@ -19,12 +36,7 @@ export async function applyPathSortToSortSet(
   if (raw) {
     try {
       const parsed = await parseString(raw);
-      if (
-        parsed &&
-        typeof parsed === 'object' &&
-        !Array.isArray(parsed) &&
-        !(parsed instanceof Error)
-      ) {
+      if (isValidSortSet(parsed)) {
         sortSetObj = parsed as Record<string, unknown>;
       } else {
         recoveredFromInvalidInput = true;
