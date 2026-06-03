@@ -409,7 +409,7 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
       });
     } else if (type === 'copy') {
       delete next.update;
-      actions[index] = { ...next, copy: true, from: '$' };
+      actions[index] = { ...next, copy: '$' };
       setActionUpdateValues((prev) => {
         const map = new Map(prev);
         map.delete(index);
@@ -936,16 +936,16 @@ const OverlayDialog: React.FC<OverlayDialogProps> = ({
                               {isCopy && (
                                 <div className='space-y-2'>
                                   <Label className='text-xs font-bold uppercase tracking-wider text-muted-foreground'>
-                                    From (JSONPath)
+                                    Copy Source (JSONPath)
                                   </Label>
                                   <Input
-                                    value={action.from || ''}
-                                    onChange={(e) => updateAction(i, 'from', e.target.value)}
-                                    list={`jsonpath-suggestions-from-${i}`}
+                                    value={typeof action.copy === 'string' ? action.copy : ''}
+                                    onChange={(e) => updateAction(i, 'copy', e.target.value)}
+                                    list={`jsonpath-suggestions-copy-${i}`}
                                     className='h-9 font-mono text-sm border-2 focus-visible:border-primary'
                                     placeholder='$.components.schemas.Pet'
                                   />
-                                  <datalist id={`jsonpath-suggestions-from-${i}`}>
+                                  <datalist id={`jsonpath-suggestions-copy-${i}`}>
                                     {jsonPathSuggestions.slice(0, 500).map((s) => (
                                       <option key={s} value={s} />
                                     ))}

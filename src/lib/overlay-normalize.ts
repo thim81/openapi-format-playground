@@ -5,8 +5,7 @@ export interface OverlayAction {
   update?: unknown;
   add?: unknown;
   remove?: boolean;
-  copy?: boolean;
-  from?: string;
+  copy?: string;
   enabled?: boolean;
   description?: string;
   [key: string]: unknown;
@@ -32,7 +31,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 export const getOverlayActionKind = (action: OverlayAction): 'update' | 'remove' | 'copy' => {
   if (action.remove === true) return 'remove';
-  if (action.copy === true) return 'copy';
+  if (action.copy !== undefined) return 'copy';
   return 'update';
 };
 
@@ -45,6 +44,19 @@ export const migrateLegacyAddAction = (action: OverlayAction): OverlayAction => 
   return next;
 };
 
+export const migrateLegacyCopyAction = (action: OverlayAction): OverlayAction => {
+  const next: {
+    from?: unknown;
+    copy?: string | boolean;
+    [key: string]: unknown;
+  } = { ...action };
+  if (next.copy === true) {
+    next.copy = typeof next.from === 'string' && next.from.trim().length > 0 ? next.from : '$';
+  }
+  delete next.from;
+  return next as OverlayAction;
+};
+
 export const normalizeOverlayForUi = (value: OverlayDocument): OverlayDocument => {
   const source = isRecord(value) ? (value as OverlayDocument) : {};
   const rawInfo = isRecord(source.info) ? source.info : {};
@@ -52,6 +64,7 @@ export const normalizeOverlayForUi = (value: OverlayDocument): OverlayDocument =
   const actions = rawActions
     .map((action) => (isRecord(action) ? migrateLegacyAddAction(action as OverlayAction) : null))
     .filter((action): action is OverlayAction => action !== null)
+    .map((action) => migrateLegacyCopyAction(action))
     .map((action) => ({
       ...action,
       target: typeof action.target === 'string' ? action.target : '',
@@ -80,7 +93,8 @@ export const normalizeOverlayForProcessing = (value: OverlayDocument): OverlayDo
   const rawActions = Array.isArray(source.actions) ? source.actions : [];
   const actions = rawActions
     .map((action) => (isRecord(action) ? migrateLegacyAddAction(action as OverlayAction) : null))
-    .filter((action): action is OverlayAction => action !== null);
+    .filter((action): action is OverlayAction => action !== null)
+    .map((action) => migrateLegacyCopyAction(action));
 
   const overlayVersion =
     typeof source.overlay === 'string' && source.overlay.trim().length > 0

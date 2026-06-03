@@ -42,8 +42,7 @@ describe('processOpenApi overlay 1.1', () => {
     const overlaySet = `overlay: 1.1.0
 actions:
   - target: $.info.title
-    copy: true
-    from: $.info.version
+    copy: $.info.version
   - target: $.info.version
     update: 2.0.0
 `;

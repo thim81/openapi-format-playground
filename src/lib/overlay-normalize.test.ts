@@ -24,16 +24,16 @@ describe('overlay-normalize', () => {
     expect(result.actions?.[0]).not.toHaveProperty('add');
   });
 
-  it('preserves copy/from action and detects kind as copy', () => {
+  it('migrates legacy copy/from action to spec copy form', () => {
     const result = normalizeOverlayForUi({
-      actions: [{ target: '$.info.title', copy: true, from: '$.info.version' }],
+      actions: [{ target: '$.info.title', copy: true, from: '$.info.version' } as any],
     });
     const action = result.actions?.[0];
     expect(action).toMatchObject({
       target: '$.info.title',
-      copy: true,
-      from: '$.info.version',
+      copy: '$.info.version',
     });
+    expect(action).not.toHaveProperty('from');
     expect(getOverlayActionKind(action!)).toBe('copy');
   });
 });

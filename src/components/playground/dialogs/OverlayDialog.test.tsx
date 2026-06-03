@@ -38,9 +38,9 @@ vi.mock('openapi-format', () => ({
 }));
 
 describe('OverlayDialog', () => {
-  it('copy actions show from input and hide update editor', async () => {
+  it('copy actions show a copy source input and hide update editor', async () => {
     const overlaySet = JSON.stringify({
-      actions: [{ target: '$.info.title', copy: true, from: '$.info.version' }],
+      actions: [{ target: '$.info.title', copy: '$.info.version' }],
     });
 
     render(
@@ -57,7 +57,7 @@ describe('OverlayDialog', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('From (JSONPath)')).toBeInTheDocument();
+      expect(screen.getByText('Copy Source (JSONPath)')).toBeInTheDocument();
     });
     expect(screen.queryByText('Update Value')).not.toBeInTheDocument();
   });
